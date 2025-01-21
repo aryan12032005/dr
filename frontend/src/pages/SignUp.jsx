@@ -51,7 +51,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="h-screen md:h-[75vh] flex flex-col md:flex-row items-center justify-center bg-zinc-900">
+    <div className="h-screen md:h-[85vh] flex flex-col md:flex-row items-center justify-center bg-zinc-900">
       <div className="w-full md:w-1/2 p-8 bg-zinc-800 rounded-lg shadow-md">
         <h2 className="text-2xl text-yellow-100 font-semibold mb-4">Sign Up</h2>
         <form onSubmit={handleSubmit}>

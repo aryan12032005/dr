@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 const Hero = () => {
   return (
@@ -7,7 +8,7 @@ const Hero = () => {
         <h1 className='text-4xl lg:text-6xl font-semibold text-yellow-100 lg:text-left'>Digitally Store Your Data</h1>
         <p className='mt-4 text-xl text-zinc-300 text-center lg:text-left'>An open source repository software package typically used for creating open access repositories for scholarly and/or published digital content.</p>
         <div className='mt-8'>
-            <button className=' text-yellow-100 text-xl lg:text-2xl font-semibold border border-yellow-100 px-10 py-3 hover:bg-zinc-800 rounded-full '>Discover Role-Based Authentication</button>
+            <Link to="/Login" className=' text-yellow-100 text-xl lg:text-2xl font-semibold border border-yellow-100 px-10 py-3 hover:bg-zinc-800 rounded-full '>Upload/Search</Link>
         </div>
         
         </div>

@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import config from '../config.js'
 
 const Login = () => {
+
+  const getCSRFToken = async() => {
+    var response=await fetch(`${config.backendUrl}login/`, {
+      method: 'GET',
+    });
+    var data= await response.json()
+    return data.csrf_token
+  };
+
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
 
@@ -16,13 +26,14 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       // Send login data to your backend (replace with your actual API endpoint)
-      const response = await fetch('/api/login', {
+      const csrfToken = getCSRFToken();
+      const response = await fetch(`${config.backendUrl}login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
         },
         body: JSON.stringify(formData),
       });
@@ -51,12 +62,12 @@ const Login = () => {
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-white">
-              Email:
+              Username:
             </label>
             <input
-              type="email"
-              id="email"
-              name="email"
+              type="text"
+              id="username"
+              name="username"
               value={formData.email}
               onChange={handleChange}
               className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -78,6 +89,7 @@ const Login = () => {
           <button
             type="submit"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md"
+            onClick={handleSubmit}
           >
             Log In
           </button>

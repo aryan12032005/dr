@@ -9,6 +9,8 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_protect
 from . serializers import LoginSerializer,LibraryUserSerializer
 
+from ..databases.service import mongo_DB
+
 # Create your views here.
 def index(request):
     return Response("this is an api view")
@@ -46,6 +48,16 @@ class SignupView(APIView):
     def post(self, request):
         serializer = LibraryUserSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            return Response({'message': 'User created successfully', 'user': serializer.data}, status=status.HTTP_201_CREATED)
+            existing_username=User.objects.get(username=serializer.validated_data['username'])
+            existing_email=User.objects.get(email=serializer.validated_data['email'])
+            if not existing_username or not existing_email:
+                user = serializer.save()
+                return Response({'message': 'User created successfully'}, status=status.HTTP_201_CREATED)
+            else:
+                Response({'message': 'User already registered'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SearchView(APIView):
+    def get(self,request):
+        querry=request.data.get("querry")
+        mongo_client=mongo_DB(None, None,"localhost",271017, "library","documents")

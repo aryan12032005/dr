@@ -2,8 +2,11 @@ from pymongo import MongoClient
 import sqlite3 as sq
 
 class mongo_DB:
-    def __init__(self, username=None, password=None, host=None, port=None, db_name="library", table_name="documents"):
-        db_string=f"mongodb://localhost:27017"
+    def __init__(self, username=None, password=None, host="localhost", port=27017, db_name="library", table_name="documents"):
+        if password and username:
+            db_string=f"mongodb://{username}:{password}@localhost:{port}"
+        else:
+            db_string=f"mongodb://localhost:{port}"
         self.client=MongoClient(db_string)
         self.db=self.client[db_name]
         self.doc=self.db[table_name]
@@ -12,7 +15,7 @@ class mongo_DB:
         return self.doc.insert_one(item).inserted_id
     
     def get_document(self, querry):
-        item=self.doc.find_one(querry)
+        item=self.doc.find(querry)
         if item:
             return item
         else:

@@ -12,8 +12,8 @@ const Navbar = () => {
         link: "/about-us",
         },
         {
-        title: "Uploads",
-        link: "/uploads",
+        title:"Admin Panel",
+        link:"/adminpanel",
         },
     ];
     const [MobileNav, setMobileNav] = useState('hidden')
@@ -22,7 +22,7 @@ const Navbar = () => {
      <nav className='z-50 relative flex bg-zinc-800 text-white px-4 py-4 items-center justify-between'>
       <Link to='/' className='flex items-center'>
         <img className="h-10 me-4"
-        src='https://www.pikpng.com/pngl/m/424-4249556_indevis-cloud-storage-logo-clipart.png' alt='logo' />
+        src='vaibhavlogo.png' alt='logo' />
         <h1 className='text-2xl font-semibold'>Digital Repository</h1>
       </Link>
       <div className='nav-links-repo block md:flex items-center gap-4'>
@@ -44,6 +44,7 @@ const Navbar = () => {
         <Link to= '/SignUp'
         className='px-4 py-1  bg-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300' >SignUp
         </Link >
+        
 
         </div>
         <button className='text-white text-2xl hover:text-zinc-400' onClick={()=> (MobileNav === "hidden" ? setMobileNav("block") : setMobileNav("hidden"))}>

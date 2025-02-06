@@ -144,7 +144,7 @@ const Signup = () => {
       </div>
 
       <div>
-        <label htmlFor="phone_number" className="block text-white">
+        <label htmlFor="phone_number" className="block text-white ">
           Phone Number:
         </label>
         <input
@@ -153,51 +153,27 @@ const Signup = () => {
           name="phone_number"
           value={formData.phone_number}
           onChange={handleChange}
-          className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
         />
       </div>
 
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          id="is_faculty"
-          name="is_faculty"
-          checked={formData.is_faculty}
-          onChange={handleChange}
-          className="mr-2"
-        />
-        <label htmlFor="is_faculty" className="text-white">
-          Is Faculty?
-        </label>
-      </div>
+      
+      <div className="flex flex-col md:flex-row gap-4 mb-8"> {/* Parent container */}
+  <div className="flex items-center">
+    <input type="checkbox" id="is_faculty" name="is_faculty" checked={formData.is_faculty} onChange={handleChange} className="mr-2" />
+    <label htmlFor="is_faculty" className="text-white">Is Faculty?</label>
+  </div>
 
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          id="is_admin"
-          name="is_admin"
-          checked={formData.is_admin}
-          onChange={handleChange}
-          className="mr-2"
-        />
-        <label htmlFor="is_admin" className="text-white">
-          Is Admin?
-        </label>
-      </div>
+  <div className="flex items-center">
+    <input type="checkbox" id="is_admin" name="is_admin" checked={formData.is_admin} onChange={handleChange} className="mr-2" />
+    <label htmlFor="is_admin" className="text-white">Is Admin?</label>
+  </div>
 
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          id="is_allowed"
-          name="is_allowed"
-          checked={formData.is_allowed}
-          onChange={handleChange}
-          className="mr-2"
-        />
-        <label htmlFor="is_allowed" className="text-white">
-          Is Allowed?
-        </label>
-      </div>
+  <div className="flex items-center">
+    <input type="checkbox" id="is_allowed" name="is_allowed" checked={formData.is_allowed} onChange={handleChange} className="mr-2" />
+    <label htmlFor="is_allowed" className="text-white">Is Allowed?</label>
+  </div>
+</div>
 
           <button
             type="submit"

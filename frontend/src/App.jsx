@@ -7,6 +7,7 @@ import Login from './pages/LogIn'
 import Signup from './pages/SignUp'
 import AboutUs from './pages/AboutUs'
 
+import AdminPanel from './pages/AdminPanel'
 
 
 const App = () => {
@@ -16,8 +17,11 @@ const App = () => {
         <Navbar />
         <Routes>
           <Route exact path='/' element={<Home />} />
-          <Route path='/login' element={<Login/>} />
-          <Route path='/signup' element={<Signup/>} />
+          <Route path='/LogIn' element={<Login/>} />
+          <Route path='/SignUp' element={<Signup/>} />
+          <Route path='/about-us' element={<AboutUs/>}/>
+          <Route path='/AdminPanel' element={<AdminPanel/>}/>
+
 
           
           

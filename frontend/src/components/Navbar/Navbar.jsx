@@ -47,7 +47,7 @@ const Navbar = () => {
         
 
         </div>
-        <button className='text-white text-2xl hover:text-zinc-400' onClick={()=> (MobileNav === "hidden" ? setMobileNav("block") : setMobileNav("hidden"))}>
+        <button className='block md:hidden text-white text-2xl hover:text-zinc-400' onClick={()=> (MobileNav === "hidden" ? setMobileNav("block") : setMobileNav("hidden"))}>
           <FaGripLines />
         </button>
       </div>
@@ -64,14 +64,15 @@ const Navbar = () => {
         ))}
 
         <Link to='/LogIn'
-        className={` ${MobileNav}px-4 mb-8 text-3xl font-semibold py-2 border border-blue-500 rounded text-white hover:bg-white-800 hover:text-zinc-800 transition-all duration-300`}
+        className={` ${MobileNav}px-4 mb-8 text-3xl font-semibold py-2  bg-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300 `}
         >
         LogIn
         </Link>
         <Link to= '/SignUp'
         className={` ${MobileNav}px-4 mb-8 text-3xl font-semibold py-2  bg-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300 `}>SignUp
         </Link >
-
+        
+        
      </div>
    </> 
   )

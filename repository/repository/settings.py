@@ -25,7 +25,28 @@ SECRET_KEY = 'django-insecure-8#+r4cpo52ils31m6h8=kjxj=jpvq5_uh0n0%bm$!=il*0_hnl
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000", 
+]
+
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:3000'
+)
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'DELETE',
+]
 
 
 # Application definition
@@ -38,8 +59,23 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt'
 ]
 
+# REST Framework settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+
+
+AUTHENTICATION_BACKENDS=[
+    'django.contrib.auth.backends.ModelBackend'
+]
+AUTH_USER_MODEL="library.LibraryUser"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -48,6 +84,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'repository.urls'

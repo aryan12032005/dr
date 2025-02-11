@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import config from '../config.js'
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
 
+  const navigate=useNavigate();
   const getCSRFToken = async() => {
-    var response=await fetch(`${config.backendUrl}login/`, {
+    var response=await fetch(`${config.backendUrl}get_csrf/`, {
       method: 'GET',
     });
     var data= await response.json()
@@ -42,8 +44,8 @@ const Login = () => {
         // Handle successful login (e.g., store token in local storage and redirect)
         const data = await response.json(); 
         localStorage.setItem('token', data.token); 
-        alert('Login successful!');
         // Redirect to the desired page after login
+        navigate('/AdminPanel')
       } else {
         // Handle login errors
         const errorData = await response.json();

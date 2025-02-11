@@ -23,19 +23,18 @@ def is_admin(func):
         if request.user.is_admin:
             return func(request,*args,**kwargs)
         else:
-            return Response({"error":"You are not authenticated for this api"})
+            return Response({'message':'authentication failed'},status=status.HTTP_401_UNAUTHORIZED)
 
 # Create your views here.
 def index(request):
     return Response("this is an api view")
 
-class LoginView(APIView):
-    def get(self, request):
-        # Get CSRF token and set it in the response
-        csrf_token = get_token(request)
-        response = JsonResponse({'csrf_token': csrf_token})
-        return response
+def get_csrf_token(request):
+    csrf_token = get_token(request)
+    response = JsonResponse({'csrf_token': csrf_token})
+    return response
 
+class LoginView(APIView):
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -57,11 +56,8 @@ class LoginView(APIView):
             return Response({"message": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
         
 class SignupView(APIView):
-    def get(self,request):
-        csrf_token = get_token(request)
-        response = JsonResponse({'csrf_token': csrf_token})
-        return response
-    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         serializer = LibraryUserSerializer(data=request.data)
         
@@ -91,11 +87,8 @@ class adminuserView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get(self,request,start_c=0,end_c=50):
-        users=LibraryUser.objects.filter(is_admin=False).values('email','id','username','phone_number','is_faculty')[start_c:end_c]
+    def get(self,request):
+        users=LibraryUser.objects.filter(is_admin=False).values('email','id','first_name','username','phone_number','is_faculty')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
         user_count=LibraryUser.objects.filter(is_admin=False).aggregate(Count("id"))
-        print(users)
-        print(user_count)
-        return Response({"meggase":"success","users":list(users),"user_count":user_count['id__count']})
-
+        return Response({"users":list(users),"user_count":user_count['id__count']},status=status.HTTP_200_OK)
 

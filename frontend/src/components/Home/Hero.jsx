@@ -1,27 +1,47 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ReactTyped } from "react-typed";
 
 const Hero = () => {
-  return (
-    <div className='h-screen md:h-[75vh] flex flex-col md:flex-row items-center justify-center'> {/* Center items in main container */}
-  <div className='w-full lg:w-3/6 flex flex-col items-center justify-center'> {/* Center text block */}
-    <h1 className='text-4xl lg:text-6xl font-semibold text-yellow-100 lg:text-left text-center'>
-      Digitally Store Your Data
-    </h1>
-    <p className='mt-4 text-xl text-zinc-300 text-center lg:text-left'>
-      An open source repository software package typically used for creating open access repositories for scholarly and/or published digital content.
-    </p>
-    <div className='mt-8 flex justify-center'>
-      <Link to="/Login" className='text-yellow-100 text-xl lg:text-2xl font-semibold border border-yellow-100 px-10 py-3 hover:bg-zinc-800 rounded-full'>
-        Login to Discover
-      </Link>
-    </div>
-  </div>
-  <div className='w-full lg:w-3/6 h-auto lg:h-[100%] flex items-center justify-center'>
-    <img src='./Untitled.png' alt='newhome' className="max-w-full h-auto" /> {/* Image responsiveness */}
-  </div>
-</div>
-  )
-}
+  return (
+    <div className="h-screen flex flex-col items-center bg-[url('./books.jpg')] bg-cover bg-center scroll-px-10"> {/* Removed justify-center */}
+      <div className="w-full lg:w-3/6 flex flex-col items-center px-4 lg:px-0 text-center pt-14 lg:pt-14"> {/* Removed justify-center */}
+        <div className="rounded-lg p-8 ">
+          <div className="text-container">
+            <h1 className="text-4xl lg:text-6xl font-semibold text-yellow-100 leading-tight mb-4">
+              <ReactTyped
+                strings={[
+                  'Digitally Store Your Data',
+                  'Securely Manage Files',
+                  'Easy Access'
+                ]}
+                typeSpeed={40}
+                backSpeed={40}
+                loop={true}
+              />
+            </h1>
+            <p className="mt-4 text-xl text-zinc-300 leading-relaxed">
+              An open source repository software package typically used for creating open access repositories for scholarly and/or published digital content.
+            </p>
+            <div className="mt-7 flex justify-center">
+              <Link to="/Login" className="text-yellow-100 text-xl lg:text-2xl font-semibold border border-yellow-100 px-10 py-3 hover:bg-zinc-800 rounded-full transition-colors duration-300">
+                Login to Discover
+              </Link>
+            </div>
 
-export default Hero
+            <div className="w-fit flex justify-center mt-8">
+              {/* <img
+                src="./Untitled.png"
+                alt="Data storage visualization"
+                className="max-w-full h-auto object-contain rounded-lg shadow-lg"
+                loading="lazy"
+              /> */}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Hero;

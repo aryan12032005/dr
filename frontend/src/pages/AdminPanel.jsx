@@ -407,7 +407,14 @@ const AdminPanel = () => {
               Add User
             </button>
           </div>
-        </div>
+        ) : null}
+        <Routes>
+        <Route path="/Settings" element={<Settings />} />
+        <Route path="/NewUserAdmin" element={<NewUserAdmin/>} />
+        <Route path="/DocumentManage" element={<DocumentManage/>} />
+        <Route path="/UserManagement" element={<UserManagement/>} />
+        </Routes>
+      
       </div>
     </div>
   );

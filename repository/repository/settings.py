@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -41,12 +41,15 @@ CORS_ORIGIN_WHITELIST = (
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_METHODS = [
+CORS_ALLOW_METHODS = [
     'GET',
     'POST',
     'PUT',
+    'PATCH',
     'DELETE',
+    'OPTIONS',
 ]
+
 
 
 # Application definition
@@ -71,6 +74,12 @@ REST_FRAMEWORK = {
     ],
 }
 
+SIMPLE_JWT={
+    'ACCESS_TOKEN_LIFETIME':timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME':timedelta(hours=1),
+    'BLACKLIST_AFTER_ROTATION':True,
+    'ROTATE_REFRESH_TOKEN':True
+}
 
 AUTHENTICATION_BACKENDS=[
     'django.contrib.auth.backends.ModelBackend'

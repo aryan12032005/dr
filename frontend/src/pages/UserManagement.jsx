@@ -9,7 +9,8 @@ const UserManagement = () => {
   var start_count = 0;
   var end_count = 50;
   const navigate = useNavigate();
-  var accessToken = localStorage.getItem("token");
+  var accessToken = localStorage.getItem("access_token");
+  var refreshToken = localStorage.getItem("refresh_token");
 
   const [newUser, setNewUser] = useState({
     email: "",
@@ -30,48 +31,117 @@ const UserManagement = () => {
     var data = await response.json();
     return data.csrf_token;
   };
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        if (!accessToken) {
+  const refresh_token = async() => {
+    const csrf_token=getCSRFToken();
+    var result= await fetch(
+      `${config.backendUrl}refresh_token/`,
+      {
+        method:'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrf_token,
+        },
+        body: JSON.stringify(refreshToken)
+      }
+    )
+    if(result.ok){
+      data=result.json();
+      localStorage.setItem('access_token',data['access_token']);
+      localStorage.setItem('refresh_token',data['refresh_token']);
+      refresh_token=data['refresh_token'];
+      return true;
+    } else {
+      localStorage.clear();
+      
+    }
+  }
+  const fetchUsers = async () => {
+    try {
+      if (!accessToken) {
+        navigate("/LogIn");
+        return;
+      } else {
+        var result = await fetch(
+          `${config.backendUrl}admin/?start_c=${start_count}&end_c=${end_count}`,
+          {
+            method: "get",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+        if (result.ok) {
+          result = await result.json();
+          setUsers(result["users"]);
+        } else if (result.status=401) {
+          var refresh_status=refresh_token();
+          if(refresh_status){
+            fetchUsers();
+          } else {
+            navigate('/LogIn');
+          }
+        } else{
+          result = await result.json();
+          alert(result["message"]);
+          localStorage.clear();
           navigate("/LogIn");
           return;
-        } else {
-          var result = await fetch(
-            `${config.backendUrl}admin/?start_c=${start_count}&end_c=${end_count}`,
-            {
-              method: "get",
-              headers: { Authorization: `Bearer ${accessToken}` },
-            }
-          );
-          if (result.ok) {
-            result = await result.json();
-            setUsers(result["users"]);
-          } else {
-            result = await result.json();
-            alert(result["message"]);
-            localStorage.clear();
-            navigate("/LogIn");
-            return;
-          }
         }
-      } catch (error) {
-        console.error("Error fetching users:", error);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+  useEffect(() => {
     fetchUsers();
   }, [navigate]);
 
-  const handleDelete = (id) => {
-    setUsers(users.filter((user) => user.id !== id));
+  const searchUser = async(querry) =>{
+    var result = await fetch(
+      `${config.backendUrl}admin/?start_c=${start_count}&end_c=${end_count}&querry=${querry}`,
+      {
+        method: "get",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+    var result =await result.json();
+    setUsers(result["users"]);
+  }
+
+  const handleDelete = async(user) => {
+    var confirmation=confirm(`are you sure to delete user ${user.username}`);
+    if(confirmation){
+      var result = await fetch(
+        `${config.backendUrl}admin/delete_user/`,
+        {
+          method: "DELETE",
+          headers: { 
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body : JSON.stringify( user )
+        }
+      );
+      if(result.ok){
+        alert('user deleted.');
+        fetchUsers();
+      }
+      else{
+        var message=result.json()['message'];
+        alert(`${message}`);
+      }
+    }
   };
 
   const handleAddUser = async () => {
     if (
-      newUser.first_name.trim() !== "" ||
+      (newUser.first_name.trim() !== "" ||
       newUser.email.trim() !== "" ||
-      newUser.phone_number.trim() !== ""
+      newUser.phone_number.trim() !== "") && 
+      newUser.phone_number.length === 10
     ) {
+      if(newUser.password.length < 8){
+        alert('Password should be 8 char long!');
+        return;
+      }
       // const nextId = users.length > 0 ? Math.max(...users.map(user => user.id)) + 1 : 1;
       const csrfToken = await getCSRFToken();
       var result = await fetch(`${config.backendUrl}signup/`, {
@@ -85,6 +155,7 @@ const UserManagement = () => {
       });
       if (result.ok) {
         alert("user add successfull");
+        fetchUsers();
       } else {
         alert("error creating user");
       }
@@ -143,6 +214,12 @@ const UserManagement = () => {
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
+      <button
+        onClick={() => searchUser(searchTerm)}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
+      >
+      Search
+      </button>
 
       <p className="text-gray-600 mb-4">
         Total Users: {filteredUsers.length} (Filtered from {users.length})
@@ -234,7 +311,7 @@ const UserManagement = () => {
                 {editUser?.id === user.id ? (
                   <>
                     <button
-                      onClick={handleUpdateUser}
+                      onClick={() => handleUpdateUser(user)}
                       className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
                     >
                       Update
@@ -255,7 +332,7 @@ const UserManagement = () => {
                   </button>
                 )}
                 <button
-                  onClick={() => handleDelete(user.id)}
+                  onClick={() => handleDelete(user)}
                   className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded transition-all duration-300 hover:scale-110"
                 >
                   Delete

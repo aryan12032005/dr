@@ -11,7 +11,7 @@ const AdminPanel = () => {
   const navigate=useNavigate();
   const check = async () => {
     try {
-      const accessToken=localStorage.getItem('token');
+      const accessToken=localStorage.getItem('access_token');
       if(!accessToken){
         navigate('/LogIn');
       }
@@ -27,7 +27,7 @@ const AdminPanel = () => {
           console.log('ok');
         }
         else{
-          localStorage.clear('token');
+          localStorage.clear();
           navigate('/LogIn');
         }
       }
@@ -35,7 +35,9 @@ const AdminPanel = () => {
       console.error("Error fetching users:", error);
     }
   }
-  check();
+  useEffect(() => {
+      check();
+    }, [navigate]);
 
   return (
     <div className="bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 min-h-screen p-4 ">

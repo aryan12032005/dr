@@ -43,7 +43,8 @@ const Login = () => {
       if (response.ok) {
         // Handle successful login (e.g., store token in local storage and redirect)
         const data = await response.json(); 
-        localStorage.setItem('token', data.token); 
+        localStorage.setItem('access_token', data.access_token); 
+        localStorage.setItem('refresh_token', data.refresh_token); 
         // Redirect to the desired page after login
         navigate('/AdminPanel')
       } else {

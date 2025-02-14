@@ -6,7 +6,6 @@ import {BrowserRouter as Router,Routes,Route} from "react-router-dom"
 import Login from './pages/LogIn'
 import Signup from './pages/SignUp'
 import AboutUs from './pages/AboutUs'
-
 import AdminPanel from './pages/AdminPanel'
 
 

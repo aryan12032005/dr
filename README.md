@@ -11,6 +11,7 @@
        npm i tailwindcss vite axios react-router-dom react-icons postcss autoprefixer
        npx tailwindcss init -p
        npm i @reduxjs/toolkit react-redux
+    3. npm install react-typed --save
     for icons:
     npm install @fortawesome/fontawesome-svg-core
     npm install @fortawesome/free-brands-svg-icons  // For brand icons (Instagram, etc.)

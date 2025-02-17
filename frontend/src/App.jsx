@@ -6,7 +6,6 @@ import {BrowserRouter as Router,Routes,Route} from "react-router-dom"
 import Login from './pages/LogIn'
 import Signup from './pages/SignUp'
 import AboutUs from './pages/AboutUs'
-
 import AdminPanel from './pages/AdminPanel'
 
 
@@ -20,7 +19,8 @@ const App = () => {
           <Route path='/LogIn' element={<Login/>} />
           <Route path='/SignUp' element={<Signup/>} />
           <Route path='/about-us' element={<AboutUs/>}/>
-          <Route path='/AdminPanel' element={<AdminPanel/>}/>
+          <Route path='/AdminPanel/*' element={<AdminPanel/>}/> 
+          
 
 
           

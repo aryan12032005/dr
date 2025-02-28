@@ -11,16 +11,31 @@ from .serializers import LoginSerializer,LibraryUserSerializer
 from .models import LibraryUser
 import os
 from rest_framework.permissions import IsAuthenticated
-from .databases.service import mongo_DB
-from functools import wraps
+from .databases.service import mongo_DB,fsHandler
 from django.db.models import Q
+import json
+from .permissions import *
+from datetime import datetime
 
 MONGO_USERNAME=os.getenv("MONGO_USERNAME")
 MONGO_PASSWORD=os.getenv("MONGO_PASSWORD")
+FS_DIR=os.getcwd().strip('/')[:-2].join('/')+'/FILES'
 
 # Create your views here.
 def index(request):
     return Response("this is an api view")
+
+class logout_user(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self,request):
+        try:
+            logout(request.user)
+            return Response({'message':'logout successfull'},status=status.HTTP_200_OK)
+        except:
+            return Response({'message':'error logout'},status=status.HTTP_400_BAD_REQUEST)
+
 
 class refresh_token(APIView):
     def post(self,request):
@@ -44,6 +59,44 @@ def get_csrf_token(request):
     csrf_token = get_token(request)
     response = JsonResponse({'csrf_token': csrf_token})
     return response
+
+class user_type(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method=='POST':
+            return [IsAdmin(),IsActive()]
+        
+        if self.request.method=='GET':
+            return [IsActive()]
+        
+        return super().get_permissions()
+
+    def get(self,request):
+        user=request.user
+        if not user.is_allowed:
+            return Response({'message':'User banned'},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({
+                'is_admin':user.is_admin,
+                'is_faculty':user.is_faculty,
+            },status=status.HTTP_200_OK)
+        
+    def post(self,request):
+        new_details=request.data.get('new_details')
+        try:
+            user=LibraryUser.objects.filter(id=new_details['id']).first()
+            if not user:
+                return Response({'message':'user does not exist'},status=status.HTTP_400_BAD_REQUEST)
+            user.is_admin=new_details['is_admin']
+            user.is_faculty=new_details['is_faculty']
+            user.is_allowed=new_details['is_allowed']
+            user.save()
+            return Response({'message':'user details changed'},status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'message':'Something went wrong :('},status=status.HTTP_400_BAD_REQUEST)
+        
 
 class LoginView(APIView):
     def post(self, request):
@@ -71,7 +124,7 @@ class LoginView(APIView):
         
 class SignupView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,IsAdmin]
     def post(self, request):
         serializer = LibraryUserSerializer(data=request.data)
         
@@ -99,7 +152,7 @@ class SearchView(APIView):
 
 class adminuserView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,IsAdmin]
 
     def get(self,request):
         querry=request.query_params.get('querry',None)
@@ -119,10 +172,35 @@ class adminuserView(APIView):
 
     def delete(self,request):
         data=request.data
-        print(data.get('username'))
         user=LibraryUser.objects.filter(username=data.get('username')).first()
         if user:
             user.delete()
             return Response({'message':'User deleted'},status=status.HTTP_200_OK)
         else:
             return Response({'message':'User does not exist'},status=status.HTTP_400_BAD_REQUEST)
+        
+class upload_document(APIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes=[IsAuthenticated,IsAdmin_or_Faculty]
+
+    def post(self,request):
+        user=request.user
+        data=request.POST
+        files=request.FILES
+        mongo_client=mongo_DB(MONGO_USERNAME,MONGO_PASSWORD)
+        data={
+            'title':data.get('title'),
+            'docType':data.get('documentType'),
+            'coverTpye':data.get('coverType'),
+            'isPublic':data.get('isPublic'),
+            'owner':user.id,
+            'comments':[],
+            'createDate':datetime.strftime(datetime.now()),
+            'category':data.get('category'),
+        }
+        insert_id=mongo_client.insert(data)
+        fshandler=fsHandler(FS_DIR+'/cover')
+        print(type(files.get('cover')),type(data.get('cover')))
+        fshandler.create_file(data.get('category'),insert_id,list(data.get('cover')),list(files.get('cover')))
+        print(FS_DIR)
+        return Response({'message':'docs uploaded'},status=status.HTTP_200_OK)

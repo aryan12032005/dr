@@ -48,11 +48,12 @@ const UserManagement = () => {
       data=result.json();
       localStorage.setItem('access_token',data['access_token']);
       localStorage.setItem('refresh_token',data['refresh_token']);
-      refresh_token=data['refresh_token'];
+      accessToken=data['access_token']
+      refreshToken=data['refresh_token'];
       return true;
     } else {
       localStorage.clear();
-      
+      navigate("/LogIn");
     }
   }
   const fetchUsers = async () => {

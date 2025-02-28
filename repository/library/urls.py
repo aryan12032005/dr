@@ -7,5 +7,9 @@ urlpatterns=[
     path('signup/',views.SignupView.as_view()),
     path('admin/',views.adminuserView.as_view()),
     path('admin/delete_user/',views.adminuserView.as_view(),name='delete'),
-    path('refresh_token/',views.refresh_token.as_view())
+    path('refresh_token/',views.refresh_token.as_view()),
+    path('get_user_type/',views.user_type.as_view(),name='get'),
+    path('change_user_type/',views.user_type.as_view(),name='post'),
+    path('upload-document/',views.upload_document.as_view(),name='post'),
+    path('logout/',views.logout_user.as_view(),name='get')
 ]

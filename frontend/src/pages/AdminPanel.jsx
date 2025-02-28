@@ -24,7 +24,6 @@ const AdminPanel = () => {
           }
         );
         if(result.ok){
-          console.log('ok');
         }
         else{
           localStorage.clear();
@@ -60,7 +59,7 @@ const AdminPanel = () => {
           </div>
         </div>
         {/* Conditionally render the paragraph */}
-        {location.pathname === '/' || location.pathname==='/adminpanel' ? ( // Check if on the base path or adminpanel
+        {location.pathname === '/' || location.pathname ==='/adminpanel' ? ( // Check if on the base path or adminpanel
           <div className="text-center">
             <p>Navigate through the dashboard to access admin features</p>
           </div>

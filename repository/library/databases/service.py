@@ -1,6 +1,5 @@
 from pymongo import MongoClient
-import sqlite3 as sq
-
+import os
 class mongo_DB:
     def __init__(self, username=None, password=None, host="localhost", port=27017, db_name="library", table_name="documents"):
         if password and username:
@@ -36,3 +35,39 @@ class mongo_DB:
         return result.deleted_count
        
         
+class fsHandler:
+    def __init__(self,working_dir):
+        os.makedirs(working_dir,exist_ok=True)
+        self.work_dir=working_dir
+    
+    def create_file(self,category,id,filenames,files):
+        temp_dir=self.work_dir+category+'/'+id
+        os.mkdir(temp_dir)
+        try:
+            for i,f in enumerate(filenames):
+                with open(temp_dir+ '/'+ str(i)+ '_'+  str(f), 'wb') as new_file:
+                    for chunks in files[i]:
+                        new_file.write(chunks)
+        except:
+            return False
+        return temp_dir
+
+    def update_file(self,category,id,filenames,files):
+        temp_dir=self.work_dir+category+'/'+id
+        try:
+            for i,f in enumerate(filenames):
+                with open(temp_dir+ '/'+ str(f), 'wb') as new_file:
+                    for chunks in files[i]:
+                        new_file.write(chunks)
+        except:
+            return False
+        return temp_dir
+    
+    def detele_files(self,category,id,filenames):
+        temp_dir=self.work_dir+category+'/'+id
+        try:
+            for f in filenames:
+                os.remove(temp_dir+'/'+f)
+        except:
+            return 0
+        return True

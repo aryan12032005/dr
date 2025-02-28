@@ -1,0 +1,237 @@
+import React, { useState, useEffect } from "react";
+import config from "../config";
+
+const DocUpload = () => {
+  const [showUploadOptions, setShowUploadOptions] = useState(false);
+  const [documentType, setDocumentType] = useState("pdf");
+  const [coverType, setCoverType] = useState("img");
+  const [Cover, setCover] = useState("");
+  const [documentFile, setDocument] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+  const [category, setCategory] = useState("research_paper");
+
+  const [coverAcceptType, setCoverAcceptType] = useState(
+    ".pdf,.jpg,.jpeg,.png"
+  );
+  const [documentAcceptType, setDocumentAcceptType] = useState(".pdf");
+  const [title, setTitle] = useState("");
+
+  const getCSRFToken = async () => {
+    var response = await fetch(`${config.backendUrl}get_csrf/`, {
+      method: "GET",
+    });
+    var data = await response.json();
+    return data.csrf_token;
+  };
+
+  useEffect(() => {
+    // Update the cover input file type based on the coverType
+    if (coverType === "img") {
+      setCoverAcceptType(".pdf,.jpg,.jpeg,.png");
+    } else if (coverType === "link") {
+      setCoverAcceptType("link");
+    }
+    setCover(null);
+  }, [coverType]);
+
+  useEffect(() => {
+    // Update the document input file type based on the documentType
+    if (documentType === "pdf") {
+      setDocumentAcceptType(".pdf");
+    } else if (documentType === "imgs") {
+      setDocumentAcceptType(".jpg,.jpeg,.png");
+    } else if (documentType === "link") {
+      setDocumentAcceptType("link");
+    } else if (documentType === "mp4") {
+      setDocumentAcceptType(".mp4");
+    } else if (documentType === "self-guided") {
+      setDocumentAcceptType("*");
+    }
+    setDocument(null);
+  }, [documentType]);
+
+  // Toggle dropdown visibility
+  const toggleUploadOptions = () => {
+    setShowUploadOptions(!showUploadOptions);
+  };
+
+  // Handle file selection
+  const handleCoverChange = (event) => {
+    setCover(event.target.files[0]);
+  };
+
+  const handleDocumentChange = (event) => {
+    setDocument(event.target.files);
+  };
+
+  // Handle file upload
+  const handleUpload = async () => {
+    const data = new FormData();
+
+    // Append the form data
+    data.append("title", title);
+    data.append("coverType", coverType);
+    data.append("documentType", documentType);
+    data.append("idPublic", isPublic);
+    data.append("cover", Cover); 
+    if (documentFile && documentFile.length > 0) {
+      Array.from(documentFile).forEach((doc) => {
+        data.append('documents', doc);
+      });
+    }
+    data.append("category", category);
+
+    const csrfToken = getCSRFToken();
+    const accessToken = localStorage.getItem("access_token");
+    const response = await fetch(`${config.backendUrl}upload-document/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: data,
+    });
+    if (response.ok) {
+      alert("document uploaded successfully");
+      Navigate("/");
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center p-4">
+      {/* Upload Button */}
+      <button
+        onClick={toggleUploadOptions}
+        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+      >
+        Upload Document & Papers
+      </button>
+
+      {/* Upload Options (Visible only when button is clicked) */}
+      {showUploadOptions && (
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-md w-full max-w-md">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Select Cover Type
+          </h2>
+
+          {/* Dropdown for cover type selection */}
+          <select
+            className="border border-gray-300 rounded-lg p-2 w-full mt-2"
+            value={coverType}
+            onChange={(e) => setCoverType(e.target.value)}
+          >
+            <option value="img">Image</option>
+            <option value="link">Link</option>
+          </select>
+
+          {/* Cover Input */}
+          {coverType === "link" ? (
+            <input
+              type="text"
+              className="mt-4 border p-2 rounded w-full"
+              placeholder="Enter the link"
+              onChange={(e) => setCover(e.target.value)}
+              required
+            />
+          ) : (
+            <input
+              type="file"
+              className="mt-4 border p-2 rounded w-full"
+              multiple
+              accept={coverAcceptType}
+              onChange={handleCoverChange}
+              required
+            />
+          )}
+          <h2 className="text-lg font-semibold text-gray-800">
+            Select Document Type
+          </h2>
+
+          {/* Dropdown for document type selection */}
+          <select
+            className="border border-gray-300 rounded-lg p-2 w-full mt-2"
+            value={documentType}
+            onChange={(e) => setDocumentType(e.target.value)}
+            required
+          >
+            <option value="pdf">PDF</option>
+            <option value="imgs">Multiple Images</option>
+            <option value="link">Link</option>
+            <option value="mp4">Video</option>
+            <option value="self-guided">Self-Guided (All Types)</option>
+          </select>
+
+          {/* Document Input */}
+          {documentType === "link" ? (
+            <input
+              type="text"
+              className="mt-4 border p-2 rounded w-full"
+              placeholder="Enter the link"
+              onChange={(e) => setDocument(e.target.value)}
+              required
+            />
+          ) : (
+            <input
+              type="file"
+              className="mt-4 border p-2 rounded w-full"
+              multiple
+              accept={documentAcceptType}
+              onChange={handleDocumentChange}
+              required
+            />
+          )}
+
+          <h2 className="text-lg font-semibold text-gray-800">Title</h2>
+          <input
+            type="text"
+            className="mt-4 border p-2 rounded w-full"
+            placeholder="Enter Title"
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+          <h2 className="text-lg font-semibold text-gray-800">
+            Select Document Category
+          </h2>
+
+          {/* Dropdown for document type selection */}
+          <select
+            className="border border-gray-300 rounded-lg p-2 w-full mt-2"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            required
+          >
+            <option value="research_paper">Research Paper</option>
+            <option value="book">Book</option>
+            <option value="article">Article</option>
+            <option value="question_bank">Question Bank</option>
+            <option value="mock">Mock Test</option>
+            <option value="other">Other</option>
+          </select>
+
+          {/* Toggle for Public/Private */}
+          <div className="mt-4">
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                className="form-checkbox"
+                checked={isPublic}
+                onChange={() => setIsPublic(!isPublic)}
+              />
+              <span className="ml-2">{isPublic ? "Public" : "Private"}</span>
+            </label>
+          </div>
+
+          {/* Confirm Upload Button */}
+          <button
+            onClick={handleUpload}
+            className="bg-green-600 text-white px-4 py-2 mt-4 rounded-lg hover:bg-green-700 transition"
+          >
+            Upload
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default DocUpload;

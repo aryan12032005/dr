@@ -99,7 +99,7 @@ const Login = ({setInitialized}) => {
         </form>
         <div className="mt-4 text-center">
           <p className='text-white'>
-            Don't have an account?{' '}
+            Don't have an accoun tGet an account?{' '}
             <Link to="/signup" className="text-blue-500">
               Sign Up
             </Link>

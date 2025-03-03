@@ -9,6 +9,7 @@ import AboutUs from './pages/AboutUs'
 import AdminPanel from './pages/AdminPanel'
 import DocUpload from './pages/DocUpload'
 import LogOut from './pages/LogOut'
+import SearchDocument from './pages/SearchDocuments'
 
 
 
@@ -26,6 +27,7 @@ const App = () => {
           <Route path='/AdminPanel/*' element={<AdminPanel/>}/>
           <Route path='/doc-upload' element={<DocUpload/>}/>
           <Route path='/logout' element={<LogOut/>}/>
+          <Route path='/search-doc' element={<SearchDocument/>}/>
 
           
           

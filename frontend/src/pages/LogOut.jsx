@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom";
 
 const LogOut = () => {
   const navigate=useNavigate();
-  useEffect(()=>{
+  useEffect( ()=> {
+    const logoutUser = async() => {
     const access_token = localStorage.getItem("access_token");
-    const result = fetch(`${config.backendUrl}logout/`, {
+    const result = await fetch(`${config.backendUrl}logout/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -20,6 +21,8 @@ const LogOut = () => {
     else{
       navigate('/');
     }
+  };
+  logoutUser();
   },[navigate]);
   
   return (

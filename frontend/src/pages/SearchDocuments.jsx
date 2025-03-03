@@ -2,27 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import config from "../config.js";
 
-const UserManagement = () => {
-  const [users, setUsers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [editUser, setEditUser] = useState(null);
-  var start_count = 0;
-  var end_count = 50;
-  const navigate = useNavigate();
-  var accessToken = localStorage.getItem("access_token");
-  var refreshToken = localStorage.getItem("refresh_token");
-
-  const [newUser, setNewUser] = useState({
-    email: "",
-    username: "",
-    password: "",
-    first_name: "",
-    last_name: "",
-    phone_number: "",
-    is_faculty: false,
-    is_admin: false,
-    is_allowed: true,
-  });
+const SearchDocument = () => {
+    const [searchTerm,setSearchTerm]=useState("");
 
   const getCSRFToken = async () => {
     var response = await fetch(`${config.backendUrl}get_csrf/`, {
@@ -31,137 +12,15 @@ const UserManagement = () => {
     var data = await response.json();
     return data.csrf_token;
   };
-  const fetchUsers = async () => {
-    try {
-      if (!accessToken) {
-        navigate("/LogIn");
-        return;
-      } else {
-        var result = await fetch(
-          `${config.backendUrl}admin/?start_c=${start_count}&end_c=${end_count}`,
-          {
-            method: "get",
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
-        if (result.ok) {
-          result = await result.json();
-          setUsers(result["users"]);
-        } else {
-          result = await result.json();
-          alert(result["message"]);
-          localStorage.clear();
-          navigate("/LogIn");
-          return;
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
-  useEffect(() => {
-    fetchUsers();
-  }, [navigate]);
-
-  const searchUser = async (querry) => {
-    var result = await fetch(
-      `${config.backendUrl}admin/?start_c=${start_count}&end_c=${end_count}&querry=${querry}`,
-      {
-        method: "get",
-        headers: { Authorization: `Bearer ${accessToken}` },
-      }
-    );
-    var result = await result.json();
-    setUsers(result["users"]);
-  };
-
-  const handleDelete = async (user) => {
-    var confirmation = confirm(`are you sure to delete user ${user.username}`);
-    if (confirmation) {
-      var result = await fetch(`${config.backendUrl}admin/delete_user/`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(user),
-      });
-      if (result.ok) {
-        alert("user deleted.");
-        fetchUsers();
-      } else {
-        var message = result.json()["message"];
-        alert(`${message}`);
-      }
-    }
-  };
-
-  const handleAddUser = async () => {
-    if (newUser.password.length < 8) {
-      alert("Password should be 8 char long!");
-      return 0;
-    }
-    // const nextId = users.length > 0 ? Math.max(...users.map(user => user.id)) + 1 : 1;
-    const csrfToken = await getCSRFToken();
-    var result = await fetch(`${config.backendUrl}signup/`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken,
-      },
-      body: JSON.stringify(newUser),
-    });
-    if (result.ok) {
-      alert("user add successfull");
-      fetchUsers();
-    } else {
-      alert("error creating user");
-    }
-    // setUsers([...users, { id: nextId, ...newUser }]);
-    setNewUser({
-      email: "",
-      username: "",
-      password: "",
-      first_name: "",
-      last_name: "",
-      phone_number: "",
-      is_faculty: false,
-      is_admin: false,
-      is_allowed: true,
+  const searchDocument = async() => {
+    var response = await fetch(`${config.backendUrl}search_document/`, {
+        method:'GET',
     });
   };
-
-  const handleEdit = (user) => {
-    setEditUser(user);
-  };
-
-  const handleUpdateUser = () => {
-    if (
-      editUser.first_name.trim() !== "" &&
-      editUser.email.trim() !== "" &&
-      editUser.phone_number.trim() !== ""
-    ) {
-      setUsers(
-        users.map((user) => (user.id === editUser.id ? editUser : user))
-      );
-      setEditUser(null);
-    } else {
-      alert("Please Enter a valid name and email and phone ");
-    }
-  };
-
-  const filteredUsers = users.filter(
-    (user) =>
-      user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone_number.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
     <div className="bg-white shadow-lg rounded-lg p-6 mb-4 ">
       <h2 className="text-xl font-semibold mb-2 text-gray-700">
-        User Management
+        Search Documents
       </h2>
       <input
         type="text"
@@ -171,16 +30,14 @@ const UserManagement = () => {
         onChange={(e) => setSearchTerm(e.target.value)}
       />
       <button
-        onClick={() => searchUser(searchTerm)}
+        onClick={() => searchDocument(searchTerm)}
         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
       >
         Search
       </button>
-
       <p className="text-gray-600 mb-4">
         Total Users: {filteredUsers.length} (Filtered from {users.length})
       </p>
-
       <table className="min-w-full border border-collapse shadow-md">
         <thead>
           <tr className="bg-gray-300 text-gray-800 font-medium">
@@ -298,7 +155,6 @@ const UserManagement = () => {
           ))}
         </tbody>
       </table>
-
       <div className="mt-6 p-4 bg-gray-50 rounded-lg shadow-inner transition-all duration-300">
         <h3 className="text-lg font-semibold mb-2 text-gray-700">
           Add New User
@@ -420,4 +276,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement;
+export default SearchDocument;

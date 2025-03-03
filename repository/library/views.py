@@ -16,10 +16,12 @@ from django.db.models import Q
 import json
 from .permissions import *
 from datetime import datetime
+from dotenv import load_dotenv
 
+load_dotenv()
 MONGO_USERNAME=os.getenv("MONGO_USERNAME")
 MONGO_PASSWORD=os.getenv("MONGO_PASSWORD")
-FS_DIR=os.getcwd().strip('/')[:-2].join('/')+'/FILES'
+FS_DIR="/".join(os.getcwd().split('/')[:-1])+'/FILES'
 
 # Create your views here.
 def index(request):
@@ -30,11 +32,8 @@ class logout_user(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self,request):
-        try:
-            logout(request.user)
-            return Response({'message':'logout successfull'},status=status.HTTP_200_OK)
-        except:
-            return Response({'message':'error logout'},status=status.HTTP_400_BAD_REQUEST)
+        logout(request)
+        return Response({'message':'logout successfull'},status=status.HTTP_200_OK)
 
 
 class refresh_token(APIView):
@@ -187,20 +186,33 @@ class upload_document(APIView):
         user=request.user
         data=request.POST
         files=request.FILES
-        mongo_client=mongo_DB(MONGO_USERNAME,MONGO_PASSWORD)
-        data={
+        mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
+
+        userData={
             'title':data.get('title'),
             'docType':data.get('documentType'),
-            'coverTpye':data.get('coverType'),
+            'coverType':data.get('coverType'),
             'isPublic':data.get('isPublic'),
             'owner':user.id,
             'comments':[],
-            'createDate':datetime.strftime(datetime.now()),
+            'createDate':str(datetime.now()),
             'category':data.get('category'),
         }
-        insert_id=mongo_client.insert(data)
-        fshandler=fsHandler(FS_DIR+'/cover')
-        print(type(files.get('cover')),type(data.get('cover')))
-        fshandler.create_file(data.get('category'),insert_id,list(data.get('cover')),list(files.get('cover')))
-        print(FS_DIR)
+        
+        if(data.get('coverType')=='link'):
+            userData['coverLink']=data.get('coverLink')
+        if(data.get('documentType')=='link'):
+            userData['documentLink']=data.get('documentLink')
+        print(userData)
+        insert_id=mongo_client.insert(userData)
+        fshandler=fsHandler(FS_DIR)
+
+        if(data.get('coverType')!='link'):
+            cover_file_names= [i.name for i in files.getlist('cover')]
+            fshandler.create_file(data.get('category')+'/cover',insert_id,cover_file_names,files.getlist('cover'))
+
+        if(data.get('documentType')!='link'):
+            document_file_names= [i.name for i in files.getlist('documents')]
+            fshandler.create_file(data.get('category')+'/documents',insert_id,document_file_names,files.getlist('documents'))
+
         return Response({'message':'docs uploaded'},status=status.HTTP_200_OK)

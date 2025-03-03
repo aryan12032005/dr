@@ -1,17 +1,16 @@
 from pymongo import MongoClient
 import os
 class mongo_DB:
-    def __init__(self, username=None, password=None, host="localhost", port=27017, db_name="library", table_name="documents"):
-        if password and username:
-            db_string=f"mongodb://{username}:{password}@localhost:{port}"
-        else:
-            db_string=f"mongodb://localhost:{port}"
+    def __init__(self, username=None, password=None, host="localhost", port=27017, db_name="Library", table_name="documents"):
+        auth_database="admin"
+        db_string=f"mongodb://{username}:{password}@localhost:{port}/{auth_database}?authSource={auth_database}"
         self.client=MongoClient(db_string)
         self.db=self.client[db_name]
         self.doc=self.db[table_name]
 
     def insert(self, item):
-        return self.doc.insert_one(item).inserted_id
+        inserted_id=self.doc.insert_one(item).inserted_id
+        return inserted_id
     
     def get_document(self, querry):
         item=self.doc.find(querry)
@@ -41,11 +40,11 @@ class fsHandler:
         self.work_dir=working_dir
     
     def create_file(self,category,id,filenames,files):
-        temp_dir=self.work_dir+category+'/'+id
-        os.mkdir(temp_dir)
+        temp_dir=self.work_dir+'/'+category+'/'+str(id)
+        os.makedirs(temp_dir,exist_ok=True)
         try:
             for i,f in enumerate(filenames):
-                with open(temp_dir+ '/'+ str(i)+ '_'+  str(f), 'wb') as new_file:
+                with open(temp_dir+ '/'+ str(i)+ '_'+  str(f), 'wb+') as new_file:
                     for chunks in files[i]:
                         new_file.write(chunks)
         except:
@@ -53,10 +52,10 @@ class fsHandler:
         return temp_dir
 
     def update_file(self,category,id,filenames,files):
-        temp_dir=self.work_dir+category+'/'+id
+        temp_dir=self.work_dir+'/'+category+'/'+str(id)
         try:
             for i,f in enumerate(filenames):
-                with open(temp_dir+ '/'+ str(f), 'wb') as new_file:
+                with open(temp_dir+ '/'+ str(f), 'wb+') as new_file:
                     for chunks in files[i]:
                         new_file.write(chunks)
         except:
@@ -64,7 +63,7 @@ class fsHandler:
         return temp_dir
     
     def detele_files(self,category,id,filenames):
-        temp_dir=self.work_dir+category+'/'+id
+        temp_dir=self.work_dir+'/'+category+'/'+str(id)
         try:
             for f in filenames:
                 os.remove(temp_dir+'/'+f)

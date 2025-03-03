@@ -45,8 +45,8 @@ const Login = ({setInitialized}) => {
         localStorage.setItem('access_token', data.access_token); 
         localStorage.setItem('refresh_token', data.refresh_token); 
         // Redirect to the desired page after login
-        setInitialized(false);
-        navigate('/AdminPanel');
+        // setInitialized(false);
+        navigate('/');
       } else {
         // Handle login errors
         const errorData = await response.json();

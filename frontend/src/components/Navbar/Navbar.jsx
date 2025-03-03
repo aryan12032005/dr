@@ -4,6 +4,11 @@ import { FaGripLines } from "react-icons/fa";
 import { useNavigate,useLocation} from "react-router-dom";
 import config from "../../config";
 
+
+var accessToken=localStorage.getItem('access_token');
+var refreshToken=localStorage.getItem('refresh_token');
+
+
 const getCSRFToken = async () => {
   var response = await fetch(`${config.backendUrl}get_csrf/`, {
     method: "GET",
@@ -12,70 +17,103 @@ const getCSRFToken = async () => {
   return data.csrf_token;
 };
 
+const refresh_token = async() => {
+  const csrf_token=getCSRFToken();
+  var result= await fetch(
+    `${config.backendUrl}refresh_token/`,
+    {
+      method:'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrf_token,
+      },
+      body: JSON.stringify({'refresh_token':refreshToken})
+    }
+  )
+  if(result.ok){
+    data=await result.json();
+    localStorage.setItem('access_token',data['access_token']);
+    localStorage.setItem('refresh_token',data['refresh_token']);
+    accessToken=data['access_token'];
+    refreshToken=data['refresh_token'];
+    return true;
+  } else {
+    localStorage.clear();
+    return false;
+  }
+};
+
 const get_status = async () => {
-  var access_token = localStorage.getItem("access_token");
-  if (!access_token) {
-    return 1;
+  accessToken=localStorage.getItem('access_token');
+  refreshToken=localStorage.getItem('refresh_token');
+
+  if (!accessToken || !refreshToken) {
+    return -1;
   }
   const result = await fetch(`${config.backendUrl}get_user_type/`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
   if (result.ok) {
     const data = await result.json();
     return data;
+  } else if(result.status==401){
+    if(refresh_token()==true){
+      return get_status();
+    }
+    else{
+      return -1;
+    }
   } else {
     localStorage.clear();
     return -1;
   }
 };
 
-const Navbar = ({isInitialized,setInitialized}) => {
+const Navbar = () => {
   const navigate = useNavigate();
-  const [loginSignup, setloginSignup] = useState([]);
+  const location= useLocation();
+  const [loginSignup, setloginSignup] = useState([
+    { tittle: "Log in", link: "/LogIn" },
+    { tittle: "Sign Up", link: "/SignUp" },
+  ]);
   const [user_status, set_user_status] = useState(1);
 
   const [links, setLinks] = useState([
     { title: "Home", link: "/" },
     { title: "About Us", link: "/about-us" },
-    { tittle: "Search documents", link: "/search_doc" },
+    { tittle: "Search documents", link: "/search-doc" },
   ]);
   const [MobileNav, setMobileNav] = useState("hidden");
 
-
   useEffect(() => {
-    if (!isInitialized) {
       get_status().then((result) => {
         set_user_status(result);
+        console.log(result);
       });
-
-      setInitialized(true); // This ensures the effect runs only once
-    }
-  }, [isInitialized]);
+  }, [location]);
 
   // Side-effect when user status changes
   useEffect(() => {
-    if (user_status === 1) {
+    if (user_status === -1) {
       setloginSignup([
         { tittle: "Log in", link: "/LogIn" },
         { tittle: "Sign Up", link: "/SignUp" },
       ]);
-    } else if (user_status === -1) {
       setLinks([
         { title: "Home", link: "/" },
         { title: "About Us", link: "/about-us" },
-        { tittle: "Search documents", link: "/search_doc" },
+        { tittle: "Search documents", link: "/search-doc" },
       ]);
-      localStorage.clear();
-      navigate("/LogIn");
+      navigate('/');
     } else {
       const updatedLinks = [
         { title: "Home", link: "/" },
         { title: "About Us", link: "/about-us" },
-        { title: "Search documents", link: "/search_doc" },
+        { title: "Search documents", link: "/search-doc" },
       ];
 
       if (user_status.is_admin) {
@@ -94,7 +132,7 @@ const Navbar = ({isInitialized,setInitialized}) => {
       setloginSignup([]);
       setLinks(updatedLinks);
     }
-  }, [user_status, navigate]);
+  }, [user_status]);
 
   return (
     <>

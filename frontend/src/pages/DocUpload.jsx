@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import config from "../config";
+import { useNavigate } from "react-router-dom";
 
 const DocUpload = () => {
   const [showUploadOptions, setShowUploadOptions] = useState(false);
@@ -10,11 +11,10 @@ const DocUpload = () => {
   const [isPublic, setIsPublic] = useState(true);
   const [category, setCategory] = useState("research_paper");
 
-  const [coverAcceptType, setCoverAcceptType] = useState(
-    ".pdf,.jpg,.jpeg,.png"
-  );
+  const [coverAcceptType, setCoverAcceptType] = useState(".pdf,image/*");
   const [documentAcceptType, setDocumentAcceptType] = useState(".pdf");
   const [title, setTitle] = useState("");
+  const navigate=useNavigate();
 
   const getCSRFToken = async () => {
     var response = await fetch(`${config.backendUrl}get_csrf/`, {
@@ -27,7 +27,7 @@ const DocUpload = () => {
   useEffect(() => {
     // Update the cover input file type based on the coverType
     if (coverType === "img") {
-      setCoverAcceptType(".pdf,.jpg,.jpeg,.png");
+      setCoverAcceptType(".pdf,image/*");
     } else if (coverType === "link") {
       setCoverAcceptType("link");
     }
@@ -39,7 +39,7 @@ const DocUpload = () => {
     if (documentType === "pdf") {
       setDocumentAcceptType(".pdf");
     } else if (documentType === "imgs") {
-      setDocumentAcceptType(".jpg,.jpeg,.png");
+      setDocumentAcceptType("image/*");
     } else if (documentType === "link") {
       setDocumentAcceptType("link");
     } else if (documentType === "mp4") {
@@ -57,7 +57,7 @@ const DocUpload = () => {
 
   // Handle file selection
   const handleCoverChange = (event) => {
-    setCover(event.target.files[0]);
+    setCover(event.target.files);
   };
 
   const handleDocumentChange = (event) => {
@@ -72,12 +72,22 @@ const DocUpload = () => {
     data.append("title", title);
     data.append("coverType", coverType);
     data.append("documentType", documentType);
-    data.append("idPublic", isPublic);
-    data.append("cover", Cover); 
+    data.append("isPublic", isPublic);
+    if (Cover && Cover.length > 0) {
+      data.append("cover", Cover[0]);  
+    }
+    else{
+      data.append('coverLink',Cover);
+    }
+  
+    // Append documents (multiple files)
     if (documentFile && documentFile.length > 0) {
       Array.from(documentFile).forEach((doc) => {
-        data.append('documents', doc);
+        data.append("documents", doc);  // 'documents' will be an array in the backend
       });
+    }
+    else{
+      data.append('documentLink',documentFile);
     }
     data.append("category", category);
 
@@ -93,7 +103,7 @@ const DocUpload = () => {
     });
     if (response.ok) {
       alert("document uploaded successfully");
-      Navigate("/");
+      navigate("/");
     }
   };
 

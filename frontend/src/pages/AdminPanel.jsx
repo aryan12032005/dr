@@ -5,6 +5,14 @@ import NewUserAdmin from './NewUserAdmin';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import UserManagement from './UserManagement';
 import config from '../config.js'
+import {
+  FaUsers,
+  FaFileAlt,
+  FaCog,
+  FaUserPlus,
+  FaChartLine,
+  FaBell,
+} from 'react-icons/fa'; // Import icons
 
 const AdminPanel = () => {
   const location =useLocation();
@@ -39,39 +47,94 @@ const AdminPanel = () => {
     }, [navigate]);
 
   return (
-    <div className="bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 min-h-screen p-4 ">
-      <div className="container mx-auto">
-        <h1 className="text-3xl font-bold mb-4 text-center text-gray-800 drop-shadow-lg">Admin Panel</h1>
-        <div className="bg-white p-6 rounded-lg shadow-md mb-6"> {/* Card-like container */}
-          <div className="flex space-x-6 justify-center"> {/* Use flexbox for horizontal layout */}
-            <Link to="/adminpanel/UserManagement" className={`px-4 py-2 rounded-md ${location.pathname === '/adminpanel/UserManagement' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors duration-300`}>
-              User Management
-            </Link>
-            <Link to="/adminpanel/DocumentManage" className={`px-4 py-2 rounded-md ${location.pathname === '/adminpanel/DocumentManage' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors duration-300`}>
-              Document Management
-            </Link>
-            <Link to="/adminpanel/Settings" className={`px-4 py-2 rounded-md ${location.pathname === '/adminpanel/Settings' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors duration-300`}>
-              Settings
-            </Link>
-            <Link to="/adminpanel/NewUserAdmin" className={`px-4 py-2 rounded-md ${location.pathname === '/adminpanel/NewUserAdmin' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition-colors duration-300`}>
-              New User Sign Up
-            </Link>
+    <div className="flex min-h-screen bg-gray-100">
+      {/* Sidebar */}
+      <aside className="bg-gray-800 text-white w-64 p-4">
+        <h2 className="text-2xl font-semibold mb-6 text-center">Admin Panel</h2>
+        <nav>
+          <Link
+            to="/adminpanel/UserManagement"
+            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
+              location.pathname === '/adminpanel/UserManagement' ? 'bg-gray-700' : ''
+            }`}
+          >
+            <FaUsers />
+            <span>User Management</span>
+          </Link>
+          <Link
+            to="/adminpanel/DocumentManage"
+            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
+              location.pathname === '/adminpanel/DocumentManage' ? 'bg-gray-700' : ''
+            }`}
+          >
+            <FaFileAlt />
+            <span>Document Management</span>
+          </Link>
+          <Link
+            to="/adminpanel/Settings"
+            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
+              location.pathname === '/adminpanel/Settings' ? 'bg-gray-700' : ''
+            }`}
+          >
+            <FaCog />
+            <span>Settings</span>
+          </Link>
+          <Link
+            to="/adminpanel/NewUserAdmin"
+            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
+              location.pathname === '/adminpanel/NewUserAdmin' ? 'bg-gray-700' : ''
+            }`}
+          >
+            <FaUserPlus />
+            <span>New User Sign Up</span>
+          </Link>
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-semibold mb-4">Dashboard</h1>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Example Dashboard Cards */}
+            <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
+              <div className="text-blue-500 text-3xl">
+                <FaUsers />
+              </div>
+              <div>
+                <h3 className="font-semibold">Total Users</h3>
+                <p className="text-gray-600">150</p>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
+              <div className="text-green-500 text-3xl">
+                <FaFileAlt />
+              </div>
+              <div>
+                <h3 className="font-semibold">Uploaded Docs</h3>
+                <p className="text-gray-600">320</p>
+              </div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
+              <div className="text-purple-500 text-3xl">
+                <FaChartLine />
+              </div>
+              <div>
+                <h3 className="font-semibold">Recent Activity</h3>
+                <p className="text-gray-600">10</p>
+              </div>
+            </div>
           </div>
         </div>
-        {/* Conditionally render the paragraph */}
-        {location.pathname === '/' || location.pathname ==='/adminpanel' ? ( // Check if on the base path or adminpanel
-          <div className="text-center">
-            <p>Navigate through the dashboard to access admin features</p>
-          </div>
-        ) : null}
+
+        {/* Routes */}
         <Routes>
-        <Route path="/Settings" element={<Settings />} />
-        <Route path="/NewUserAdmin" element={<NewUserAdmin/>} />
-        <Route path="/DocumentManage" element={<DocumentManage/>} />
-        <Route path="/UserManagement" element={<UserManagement/>} />
+          <Route path="/Settings" element={<Settings />} />
+          <Route path="/NewUserAdmin" element={<NewUserAdmin />} />
+          <Route path="/DocumentManage" element={<DocumentManage />} />
+          <Route path="/UserManagement" element={<UserManagement />} />
         </Routes>
-      
-      </div>
+      </main>
     </div>
   );
 };

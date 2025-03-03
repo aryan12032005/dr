@@ -28,7 +28,6 @@ const AdminPanel = () => {
             </Link>
           </div>
         </div>
-        {/* Conditionally render the paragraph */}
         {location.pathname === '/' || location.pathname==='/adminpanel' ? ( // Check if on the base path or adminpanel
           <div className="text-center">
             <p>Navigate through the dashboard to access admin features</p>

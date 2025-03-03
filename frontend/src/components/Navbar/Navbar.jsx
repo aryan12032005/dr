@@ -23,7 +23,7 @@ const Navbar = () => {
       <Link to='/' className='flex items-center'>
         <img className="h-10 me-4"
         src='vaibhavlogo.png' alt='logo' />
-        <h1 className='text-2xl font-semibold'>Digital Repository</h1>
+        <h1 className='text-2xl font-semibold'>Institutional Digital Resource Library</h1>
       </Link>
       <div className='nav-links-repo block md:flex items-center gap-4'>
        <div className="hidden md:flex gap-4">

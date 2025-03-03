@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import config from '../config.js'
+import { useNavigate } from 'react-router-dom';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ const Signup = () => {
     is_admin: false,
     is_allowed: true,
   });
+
+  const navigate=useNavigate();
 
   // Handle changes in form input fields
   const handleChange = (e) => {
@@ -58,6 +61,7 @@ const Signup = () => {
         // Handle successful signup (e.g., redirect to login page)
         alert('Signup successful!');
         // Redirect to login page
+        navigate('/LogIn')
       } else {
         // Handle signup errors
         const errorData = await response.json();

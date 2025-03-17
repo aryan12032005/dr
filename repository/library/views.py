@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate,login, logout
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 from django.db.models import Count
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
@@ -17,12 +18,14 @@ import json
 from .permissions import *
 from datetime import datetime
 from dotenv import load_dotenv
+import pandas as pd
+from io import StringIO
 
 load_dotenv()
 MONGO_USERNAME=os.getenv("MONGO_USERNAME")
 MONGO_PASSWORD=os.getenv("MONGO_PASSWORD")
 FS_DIR="/".join(os.getcwd().split('/')[:-1])+'/FILES'
-
+mongo_client_usual=mongo_DB(MONGO_USERNAME,MONGO_PASSWORD)
 # Create your views here.
 def index(request):
     return Response("this is an api view")
@@ -39,18 +42,16 @@ class logout_user(APIView):
 class refresh_token(APIView):
     def post(self,request):
         refreshToken=request.data.get('refresh_token')
-        if not refresh_token:
+        if not refreshToken:
             return Response({'message':'no refresh token found'},status=status.HTTP_400_BAD_REQUEST)
-        else:
+        else: 
             try:
-                refresh=RefreshToken(refreshToken)
-                if refresh.blacklisted:
-                    return Response({"message": "Refresh token is blacklisted"}, status=status.HTTP_400_BAD_REQUEST)
-                else:
-                    return Response({
-                        'refresh_token':str(refresh),
-                        'access_token': str(refresh.access_token),
-                    }, status=status.HTTP_200_OK)
+                old_refresh=RefreshToken(refreshToken)
+                refresh=RefreshToken.for_user(LibraryUser.objects.filter(id=old_refresh.payload.get('user_id')).first())
+                return Response({
+                    'refresh_token':str(refresh),
+                    'access_token': str(refresh.access_token),
+                }, status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({'message':str(e)},status=status.HTTP_400_BAD_REQUEST)
             
@@ -59,6 +60,20 @@ def get_csrf_token(request):
     response = JsonResponse({'csrf_token': csrf_token})
     return response
 
+class total_details(APIView):
+    authentication_classes=[JWTAuthentication]
+
+    def get_permissions(self):
+        if self.request.method=='GET':
+            return [IsAdmin(),IsActive()]
+        
+        return super().get_permissions()
+    
+    def get(self,request):
+        total_users=LibraryUser.objects.count()
+        total_docs=mongo_client_usual.get_count()
+        return Response({'total_users':total_users,'total_docs':total_docs},status=status.HTTP_200_OK)
+        
 class user_type(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -77,10 +92,18 @@ class user_type(APIView):
         if not user.is_allowed:
             return Response({'message':'User banned'},status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({
-                'is_admin':user.is_admin,
-                'is_faculty':user.is_faculty,
-            },status=status.HTTP_200_OK)
+            access_token=request.headers.get('Authorization')
+            if not access_token:
+                return Response({'message':'No token found'},status=status.HTTP_400_BAD_REQUEST)
+            access_token=access_token.split(' ')[1]
+            try:
+                AccessToken(access_token)
+                return Response({
+                    'is_admin':user.is_admin,
+                    'is_faculty':user.is_faculty,
+                },status=status.HTTP_200_OK)
+            except:
+                return Response({'message':'token expired'},status=status.HTTP_401_UNAUTHORIZED)
         
     def post(self,request):
         new_details=request.data.get('new_details')
@@ -128,8 +151,6 @@ class SignupView(APIView):
         serializer = LibraryUserSerializer(data=request.data)
         
         if serializer.is_valid():
-            print(serializer.validated_data)
-            print(serializer.validated_data['username'],serializer.validated_data['email'])
             existing_user=LibraryUser.objects.filter(username=serializer.validated_data['username'],email=serializer.validated_data['email']).first()
             if not existing_user:
                 user = serializer.save()
@@ -138,25 +159,74 @@ class SignupView(APIView):
                 Response({'message': 'User already registered'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class uploadCsv(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated,IsAdmin]
+    
+    def post(self,request):
+        try:
+            csv_file=request.FILES.getlist('csvFile')[0]
+            file_content = csv_file.read().decode("utf-8")
+            file_content=StringIO(file_content)
+            df=pd.read_csv(file_content,header=0)
+            if request.data.get('is_faculty')==True:
+                df['is_faculty']=True
+            else:
+                df["is_faculty"]=False
+            df["is_allowed"]=True
+            df["is_admin"]=False
+            new_user={}
+            existing_users=[]
+            for i in df.values:
+                for c,j in enumerate(df.columns):
+                    new_user[j]=i[c]
+                new_user=LibraryUserSerializer(data=new_user)
+                if new_user.is_valid():
+                    existing_user=LibraryUser.objects.filter(username=new_user.validated_data['username'],email=new_user.validated_data['email']).first()
+                    if not existing_user:
+                        user = new_user.save()
+                        print(f"added user {user.username}")
+                    else:
+                        existing_users.append(str(new_user.validated_data['username'].value))
+                else:
+                    existing_users.append(str(new_user['username'].value))
+                new_user={}
+            print(existing_users)
+            if len(existing_users)>0:
+                return Response({"message":"Existing or Invalid users","users":existing_users},status=status.HTTP_409_CONFLICT)
+            return Response({"message":"Users created Successfully"},status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            print(e)
+            return Response({"message":"failed to add users"},status=status.HTTP_400_BAD_REQUEST)
+
 class SearchView(APIView):
     def get(self,request):
-        querry=request.data.get("querry")
-        mongo_client=mongo_DB(MONGO_USERNAME, MONGO_PASSWORD,"localhost",271017, "library","documents")
-        result=mongo_client.get_document({"title":querry})
-        if result:
-            return Response({"details":result},status=status.HTTP_200_OK)
-        else:
-            return Response({'message':'error'},status=status.HTTP_400_BAD_REQUEST)
+        querry=request.query_params.get('querry')
+        mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
+        result=mongo_client.get_document(str(querry))
+        result=result.to_list()
+        if len(result) > 0:
+            documents = [
+                {
+                    'id': str(doc['_id']),
+                    'title': doc.get('title', ''),
+                    'docType': doc.get('docType', ''),
+                    'date': datetime.strptime(doc.get('createDate', 0),'%Y-%m-%d %H:%M:%S.%f').date()
+                }
+                for doc in result
+            ]
+            print(documents)
+            return Response({"documents":documents},status=status.HTTP_200_OK)
 
 
 class adminuserView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated,IsAdmin]
+    permission_classes = [IsAuthenticated,IsAdmin,IsActive]
 
     def get(self,request):
         querry=request.query_params.get('querry',None)
         if querry:
-            print(querry)
             querry=querry.strip()
             users=LibraryUser.objects.filter(
                 Q(username__icontains=querry) |
@@ -165,9 +235,23 @@ class adminuserView(APIView):
                 Q(phone_number__icontains=querry),is_admin=False
             ).values('email','id','first_name','username','phone_number','is_faculty')
             return Response({"users":list(users),"user_count":len(users)},status=status.HTTP_200_OK)
-        users=LibraryUser.objects.filter(is_admin=False).values('email','id','first_name','username','phone_number','is_faculty')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
+        users=LibraryUser.objects.filter(is_admin=False).values('email','id','first_name','username','phone_number','is_allowed')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
         user_count=LibraryUser.objects.filter(is_admin=False).aggregate(Count("id"))
         return Response({"users":list(users),"user_count":user_count['id__count']},status=status.HTTP_200_OK)
+    
+    def post(self,request):
+        data=request.data
+        edit_user=LibraryUser.objects.filter(id=data['id']).first()
+        if(edit_user):
+            try:
+                for key,value in data.items():
+                    if key != 'id':
+                        setattr(edit_user,key,value)
+                edit_user.save()
+                return Response({},status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({'message':'Error updating user'},status=status.HTTP_400_BAD_REQUEST)
+            
 
     def delete(self,request):
         data=request.data
@@ -180,7 +264,7 @@ class adminuserView(APIView):
         
 class upload_document(APIView):
     authentication_classes=[JWTAuthentication]
-    permission_classes=[IsAuthenticated,IsAdmin_or_Faculty]
+    permission_classes=[IsAuthenticated,IsAdmin_or_Faculty,IsActive]
 
     def post(self,request):
         user=request.user

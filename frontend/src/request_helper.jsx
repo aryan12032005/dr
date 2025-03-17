@@ -1,0 +1,78 @@
+import config from "./config";
+
+class networkRequests {
+  constructor() {
+    this.baseUrl = config.backendUrl;
+    this.accessToken = localStorage.getItem("access_token");
+    this.refreshToken = localStorage.getItem("refresh_token");
+  }
+
+  async reload_tokens(){
+    this.accessToken = localStorage.getItem("access_token");
+    this.refreshToken = localStorage.getItem("refresh_token");
+  }
+
+  async getCSRFToken() {
+    var response = await fetch(`${this.baseUrl}get_csrf/`, {
+      method: "GET",
+    });
+    var data = await response.json();
+    return data.csrf_token;
+  }
+
+  async refresh_token() {
+    const csrf_token = await this.getCSRFToken();
+    this.refreshToken = localStorage.getItem("refresh_token");
+    if (!this.refreshToken) {
+      localStorage.clear();
+      return 0;
+    }
+    var result = await fetch(`${this.baseUrl}refresh_token/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrf_token,
+      },
+      body: JSON.stringify({ refresh_token: this.refreshToken }),
+    });
+    if (result.ok) {
+      const data = await result.json();
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
+      this.accessToken = data["access_token"];
+      this.refreshToken = data["refresh_token"];
+      return 1;
+    } else {
+      localStorage.clear();
+      return 0;
+    }
+  }
+
+  async fetchReq(endPoint, method, headers, body = null) {
+      let result = null;
+      if (body) {
+        headers["X-CSRFToken"] = await this.getCSRFToken();
+        result = await fetch(`${this.baseUrl}${endPoint}`, {
+          method: method,
+          headers: headers,
+          body: body,
+        });
+      } else {
+        result = await fetch(`${this.baseUrl}${endPoint}`, {
+          method: method,
+          headers: headers,
+        });
+      }
+      if (result.status === 401) {
+        const isTokenRefreshed = await this.refresh_token();
+        if (isTokenRefreshed === 1) {
+            headers["Authorization"] = `Bearer ${this.refreshToken}`;
+            result = await this.fetchReq(endPoint, method, headers, body); 
+        }
+      }
+      return result; 
+    }
+}
+
+
+export default networkRequests;

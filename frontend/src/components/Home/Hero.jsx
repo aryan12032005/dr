@@ -13,7 +13,6 @@ const Hero = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [nextImageIndex, setNextImageIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
-
   // Effect to handle automatic image sliding
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -146,7 +145,7 @@ const Hero = () => {
       </div>
       
       {/* CSS Animations for the book */}
-      <style jsx>{`
+      <style>{`
         @keyframes bookCoverFlip {
           0% { transform: rotateY(0deg); }
           50% { transform: rotateY(-160deg); }

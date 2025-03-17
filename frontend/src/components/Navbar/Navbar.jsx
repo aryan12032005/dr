@@ -1,72 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FaGripLines } from "react-icons/fa";
-import { useNavigate,useLocation} from "react-router-dom";
-import config from "../../config";
+import { useNavigate, useLocation } from "react-router-dom";
+import networkRequests from "../../request_helper";
 
+const req_client = new networkRequests();
 
-var accessToken=localStorage.getItem('access_token');
-var refreshToken=localStorage.getItem('refresh_token');
-
-
-const getCSRFToken = async () => {
-  var response = await fetch(`${config.backendUrl}get_csrf/`, {
-    method: "GET",
-  });
-  var data = await response.json();
-  return data.csrf_token;
-};
-
-const refresh_token = async() => {
-  const csrf_token=getCSRFToken();
-  var result= await fetch(
-    `${config.backendUrl}refresh_token/`,
-    {
-      method:'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrf_token,
-      },
-      body: JSON.stringify({'refresh_token':refreshToken})
-    }
-  )
-  if(result.ok){
-    data=await result.json();
-    localStorage.setItem('access_token',data['access_token']);
-    localStorage.setItem('refresh_token',data['refresh_token']);
-    accessToken=data['access_token'];
-    refreshToken=data['refresh_token'];
-    return true;
-  } else {
-    localStorage.clear();
-    return false;
-  }
-};
 
 const get_status = async () => {
-  accessToken=localStorage.getItem('access_token');
-  refreshToken=localStorage.getItem('refresh_token');
-
-  if (!accessToken || !refreshToken) {
+  await req_client.reload_tokens();
+  if (!req_client.accessToken || !req_client.refreshToken) {
     return -1;
   }
-  const result = await fetch(`${config.backendUrl}get_user_type/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  const header = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${req_client.accessToken}`,
+  };
+  const result = await req_client.fetchReq("get_user_type/", "GET", header);
+
   if (result.ok) {
-    const data = await result.json();
+    const data = result.json();
     return data;
-  } else if(result.status==401){
-    if(refresh_token()==true){
-      return get_status();
-    }
-    else{
-      return -1;
-    }
   } else {
     localStorage.clear();
     return -1;
@@ -75,13 +29,12 @@ const get_status = async () => {
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const location= useLocation();
+  const location = useLocation();
   const [loginSignup, setloginSignup] = useState([
     { tittle: "Log in", link: "/LogIn" },
     { tittle: "Sign Up", link: "/SignUp" },
   ]);
   const [user_status, set_user_status] = useState(1);
-
   const [links, setLinks] = useState([
     { title: "Home", link: "/" },
     { title: "About Us", link: "/about-us" },
@@ -89,12 +42,18 @@ const Navbar = () => {
   ]);
   const [MobileNav, setMobileNav] = useState("hidden");
 
+
   useEffect(() => {
+    get_status().then((result) => {
+      set_user_status(result);
+    });
+    const interval = setInterval(() => {
       get_status().then((result) => {
         set_user_status(result);
-        console.log(result);
       });
-  }, [location]);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [location,navigate,window.location.pathname]);
 
   // Side-effect when user status changes
   useEffect(() => {
@@ -108,7 +67,7 @@ const Navbar = () => {
         { title: "About Us", link: "/about-us" },
         { tittle: "Search documents", link: "/search-doc" },
       ]);
-      navigate('/');
+      navigate("/");
     } else {
       const updatedLinks = [
         { title: "Home", link: "/" },
@@ -126,7 +85,6 @@ const Navbar = () => {
         updatedLinks.push(
           { title: "Document Upload", link: "/doc-upload" },
           { title: "Logout", link: "/logout" }
-
         );
       }
       setloginSignup([]);

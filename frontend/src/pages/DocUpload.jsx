@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import config from "../config";
 import { useNavigate } from "react-router-dom";
+import networkRequests from "../request_helper";
 
+const req_client = new networkRequests();
 const DocUpload = () => {
   const [showUploadOptions, setShowUploadOptions] = useState(false);
   const [documentType, setDocumentType] = useState("pdf");
@@ -16,13 +18,6 @@ const DocUpload = () => {
   const [title, setTitle] = useState("");
   const navigate=useNavigate();
 
-  const getCSRFToken = async () => {
-    var response = await fetch(`${config.backendUrl}get_csrf/`, {
-      method: "GET",
-    });
-    var data = await response.json();
-    return data.csrf_token;
-  };
 
   useEffect(() => {
     // Update the cover input file type based on the coverType
@@ -91,16 +86,11 @@ const DocUpload = () => {
     }
     data.append("category", category);
 
-    const csrfToken = getCSRFToken();
-    const accessToken = localStorage.getItem("access_token");
-    const response = await fetch(`${config.backendUrl}upload-document/`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrfToken,
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: data,
-    });
+    req_client.reload_tokens();
+    const headers={
+      Authorization: `Bearer ${req_client.accessToken}`,
+    }
+    const response=await req_client.fetchReq('upload-document/', "POST", headers, data);
     if (response.ok) {
       alert("document uploaded successfully");
       navigate("/");

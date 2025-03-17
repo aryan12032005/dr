@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# Set CORS request only for frontend acc to the deployed frontend origin
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
 ]
@@ -41,6 +42,7 @@ CORS_ORIGIN_WHITELIST = (
 
 CORS_ALLOW_CREDENTIALS = True
 
+# Methods to be allowed by CORS requests
 CORS_ALLOW_METHODS = [
     'GET',
     'POST',
@@ -74,11 +76,13 @@ REST_FRAMEWORK = {
     ],
 }
 
+# User authentications and accesstoken based settings
 SIMPLE_JWT={
-    'ACCESS_TOKEN_LIFETIME':timedelta(minutes=15),
-    'REFRESH_TOKEN_LIFETIME':timedelta(hours=1),
-    'BLACKLIST_AFTER_ROTATION':True,
-    'ROTATE_REFRESH_TOKEN':True
+    'ACCESS_TOKEN_LIFETIME':timedelta(minutes=10),
+    'REFRESH_TOKEN_LIFETIME':timedelta(hours=3),
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ROTATE_REFRESH_TOKEN':True,
+    'BLACKLIST_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.RefreshToken'),
 }
 
 AUTHENTICATION_BACKENDS=[

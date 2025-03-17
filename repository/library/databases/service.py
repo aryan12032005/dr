@@ -8,12 +8,20 @@ class mongo_DB:
         self.db=self.client[db_name]
         self.doc=self.db[table_name]
 
+    def get_count(self,db_name="Library",collection="documents"):
+        db=self.client[db_name]
+        doc=db[collection]
+        return doc.count_documents({})
+    
     def insert(self, item):
         inserted_id=self.doc.insert_one(item).inserted_id
         return inserted_id
     
     def get_document(self, querry):
-        item=self.doc.find(querry)
+        item=self.doc.find(
+            {"$text": {"$search": querry}},
+            {"score": {"$meta": "textScore"}}
+        ).sort([("score", {"$meta": "textScore"})]).limit(10)
         if item:
             return item
         else:

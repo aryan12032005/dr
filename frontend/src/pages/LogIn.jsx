@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import config from '../config.js';
 import { useNavigate } from 'react-router-dom';
+import networkRequests from "../request_helper";
 
-const Login = ({setInitialized}) => {
+const req_client = new networkRequests();
+
+const Login = () => {
   const navigate=useNavigate();
-  const getCSRFToken = async() => {
-    var response=await fetch(`${config.backendUrl}get_csrf/`, {
-      method: 'GET',
-    });
-    const data = await response.json();
-    return data.csrf_token;
-  };
 
   const [formData, setFormData] = useState({
     username: '',
@@ -28,23 +23,17 @@ const Login = ({setInitialized}) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const csrfToken = await getCSRFToken();
-      const response = await fetch(`${config.backendUrl}login/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
-        },
-        body: JSON.stringify(formData),
-      });
-      
+      req_client.reload_tokens();
+      const header={
+        'Content-Type': 'application/json',
+      };
+      const response=await req_client.fetchReq("login/", "POST", header, JSON.stringify(formData));
       if (response.ok) {
-        // Handle successful login (e.g., store token in local storage and redirect)
-        const data = await response.json(); 
+        const data= await response.json();
         localStorage.setItem('access_token', data.access_token); 
-        localStorage.setItem('refresh_token', data.refresh_token); 
-        // Redirect to the desired page after login
-        // setInitialized(false);
+        localStorage.setItem('refresh_token', data.refresh_token);
+        req_client.accessToken=data.access_token;
+        req_client.refreshToken=data.refresh_token
         navigate('/');
       } else {
         const errorData = await response.json();

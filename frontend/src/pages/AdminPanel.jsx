@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Settings from './Settings'; 
-import DocumentManage from './DocumentManage';
 import NewUserAdmin from './NewUserAdmin';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import DocUpload from './DocUpload.jsx';
 import UserManagement from './UserManagement';
-import config from '../config.js'
 import {
   FaUsers,
   FaFileAlt,
@@ -13,38 +12,32 @@ import {
   FaChartLine,
   FaBell,
 } from 'react-icons/fa'; // Import icons
+import networkRequests from "../request_helper";
+
+const req_client = new networkRequests();
 
 const AdminPanel = () => {
-  const location =useLocation();
   const navigate=useNavigate();
-  const check = async () => {
-    try {
-      const accessToken=localStorage.getItem('access_token');
-      if(!accessToken){
-        navigate('/LogIn');
-      }
-      else{
-        var result = await fetch(
-          `${config.backendUrl}admin/?start_c=0&end_c=5`,
-          {
-            method: "get",
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
-        if(result.ok){
-        }
-        else{
-          localStorage.clear();
-          navigate('/LogIn');
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error);
+  const [totalUsers,setTotalUsers]=useState(0);
+  const [totalDocs,setTotalDocs]=useState(0);
+
+  const fetch_details = async() => {
+    req_client.reload_tokens();
+    const header={
+      Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
+    };
+    const result=await req_client.fetchReq('total_details/', "GET", header);
+    if(result.ok){
+      const data= await result.json();
+      setTotalUsers(data.total_users);
+      setTotalDocs(data.total_docs);
     }
   }
+
   useEffect(() => {
-      check();
-    }, [navigate]);
+    fetch_details();
+  },[navigate]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -103,7 +96,7 @@ const AdminPanel = () => {
               </div>
               <div>
                 <h3 className="font-semibold">Total Users</h3>
-                <p className="text-gray-600">150</p>
+                <p className="text-gray-600">{totalUsers}</p>
               </div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
@@ -112,7 +105,7 @@ const AdminPanel = () => {
               </div>
               <div>
                 <h3 className="font-semibold">Uploaded Docs</h3>
-                <p className="text-gray-600">320</p>
+                <p className="text-gray-600">{totalDocs}</p>
               </div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
@@ -131,7 +124,7 @@ const AdminPanel = () => {
         <Routes>
           <Route path="/Settings" element={<Settings />} />
           <Route path="/NewUserAdmin" element={<NewUserAdmin />} />
-          <Route path="/DocumentManage" element={<DocumentManage />} />
+          <Route path="/DocumentManage" element={<DocUpload />} />
           <Route path="/UserManagement" element={<UserManagement />} />
         </Routes>
       </main>

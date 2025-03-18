@@ -146,7 +146,7 @@ const Hero = () => {
       </div>
       
       {/* CSS Animations for the book */}
-      <style jsx>{`
+      <style>{`
         @keyframes bookCoverFlip {
           0% { transform: rotateY(0deg); }
           50% { transform: rotateY(-160deg); }

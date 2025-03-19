@@ -13,6 +13,7 @@ import {
   FaBell,
 } from 'react-icons/fa'; // Import icons
 import networkRequests from "../request_helper";
+import FacultyManage from './FacultyManage';
 
 const req_client = new networkRequests();
 
@@ -62,6 +63,16 @@ const AdminPanel = () => {
           >
             <FaFileAlt />
             <span>Document Management</span>
+          </Link>
+          {/* Added new link for Faculty Management */}
+          <Link
+            to="/adminpanel/FacultyManage"
+            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
+              location.pathname === '/adminpanel/FacultyManage' ? 'bg-gray-700' : ''
+            }`}
+          >
+            <FaChalkboardTeacher />
+            <span>Faculty Management</span>
           </Link>
           <Link
             to="/adminpanel/Settings"
@@ -116,6 +127,7 @@ const AdminPanel = () => {
           <Route path="/Settings" element={<Settings />} />
           <Route path="/DocumentManage" element={<DocumentManage />} />
           <Route path="/UserManagement" element={<UserManagement />} />
+          <Route path="/FacultyManage" element={<FacultyManage />} />
         </Routes>
       </main>
     </div>

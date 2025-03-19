@@ -6,10 +6,12 @@ from django.db.models import Count
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from rest_framework.response import Response
+from django.http import FileResponse
 from rest_framework.views import APIView
 from rest_framework import status
 from .serializers import LoginSerializer,LibraryUserSerializer
-from .models import LibraryUser
+from .forms import DepartmentsForm
+from .models import LibraryUser, Departments
 import os
 from rest_framework.permissions import IsAuthenticated
 from .databases.service import mongo_DB,fsHandler
@@ -162,7 +164,20 @@ class SignupView(APIView):
 class uploadCsv(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated,IsAdmin]
-    
+
+    def get(self, request):
+        file_path = "/library/databases/sample_template.csv"
+        file_path=os.getcwd()+file_path
+        print(file_path)
+        if os.path.exists(file_path):
+            file = open(file_path, 'rb')  
+            response = FileResponse(file, content_type='application/csv') 
+            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+            response.status_code = status.HTTP_200_OK
+            return response
+        else:
+            return Response({"message": "File not found."}, status=status.HTTP_404_NOT_FOUND)
+        
     def post(self,request):
         try:
             csv_file=request.FILES.getlist('csvFile')[0]
@@ -218,6 +233,7 @@ class SearchView(APIView):
             ]
             print(documents)
             return Response({"documents":documents},status=status.HTTP_200_OK)
+        return Response({"message":"no document found"},status=status.HTTP_404_NOT_FOUND)
 
 
 class adminuserView(APIView):
@@ -261,7 +277,41 @@ class adminuserView(APIView):
             return Response({'message':'User deleted'},status=status.HTTP_200_OK)
         else:
             return Response({'message':'User does not exist'},status=status.HTTP_400_BAD_REQUEST)
+
+class deprtment_view(APIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes=[IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method=='POST':
+            return [IsAdmin(),IsActive()]
         
+        if self.request.method=='GET':
+            return [IsActive(),IsAdmin_or_Faculty()]
+        
+        return super().get_permissions()
+
+    def get(self,request):
+        dep_code=request.query_params.get('dep_code',None)
+        dep_details=Departments.objects.filter(dep_code=dep_code).first()
+        if dep_details:
+            return Response({"managers":dep_details.managers,"schools":dep_details.subjects},status=status.HTTP_200_OK)
+        else:
+            return Response({"message":"No dep found"}, status=status.HTTP_404_NOT_FOUND)
+        
+    def post(self, request):
+        data=request.POST
+        dep_form=DepartmentsForm(data)
+        if dep_form.is_valid():
+            dep_form.save()
+            return Response({"message":"department created successfull"},status=status.HTTP_200_OK)
+        else:
+            return Response({"message":"error creating department"},status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self,request):
+        pass
+
+
 class upload_document(APIView):
     authentication_classes=[JWTAuthentication]
     permission_classes=[IsAuthenticated,IsAdmin_or_Faculty,IsActive]

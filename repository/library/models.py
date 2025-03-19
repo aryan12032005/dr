@@ -28,3 +28,10 @@ class LibraryUser(AbstractBaseUser):
 
     def __str__(self):
         return self.email
+    
+class Departments(models.Model):
+    dep_code = models.CharField(unique=True, max_length=150)
+    dep_name = models.CharField(max_length=150)
+    managers = models.JSONField(default=list)
+    subjects = models.JSONField(default=dict)
+

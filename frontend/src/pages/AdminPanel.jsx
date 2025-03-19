@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Settings from './Settings'; 
 import NewUserAdmin from './NewUserAdmin';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import DocUpload from './DocUpload.jsx';
+import DocumentManage from './DocumentManage';
 import UserManagement from './UserManagement';
 import {
   FaUsers,
@@ -72,15 +72,6 @@ const AdminPanel = () => {
             <FaCog />
             <span>Settings</span>
           </Link>
-          <Link
-            to="/adminpanel/NewUserAdmin"
-            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel/NewUserAdmin' ? 'bg-gray-700' : ''
-            }`}
-          >
-            <FaUserPlus />
-            <span>New User Sign Up</span>
-          </Link>
         </nav>
       </aside>
 
@@ -123,8 +114,7 @@ const AdminPanel = () => {
         {/* Routes */}
         <Routes>
           <Route path="/Settings" element={<Settings />} />
-          <Route path="/NewUserAdmin" element={<NewUserAdmin />} />
-          <Route path="/DocumentManage" element={<DocUpload />} />
+          <Route path="/DocumentManage" element={<DocumentManage />} />
           <Route path="/UserManagement" element={<UserManagement />} />
         </Routes>
       </main>

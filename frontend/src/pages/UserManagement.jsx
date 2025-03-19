@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import config from "../config.js";
 import networkRequests from "../request_helper";
+import { saveAs } from "file-saver";
 
 const req_client = new networkRequests();
 
@@ -106,6 +106,19 @@ const UserManagement = () => {
     setAddUser(addNewUser ? false : true);
   };
 
+  const downloadSampleCsv = async () => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq("get_sample_csv/", "GET", headers);
+    if (result.ok) {
+      saveAs(await result.blob(), "Sample_csv.csv");
+    } else {
+      alert("Error downloading format.");
+    }
+  };
+
   const handleCsvChange = (e) => {
     setCSVFile(e.target.files);
   };
@@ -126,11 +139,10 @@ const UserManagement = () => {
     );
     if (result.ok) {
       alert("User created successfull");
-    } else if(result.status === 409) {
-      const resultJson= await result.json()
+    } else if (result.status === 409) {
+      const resultJson = await result.json();
       alert(`${resultJson.message} : ${resultJson.users}`);
-    }
-    else{
+    } else {
       alert("User creation failed");
     }
   };
@@ -237,34 +249,46 @@ const UserManagement = () => {
 
   return (
     <div className="bg-white shadow-lg rounded-lg flex flex-col items-center p-6 mb-4 ">
-      <h2 className="text-xl font-semibold mb-2 text-gray-700">
+      <h1 className="text-3xl font-semibold mb-2 text-gray-1200 underline">
         User Management
-      </h2>
-      <input
-        type="checkbox"
-        className="border rounded px-2 py-1 w-full mt-5"
-        name="upload_aculty"
-        value={uploadAsFaculty}
-        onChange={(e) => toggleUploadFaculty(e.target.checked)}
-      />
-      <label htmlFor="upload_aculty" className="text-gray-700">
-        Upload as Faculty?
-      </label>
-      <div className="flex-row items-center shadow-lg mb-5 mt-5">
+      </h1>
+      <div className="flex flex-col items-center justify-center shadow-lg mb-5 mt-5 p-6 rounded-lg bg-white">
+        <h2 className="font-semibold mb-2 text-gray-600 mb-5">
+          Upload multiple users in csv, sample{" "}
+          <a
+            className="text-black hover:text-blue-500 transform hover:scale-110 transition-all duration-300 cursor-pointer"
+            onClick={downloadSampleCsv}
+          >
+            format here.
+          </a>
+        </h2>
         <input
           type="file"
           accept=".csv"
           required
-          className="bg-black text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
+          className="bg-gray-800 text-white font-bold py-2 px-4 rounded-lg mb-4 transition-all duration-300 hover:scale-105 hover:bg-gray-700"
           onChange={handleCsvChange}
         />
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            className="border border-gray-400 rounded px-2 py-1"
+            name="upload_aculty"
+            value={uploadAsFaculty}
+            onChange={(e) => toggleUploadFaculty(e.target.checked)}
+          />
+          <label htmlFor="upload_aculty" className="ml-2 text-gray-700">
+            Upload as Faculty?
+          </label>
+        </div>
         <button
           onClick={uploadCSV}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out"
         >
-          Upload csv file
+          Upload CSV file
         </button>
       </div>
+
       <button
         onClick={toggleAddUser}
         className="bg-blue-600 text-white px-6 py-2 mb-5 rounded-lg hover:bg-blue-700 transition"

@@ -1,4 +1,6 @@
 import config from "./config";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 class networkRequests {
   constructor() {
@@ -7,7 +9,7 @@ class networkRequests {
     this.refreshToken = localStorage.getItem("refresh_token");
   }
 
-  async reload_tokens(){
+  async reload_tokens() {
     this.accessToken = localStorage.getItem("access_token");
     this.refreshToken = localStorage.getItem("refresh_token");
   }
@@ -48,31 +50,40 @@ class networkRequests {
     }
   }
 
-  async fetchReq(endPoint, method, headers, body = null) {
-      let result = null;
-      if (body) {
-        headers["X-CSRFToken"] = await this.getCSRFToken();
-        result = await fetch(`${this.baseUrl}${endPoint}`, {
-          method: method,
-          headers: headers,
-          body: body,
-        });
-      } else {
-        result = await fetch(`${this.baseUrl}${endPoint}`, {
-          method: method,
-          headers: headers,
-        });
-      }
-      if (result.status === 401) {
-        const isTokenRefreshed = await this.refresh_token();
-        if (isTokenRefreshed === 1) {
-            headers["Authorization"] = `Bearer ${this.refreshToken}`;
-            result = await this.fetchReq(endPoint, method, headers, body); 
-        }
-      }
-      return result; 
+  async fetchReq(endPoint, method, headers, body = null, count = 0) {
+    let result = null;
+    if (body) {
+      headers["X-CSRFToken"] = await this.getCSRFToken();
+      result = await fetch(`${this.baseUrl}${endPoint}`, {
+        method: method,
+        headers: headers,
+        body: body,
+      });
+    } else {
+      result = await fetch(`${this.baseUrl}${endPoint}`, {
+        method: method,
+        headers: headers,
+      });
     }
+    if (count > 1) {
+      localStorage.clear();
+      return result;
+    }
+    if (result.status === 401) {
+      const isTokenRefreshed = await this.refresh_token();
+      if (isTokenRefreshed === 1) {
+        headers["Authorization"] = `Bearer ${this.refreshToken}`;
+        result = await this.fetchReq(
+          endPoint,
+          method,
+          headers,
+          body,
+          count + 1
+        );
+      }
+    }
+    return result;
+  }
 }
-
 
 export default networkRequests;

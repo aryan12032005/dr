@@ -15,6 +15,10 @@ const SearchDocument = () => {
       const data=await response.json();
       setDocuments(data.documents);
     }
+    else if(response.status=== 404){
+      const responseJson= await response.json();
+      alert(responseJson.message);
+    }
   };
   return (
     <div className="bg-white shadow-lg rounded-lg p-6 mb-4 ">

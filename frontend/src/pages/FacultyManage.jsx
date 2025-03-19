@@ -262,7 +262,7 @@ const FacultyManage = () => {
             onChange={handleNewFacultyChange}
             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <label className="bg-blue-500 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors">
+          {/* <label className="bg-blue-500 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors">
             Upload Profile Image
             <input
               type="file"
@@ -270,7 +270,7 @@ const FacultyManage = () => {
               className="hidden"
               onChange={handleUpload}
             />
-          </label>
+          </label> */}
           <button
             onClick={handleAddFaculty}
             className="w-full bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"

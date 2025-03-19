@@ -10,7 +10,7 @@ import AdminPanel from './pages/AdminPanel'
 import DocUpload from './pages/DocUpload'
 import LogOut from './pages/LogOut'
 import SearchDocument from './pages/SearchDocuments'
-
+import Faculty from './pages/Faculty'
 
 
 const App = () => {
@@ -28,6 +28,9 @@ const App = () => {
           <Route path='/doc-upload' element={<DocUpload/>}/>
           <Route path='/logout' element={<LogOut/>}/>
           <Route path='/search-doc' element={<SearchDocument/>}/>
+          <Route path='/facultypanel' element={<Faculty/>}/>
+          
+
 
           
           

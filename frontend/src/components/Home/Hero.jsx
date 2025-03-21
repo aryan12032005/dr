@@ -7,7 +7,9 @@ const Hero = () => {
     './lib1.jpg',
     './lib2.jpg',
     './lib3.jpg',
-    './lib4.jpg'
+    './lib4.jpg',
+    './lib5.jpg',
+    './lib6.jpg'
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);

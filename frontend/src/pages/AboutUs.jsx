@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInstagram, faWhatsapp, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 
 const AboutUs = () => {
+  
   return (
     <div className="bg-gradient-to-r from-indigo-100 via-blue-100 to-sky-100 min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-xl overflow-hidden md:max-w-4xl lg:max-w-6xl">
@@ -61,6 +62,7 @@ const AboutUs = () => {
           </div>
         </div>
       </div>
+      
     </div>
   );
 };

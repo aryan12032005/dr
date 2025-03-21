@@ -7,6 +7,7 @@ import Login from './pages/LogIn'
 import Signup from './pages/SignUp'
 import AboutUs from './pages/AboutUs'
 import AdminPanel from './pages/AdminPanel'
+import Faculty from './pages/Faculty'
 
 
 
@@ -21,6 +22,7 @@ const App = () => {
           <Route path='/SignUp' element={<Signup/>} />
           <Route path='/about-us' element={<AboutUs/>}/>
           <Route path='/AdminPanel/*' element={<AdminPanel/>}/> 
+          <Route path='/facultypanel' element={<Faculty/>}/>
           
 
 

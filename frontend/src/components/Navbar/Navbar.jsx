@@ -15,6 +15,10 @@ const Navbar = () => {
         title:"Admin Panel",
         link:"/adminpanel",
         },
+        {
+          title:"Faculty",
+          link:"/facultypanel",
+          }
     ];
     const [MobileNav, setMobileNav] = useState('hidden')
   return (
@@ -23,7 +27,7 @@ const Navbar = () => {
       <Link to='/' className='flex items-center'>
         <img className="h-10 me-4"
         src='vaibhavlogo.png' alt='logo' />
-        <h1 className='text-2xl font-semibold'>Digital Repository</h1>
+        <h1 className='text-2xl font-semibold'>Institutional Digital Resource Library</h1>
       </Link>
       <div className='nav-links-repo block md:flex items-center gap-4'>
        <div className="hidden md:flex gap-4">
@@ -38,11 +42,10 @@ const Navbar = () => {
         </div>
         <div className='hidden md:flex gap-4 '>
         <Link to='/LogIn'
-        className='px-4 py-1 border border-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300'>
-        LogIn
+        className='px-4 py-1 border border-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300'>LogIn
         </Link>
         <Link to= '/SignUp'
-        className='px-4 py-1  bg-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300' >SignUp
+        className='px-4 py-1 border border-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300' >SignUp
         </Link >
         
 

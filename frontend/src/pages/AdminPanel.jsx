@@ -4,6 +4,14 @@ import DocumentManage from './DocumentManage';
 import NewUserAdmin from './NewUserAdmin';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import UserManagement from './UserManagement';
+import React from 'react';
+import Settings from './Settings';
+import DocumentManage from './DocumentManage';
+import NewUserAdmin from './NewUserAdmin';
+import UserManagement from './UserManagement';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import {FaUsers,FaFileAlt,FaCog,FaUserPlus,FaChartLine,FaBell,FaChalkboardTeacher,} from 'react-icons/fa'; // Import icons
+import FacultyManage from './FacultyManage';
 
 const AdminPanel = () => {
   const location =useLocation();

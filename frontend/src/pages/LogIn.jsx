@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import config from '../config.js'
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import config from '../config.js';
 
 const Login = () => {
+  const navigate = useNavigate();
 
-  const navigate=useNavigate();
-  const getCSRFToken = async() => {
-    var response=await fetch(`${config.backendUrl}get_csrf/`, {
+  const getCSRFToken = async () => {
+    const response = await fetch(`${config.backendUrl}get_csrf/`, {
       method: 'GET',
     });
-    var data= await response.json()
-    return data.csrf_token
+    const data = await response.json();
+    return data.csrf_token;
   };
 
   const [formData, setFormData] = useState({
@@ -29,8 +28,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Send login data to your backend (replace with your actual API endpoint)
-      const csrfToken = getCSRFToken();
+      const csrfToken = await getCSRFToken();
       const response = await fetch(`${config.backendUrl}login/`, {
         method: 'POST',
         headers: {
@@ -41,13 +39,10 @@ const Login = () => {
       });
 
       if (response.ok) {
-        // Handle successful login (e.g., store token in local storage and redirect)
-        const data = await response.json(); 
-        localStorage.setItem('token', data.token); 
-        // Redirect to the desired page after login
-        navigate('/AdminPanel')
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        navigate('/AdminPanel');
       } else {
-        // Handle login errors
         const errorData = await response.json();
         alert(`Login failed: ${errorData.message}`);
       }
@@ -58,48 +53,43 @@ const Login = () => {
   };
 
   return (
-    <div className=" md:h-[85vh] flex flex-col md:flex-row items-center justify-center bg-zinc-900">
-      <div className="w-full md:w-1/2 p-8 bg-zinc-800 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-4 text-yellow-100">Log In</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-white">
-              Username:
-            </label>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 to-zinc-800 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-zinc-700 rounded-lg shadow-lg p-8 border border-zinc-600">
+        <h2 className="text-3xl font-semibold text-yellow-100 mb-6 text-center">Log In</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="username" className="block text-white mb-1">Username:</label>
             <input
               type="text"
               id="username"
               name="username"
-              value={formData.email}
+              value={formData.username}
               onChange={handleChange}
-              className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 rounded-md border border-zinc-600 bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div className="mb-4">
-            <label htmlFor="password" className="block text-white">
-              Password:
-            </label>
+          <div>
+            <label htmlFor="password" className="block text-white mb-1">Password:</label>
             <input
               type="password"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 rounded-md border border-zinc-600 bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <button
             type="submit"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md"
-            onClick={handleSubmit}
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md transition duration-300"
           >
             Log In
           </button>
         </form>
-        <div className="mt-4 text-center">
-          <p className='text-white'>
-            Don't have an accoun tGet an account?{' '}
-            <Link to="/signup" className="text-blue-500">
+        <div className="mt-6 text-center">
+          <p className="text-gray-300">
+            Don't have an account?{' '}
+            <Link to="/signup" className="text-blue-500 hover:underline">
               Sign Up
             </Link>
           </p>

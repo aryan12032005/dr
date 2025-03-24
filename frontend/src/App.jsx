@@ -11,6 +11,7 @@ import Faculty from './pages/Faculty'
 
 
 
+
 const App = () => {
   return (
     <div>

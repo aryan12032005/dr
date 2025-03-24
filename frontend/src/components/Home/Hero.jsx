@@ -1,22 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { ReactTyped } from "react-typed";
 
 const Hero = () => {
-  const backgroundImages = [
-    './lib1.jpg',
-    './lib2.jpg',
-    './lib3.jpg',
-    './lib4.jpg',
-    './lib5.jpg',
-    './lib6.jpg'
-  ];
-
+  const backgroundImages = ["./lib1.jpg", "./lib2.jpg", "./lib3.jpg", "./lib4.jpg"];
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [nextImageIndex, setNextImageIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Effect to handle automatic image sliding
+  // Background image auto-slider effect
   useEffect(() => {
     const intervalId = setInterval(() => {
       setIsTransitioning(true);
@@ -26,112 +18,86 @@ const Hero = () => {
         setIsTransitioning(false);
       }, 1000);
     }, 5000);
-
     return () => clearInterval(intervalId);
   }, [currentImageIndex, backgroundImages.length]);
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden">
-      {/* Current background image */}
-      <div 
-        className={`absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
+      {/* Background Images */}
+      <div
+        className={`absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
+          isTransitioning ? "opacity-0" : "opacity-100"
+        }`}
         style={{
           backgroundImage: `url(${backgroundImages[currentImageIndex]})`,
-          zIndex: 1
+          zIndex: 1,
+          filter: "brightness(40%)",
         }}
       />
-      
-      {/* Next background image */}
-      <div 
+      <div
         className="absolute inset-0 w-full h-full bg-cover bg-center"
         style={{
           backgroundImage: `url(${backgroundImages[nextImageIndex]})`,
-          zIndex: 0
+          zIndex: 0,
+          filter: "brightness(40%)",
         }}
       />
-      
-      {/* Semi-transparent overlay */}
       <div className="absolute inset-0 bg-black bg-opacity-50 z-2"></div>
-      
-      {/* Content container */}
-      <div className="relative z-10 flex flex-col items-center w-full min-h-screen">
-        <div className="w-full lg:w-3/6 flex flex-col items-center px-4 lg:px-0 text-center pt-14 lg:pt-14">
-          <div className="rounded-lg p-8">
-            <div className="text-container">
-              <h1 className="text-4xl lg:text-6xl font-semibold text-yellow-100 leading-tight mb-4">
-                <ReactTyped
-                  strings={[
-                    'Welcome to',
-                    'Institutional Digital Resource Library',
-                  ]}
-                  typeSpeed={40}
-                  backSpeed={40}
-                  loop={true}
-                />
-              </h1>
-              <p className="mt-4 text-xl text-zinc-300 leading-relaxed">
-                An open source repository software package typically used for creating open access repositories for scholarly and/or published digital content.
-              </p>
-              <div className="mt-7 flex justify-center">
-                <Link to="/Login" className="text-yellow-100 text-xl lg:text-2xl font-semibold border border-yellow-100 px-10 py-3 hover:bg-zinc-800 rounded-full transition-colors duration-300">
-                  Login to Discover
-                </Link>
-              </div>
 
-              {/* Enhanced Book Animation */}
-              <div className="w-full flex justify-center mt-12">
-                <div className="book-animation w-64 h-48 relative transform-style-preserve-3d perspective-1000">
-                  {/* Book Cover */}
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center w-full min-h-screen">
+        <div className="w-full lg:w-3/6 flex flex-col items-center px-4 text-center pt-14">
+          <div className="rounded-lg p-8">
+            <h1 className="text-4xl lg:text-6xl font-semibold text-yellow-100 leading-tight mb-4">
+              <ReactTyped
+                strings={["Welcome to", "Institutional Digital Resource Library"]}
+                typeSpeed={40}
+                backSpeed={60}
+                loop={true}
+              />
+            </h1>
+            <p className="mt-4 text-xl text-zinc-300 leading-relaxed">
+              An open-source repository software package for digital content.
+            </p>
+            <div className="mt-7">
+              <Link
+                to="/Login"
+                className="text-yellow-100 text-xl lg:text-2xl font-semibold border border-yellow-100 px-10 py-3 hover:bg-zinc-800 rounded-full transition-colors duration-300 "
+              >
+             
+                Login to Discover
+              </Link>
+            </div>
+
+            {/* 3D Book Animation */}
+            <div className="flex justify-center mt-12 perspective-1000">
+              <div className="book-container relative w-48 h-64">
+                {/* Book Cover */}
+                <div className="book-cover absolute w-full h-full bg-yellow-800 rounded-md shadow-lg transform-origin-left"></div>
+
+                {/* Pages */}
+                {[...Array(5)].map((_, i) => (
                   <div
-                    className="absolute w-full h-full bg-yellow-800 rounded-r-md shadow-lg transform-origin-left"
-                    style={{
-                      animation: 'bookCoverFlip 5s infinite ease-in-out',
-                      zIndex: 10
-                    }}
-                  >
-                    <div className="absolute inset-2 border-2 border-yellow-600 rounded-r-sm"></div>
-                  </div>
-                  
-                  {/* Book Pages */}
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="absolute w-full h-full bg-gray-100 rounded-r-sm transform-origin-left"
-                      style={{
-                        animation: `bookPageTurn ${3 + i * 0.5}s infinite ${i * 0.2}s ease-in-out`,
-                        zIndex: 5 - i
-                      }}
-                    >
-                      {/* Page content - horizontal lines */}
-                      <div className="h-full w-full p-4 flex flex-col justify-around">
-                        {[...Array(6)].map((_, j) => (
-                          <div
-                            key={j}
-                            className="h-1 bg-gray-300 rounded-full"
-                            style={{ width: `${80 - Math.random() * 20}%` }}
-                          ></div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {/* Book Spine */}
-                  <div className="absolute h-full w-4 bg-yellow-900 rounded-l-md shadow-inner left-0 top-0 z-10"></div>
-                </div>
+                    key={i}
+                    className="book-page absolute w-full h-full bg-gray-200 rounded-md shadow-md transform-origin-left"
+                    style={{ animationDelay: `${i * 0.4}s` }}
+                  />
+                ))}
+
+                {/* Back Cover */}
+                <div className="book-back absolute w-full h-full bg-yellow-900 rounded-md shadow-lg"></div>
               </div>
             </div>
           </div>
         </div>
-        
-        {/* Image slider indicators */}
+
+        {/* Image Slider Indicators */}
         <div className="absolute bottom-8 flex space-x-2 z-10">
           {backgroundImages.map((_, index) => (
-            <button 
+            <button
               key={index}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                currentImageIndex === index 
-                  ? 'bg-yellow-100 w-6' 
-                  : 'bg-gray-400 bg-opacity-50'
+                currentImageIndex === index ? "bg-yellow-100 w-6" : "bg-gray-400 bg-opacity-50"
               }`}
               onClick={() => {
                 setIsTransitioning(true);
@@ -146,18 +112,45 @@ const Hero = () => {
           ))}
         </div>
       </div>
-      
-      {/* CSS Animations for the book */}
+
+      {/* CSS for 3D Book Animation */}
       <style>{`
-        @keyframes bookCoverFlip {
+        .perspective-1000 {
+          perspective: 1000px;
+        }
+
+        .book-container {
+          transform-style: preserve-3d;
+          transform: rotateY(-15deg);
+        }
+
+        .book-cover {
+          transform: rotateY(0deg);
+          animation: bookOpenClose 6s ease-in-out infinite;
+          z-index: 10;
+        }
+
+        .book-page {
+          transform: rotateY(0deg);
+          animation: pageFlip 5s ease-in-out infinite;
+        }
+
+        .book-back {
+          transform: rotateY(180deg);
+          z-index: -1;
+        }
+
+        @keyframes bookOpenClose {
           0% { transform: rotateY(0deg); }
-          50% { transform: rotateY(-160deg); }
+          30% { transform: rotateY(-140deg); }
+          70% { transform: rotateY(-140deg); }
           100% { transform: rotateY(0deg); }
         }
-        
-        @keyframes bookPageTurn {
+
+        @keyframes pageFlip {
           0% { transform: rotateY(0deg); }
-          50% { transform: rotateY(-140deg); }
+          30% { transform: rotateY(-120deg); }
+          70% { transform: rotateY(-120deg); }
           100% { transform: rotateY(0deg); }
         }
       `}</style>

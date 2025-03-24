@@ -1,14 +1,43 @@
-import React from 'react';
-import Settings from './Settings';
-import DocumentManage from './DocumentManage';
+import React, { useState, useEffect } from 'react';
+import Settings from './Settings'; 
 import NewUserAdmin from './NewUserAdmin';
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import DocumentManage from './DocumentManage';
 import UserManagement from './UserManagement';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import {FaUsers,FaFileAlt,FaCog,FaUserPlus,FaChartLine,FaBell,FaChalkboardTeacher,} from 'react-icons/fa'; // Import icons
-import FacultyManage from './FacultyManage';
+import {
+  FaUsers,
+  FaFileAlt,
+  FaCog,
+  FaUserPlus,
+  FaChartLine,
+  FaBell,
+} from 'react-icons/fa'; // Import icons
+import networkRequests from "../request_helper";
+
+const req_client = new networkRequests();
 
 const AdminPanel = () => {
-  const location = useLocation();
+  const navigate=useNavigate();
+  const [totalUsers,setTotalUsers]=useState(0);
+  const [totalDocs,setTotalDocs]=useState(0);
+
+  const fetch_details = async() => {
+    req_client.reload_tokens();
+    const header={
+      Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
+    };
+    const result=await req_client.fetchReq('total_details/', "GET", header);
+    if(result.ok){
+      const data= await result.json();
+      setTotalUsers(data.total_users);
+      setTotalDocs(data.total_docs);
+    }
+  }
+
+  useEffect(() => {
+    fetch_details();
+  },[navigate]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -53,15 +82,6 @@ const AdminPanel = () => {
             <FaCog />
             <span>Settings</span>
           </Link>
-          <Link
-            to="/adminpanel/NewUserAdmin"
-            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel/NewUserAdmin' ? 'bg-gray-700' : ''
-            }`}
-          >
-            <FaUserPlus />
-            <span>New User Sign Up</span>
-          </Link>
         </nav>
       </aside>
 
@@ -77,7 +97,7 @@ const AdminPanel = () => {
               </div>
               <div>
                 <h3 className="font-semibold">Total Users</h3>
-                <p className="text-gray-600">150</p>
+                <p className="text-gray-600">{totalUsers}</p>
               </div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
@@ -86,7 +106,7 @@ const AdminPanel = () => {
               </div>
               <div>
                 <h3 className="font-semibold">Uploaded Docs</h3>
-                <p className="text-gray-600">320</p>
+                <p className="text-gray-600">{totalDocs}</p>
               </div>
             </div>
             <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
@@ -104,7 +124,6 @@ const AdminPanel = () => {
         {/* Routes */}
         <Routes>
           <Route path="/Settings" element={<Settings />} />
-          <Route path="/NewUserAdmin" element={<NewUserAdmin />} />
           <Route path="/DocumentManage" element={<DocumentManage />} />
           <Route path="/UserManagement" element={<UserManagement />} />
           <Route path="/FacultyManage" element={<FacultyManage />} />

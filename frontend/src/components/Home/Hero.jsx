@@ -7,8 +7,7 @@ const Hero = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [nextImageIndex, setNextImageIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
-
-  // Background image auto-slider effect
+  // Effect to handle automatic image sliding
   useEffect(() => {
     const intervalId = setInterval(() => {
       setIsTransitioning(true);

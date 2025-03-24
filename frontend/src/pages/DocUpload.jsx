@@ -1,0 +1,280 @@
+import React, { useState, useEffect } from "react";
+import config from "../config";
+import { useNavigate } from "react-router-dom";
+import networkRequests from "../request_helper";
+
+const req_client = new networkRequests();
+const DocUpload = () => {
+  const [showUploadOptions, setShowUploadOptions] = useState(false);
+  const [documentType, setDocumentType] = useState("");
+  const [coverType, setCoverType] = useState("");
+  const [Cover, setCover] = useState("");
+  const [documentFile, setDocument] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+  const [category, setCategory] = useState("");
+  const [department,setDepartment] = useState("");
+  const [field,setField] = useState("");
+
+  const [coverAcceptType, setCoverAcceptType] = useState("");
+  const [documentAcceptType, setDocumentAcceptType] = useState("");
+  const [title, setTitle] = useState("");
+  const navigate=useNavigate();
+
+
+  useEffect(() => {
+    if (coverType === "img") {
+      setCoverAcceptType("image/*");
+    } else if (coverType === "link") {
+      setCoverAcceptType("link");
+    }else if (coverType === "pdf") {
+      setCoverAcceptType(".pdf");
+    }
+    setCover(null);
+  }, [coverType]);
+
+  useEffect(() => {
+    if (documentType === "pdf") {
+      setDocumentAcceptType(".pdf");
+    } else if (documentType === "imgs") {
+      setDocumentAcceptType("image/*");
+    } else if (documentType === "link") {
+      setDocumentAcceptType("link");
+    } else if (documentType === "mp4") {
+      setDocumentAcceptType(".mp4");
+    } else if (documentType === "self-guided") {
+      setDocumentAcceptType("*");
+    }
+    setDocument(null);
+  }, [documentType]);
+
+  const toggleUploadOptions = () => {
+    setShowUploadOptions(!showUploadOptions);
+  };
+  const handleDepartmentChange = (e) => {
+    setDepartment(e.target.value);
+  }
+  const handleCoverChange = (event) => {
+    setCover(event.target.files);
+  };
+  const handleDocumentChange = (event) => {
+    setDocument(event.target.files);
+  };
+
+  const handleUpload = async () => {
+    
+    const data = new FormData();
+    data.append("title", title);
+    data.append("coverType", coverType);
+    data.append("documentType", documentType);
+    data.append("isPublic", isPublic);
+    if (Cover && Cover.length > 0) {
+      data.append("cover", Cover[0]);  
+    }
+    else{
+      data.append('coverLink',Cover);
+    }
+  
+    // Append documents (multiple files)
+    if (documentFile && documentFile.length > 0) {
+      Array.from(documentFile).forEach((doc) => {
+        data.append("documents", doc);  // 'documents' will be an array in the backend
+      });
+    }
+    else{
+      data.append('documentLink',documentFile);
+    }
+    data.append("category", category);
+
+    for (let [key, value] of data.entries()) {
+      if (!value) { 
+        alert(`Please fill in the ${key} field.`);
+        return false;
+      }
+    }
+
+    req_client.reload_tokens();
+    const headers={
+      Authorization: `Bearer ${req_client.accessToken}`,
+    }
+    const response=await req_client.fetchReq('upload-document/', "POST", headers, data);
+    if (response.ok) {
+      alert("document uploaded successfully");
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center p-4">
+      {/* Upload Button */}
+      <button
+        onClick={toggleUploadOptions}
+        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+      >
+        Upload Document & Papers
+      </button>
+
+      {/* Upload Options (Visible only when button is clicked) */}
+      {showUploadOptions && (
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-md w-full max-w-md">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Select Cover Type
+          </h2>
+
+          {/* Dropdown for cover type selection */}
+          <select
+            className="border border-gray-300 rounded-lg p-2 w-full mt-2"
+            value={coverType}
+            onChange={(e) => setCoverType(e.target.value)}
+          >
+            <option value="" selected disabled>Select</option>
+            <option value="img">Image</option>
+            <option value="pdf">PDF</option>
+            <option value="link">Link</option>
+          </select>
+
+          {/* Cover Input */}
+          {coverType === "link" ? (
+            <input
+              type="text"
+              className="mt-4 border p-2 rounded w-full"
+              placeholder="Enter the link"
+              onChange={(e) => setCover(e.target.value)}
+              required
+            />
+          ) : (
+            <input
+              type="file"
+              className="mt-4 border p-2 rounded w-full"
+              multiple
+              accept={coverAcceptType}
+              onChange={handleCoverChange}
+              required
+            />
+          )}
+          <h2 className="text-lg font-semibold text-gray-800">
+            Select Document Type
+          </h2>
+
+          {/* Dropdown for document type selection */}
+          <select
+            className="border border-gray-300 rounded-lg p-2 w-full mt-2"
+            value={documentType}
+            onChange={(e) => setDocumentType(e.target.value)}
+            required
+          >
+            <option value="" disabled selected>Select</option>
+            <option value="pdf">PDF</option>
+            <option value="imgs">Multiple Images</option>
+            <option value="link">Link</option>
+            <option value="mp4">Video</option>
+            <option value="self-guided">Self-Guided (All Types)</option>
+          </select>
+
+          {/* Document Input */}
+          {documentType === "link" ? (
+            <input
+              type="text"
+              className="mt-4 border p-2 rounded w-full"
+              placeholder="Enter the link"
+              onChange={(e) => setDocument(e.target.value)}
+              required
+            />
+          ) : (
+            <input
+              type="file"
+              className="mt-4 border p-2 rounded w-full"
+              multiple
+              accept={documentAcceptType}
+              onChange={handleDocumentChange}
+              required
+            />
+          )}
+
+          <h2 className="text-lg font-semibold text-gray-800">Title</h2>
+          <input
+            type="text"
+            className="mt-4 border p-2 rounded w-full"
+            placeholder="Enter Title"
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+
+          <h2 className="text-lg font-semibold text-gray-800">
+            Select a school
+          </h2>
+          <select
+            className="border border-gray-300 rounded-lg p-2 w-full mt-2"
+            value={department}
+            onChange={handleDepartmentChange}
+            required
+          >
+            <option value="" disabled selected>Select</option>
+            <option value="computer_science">Computer Science</option>
+            <option value="law">Law</option>
+            <option value="bsc">BSC</option>
+            <option value="mechanical">Mechanical</option>
+            <option value="mbbs">MBBS</option>
+            <option value="other">Other</option>
+          </select>
+          
+          <h2 className="text-lg font-semibold text-gray-800">
+            Select a school
+          </h2>
+          <select
+            className="border border-gray-300 rounded-lg p-2 w-full mt-2"
+            value={field}
+            onChange={(e) => setField(e.target.value)}
+            required
+          >
+            <option value="" disabled selected>Select</option>
+            <option value="computer_science">Computer Science</option>
+            <option value="law">Law</option>
+            <option value="bsc">BSC</option>
+            <option value="mechanical">Mechanical</option>
+            <option value="mbbs">MBBS</option>
+            <option value="other">Other</option>
+          </select>
+
+          <h2 className="text-lg font-semibold text-gray-800">
+            Select Document Category
+          </h2>
+          <select
+            className="border border-gray-300 rounded-lg p-2 w-full mt-2"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            required
+          >
+            <option value="research_paper">Research Paper</option>
+            <option value="book">Book</option>
+            <option value="article">Article</option>
+            <option value="question_bank">Question Bank</option>
+            <option value="mock">Mock Test</option>
+            <option value="other">Other</option>
+          </select>
+
+          {/* Toggle for Public/Private */}
+          <div className="mt-4">
+            <label className="inline-flex items-center">
+              <input
+                type="checkbox"
+                className="form-checkbox"
+                checked={isPublic}
+                onChange={() => setIsPublic(!isPublic)}
+              />
+              <span className="ml-2">{isPublic ? "Public" : "Private"}</span>
+            </label>
+          </div>
+
+          {/* Confirm Upload Button */}
+          <button
+            onClick={handleUpload}
+            className="bg-green-600 text-white px-4 py-2 mt-4 rounded-lg hover:bg-green-700 transition"
+          >
+            Upload
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default DocUpload;

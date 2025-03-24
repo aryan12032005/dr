@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import config from '../config.js';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import networkRequests from "../request_helper";
+
+const req_client = new networkRequests();
 
 const Login = () => {
-  const navigate = useNavigate();
-
-  const getCSRFToken = async () => {
-    const response = await fetch(`${config.backendUrl}get_csrf/`, {
-      method: 'GET',
-    });
-    const data = await response.json();
-    return data.csrf_token;
-  };
+  const navigate=useNavigate();
 
   const [formData, setFormData] = useState({
     username: '',
@@ -28,20 +23,18 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const csrfToken = await getCSRFToken();
-      const response = await fetch(`${config.backendUrl}login/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
-        },
-        body: JSON.stringify(formData),
-      });
-
+      req_client.reload_tokens();
+      const header={
+        'Content-Type': 'application/json',
+      };
+      const response=await req_client.fetchReq("login/", "POST", header, JSON.stringify(formData));
       if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('token', data.token);
-        navigate('/AdminPanel');
+        const data= await response.json();
+        localStorage.setItem('access_token', data.access_token); 
+        localStorage.setItem('refresh_token', data.refresh_token);
+        req_client.accessToken=data.access_token;
+        req_client.refreshToken=data.refresh_token
+        navigate('/');
       } else {
         const errorData = await response.json();
         alert(`Login failed: ${errorData.message}`);

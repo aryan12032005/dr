@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# Set CORS request only for frontend acc to the deployed frontend origin
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
 ]
@@ -41,12 +42,16 @@ CORS_ORIGIN_WHITELIST = (
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_METHODS = [
+# Methods to be allowed by CORS requests
+CORS_ALLOW_METHODS = [
     'GET',
     'POST',
     'PUT',
+    'PATCH',
     'DELETE',
+    'OPTIONS',
 ]
+
 
 
 # Application definition
@@ -71,6 +76,14 @@ REST_FRAMEWORK = {
     ],
 }
 
+# User authentications and accesstoken based settings
+SIMPLE_JWT={
+    'ACCESS_TOKEN_LIFETIME':timedelta(minutes=10),
+    'REFRESH_TOKEN_LIFETIME':timedelta(hours=3),
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ROTATE_REFRESH_TOKEN':True,
+    'BLACKLIST_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.RefreshToken'),
+}
 
 AUTHENTICATION_BACKENDS=[
     'django.contrib.auth.backends.ModelBackend'

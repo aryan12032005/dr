@@ -23,7 +23,6 @@ const UserManagement = () => {
     is_allowed: true,
   });
   const navigate = useNavigate();
-  const accessToken = localStorage.getItem("access_token");
   const [csvFile, setCSVFile] = useState("");
   const [uploadAsFaculty, toggleUploadFaculty] = useState(false);
 
@@ -41,17 +40,18 @@ const UserManagement = () => {
     });
   };
 
-  useEffect(() => {
+  useEffect(() => { // on loading page refresh users in db
     fetchUsers();
   }, [navigate]);
 
-  const fetchUsers = async () => {
-    if (!accessToken) {
+  const fetchUsers = async () => {  // Fetch users from db
+    if (!req_client.accessToken) {
       navigate("/LogIn");
       return;
     }
     try {
-      const headers = { Authorization: `Bearer ${accessToken}` };
+      req_client.reload_tokens();
+      const headers = { Authorization: `Bearer ${req_client.accessToken}` };
       const result = await req_client.fetchReq(
         "admin/?start_c=0&end_c=50&is_admin=False",
         "GET",
@@ -63,7 +63,7 @@ const UserManagement = () => {
         setFilteredUsers(resultJson.users);
       } else {
         alert(resultJson.message);
-        localStorage.clear();
+        sessionStorage.clear();
         navigate("/LogIn");
       }
     } catch (error) {
@@ -71,7 +71,7 @@ const UserManagement = () => {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => {  // on search term change 
     setFilteredUsers(
       users.filter(
         (user) =>
@@ -82,7 +82,7 @@ const UserManagement = () => {
     );
   }, [searchTerm]);
 
-  const searchUser = async (query) => {
+  const searchUser = async (query) => {  // search for specific user in database
     try {
       req_client.reload_tokens();
       const headers = {
@@ -106,7 +106,7 @@ const UserManagement = () => {
     setAddUser(addNewUser ? false : true);
   };
 
-  const downloadSampleCsv = async () => {
+  const downloadSampleCsv = async () => {  // downlaod sample csv format to upload users
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -123,7 +123,7 @@ const UserManagement = () => {
     setCSVFile(e.target.files);
   };
 
-  const uploadCSV = async () => {
+  const uploadCSV = async () => {  // upload csv file to backend and create multiple users
     const body = new FormData();
     body.append("csvFile", csvFile[0]);
     body.append("is_faculty", uploadAsFaculty);
@@ -147,7 +147,7 @@ const UserManagement = () => {
     }
   };
 
-  const handleAddUser = async () => {
+  const handleAddUser = async () => {  // add a single user to database
     if (newUser.password.length < 6) {
       alert("Password should be at least 6 characters long!");
       return;
@@ -183,7 +183,7 @@ const UserManagement = () => {
     setEditUser(user);
   };
 
-  const handleUpdateUser = async (user) => {
+  const handleUpdateUser = async (user) => {  // update user information to database
     const confirmation = window.confirm(
       `Are you sure to save user ${user.username}?`
     );
@@ -217,7 +217,7 @@ const UserManagement = () => {
     }
   };
 
-  const handleDelete = async (user) => {
+  const handleDelete = async (user) => {  // handle detele a user
     const confirmation = window.confirm(
       `Are you sure to delete user ${user.username}?`
     );

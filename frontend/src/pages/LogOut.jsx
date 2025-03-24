@@ -16,7 +16,7 @@ const LogOut = () => {
     }
     const result=await req_client.fetchReq('logout/', "GET", headers);
     if(result.ok){
-      localStorage.clear();
+      sessionStorage.clear();
       navigate('/');
     }
     else{

@@ -71,8 +71,8 @@ class networkRequests {
     }
     if (result.status === 401) {
       const isTokenRefreshed = await this.refresh_token();
-      if (isTokenRefreshed === 1) {
-        headers["Authorization"] = `Bearer ${this.refreshToken}`;
+      if (isTokenRefreshed == 1) {
+        headers["Authorization"] = `Bearer ${this.accessToken}`;
         result = await this.fetchReq(
           endPoint,
           method,

@@ -17,4 +17,6 @@ urlpatterns=[
     path('edit_user/',views.adminuserView.as_view(),name='post'),
     path('upload_csv/',views.uploadCsv.as_view(),name='post'),
     path('get_sample_csv/',views.uploadCsv.as_view(),name='get'),
+    path('add_department/',views.deprtment_view.as_view(),name="post"),
+    path('get_department/',views.deprtment_view.as_view(),name="get"),
 ]

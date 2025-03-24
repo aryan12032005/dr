@@ -11,6 +11,7 @@ import {
   FaUserPlus,
   FaChartLine,
   FaBell,
+  FaChalkboardTeacher
 } from 'react-icons/fa'; // Import icons
 import networkRequests from "../request_helper";
 import FacultyManage from './FacultyManage';

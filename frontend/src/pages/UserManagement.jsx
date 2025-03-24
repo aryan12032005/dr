@@ -53,7 +53,7 @@ const UserManagement = () => {
     try {
       const headers = { Authorization: `Bearer ${accessToken}` };
       const result = await req_client.fetchReq(
-        "admin/?start_c=0&end_c=50",
+        "admin/?start_c=0&end_c=50&is_admin=False",
         "GET",
         headers
       );
@@ -90,7 +90,7 @@ const UserManagement = () => {
         "Content-Type": "application/json",
       };
       const result = await req_client.fetchReq(
-        `admin/?start_c=0&end_c=50&querry=${query}`,
+        `admin/?start_c=0&end_c=50&querry=${query}&is_admin=False`,
         "GET",
         headers
       );

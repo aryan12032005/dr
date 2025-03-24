@@ -84,11 +84,11 @@ const Navbar = () => {
       } else if (user_status.is_faculty) {
         updatedLinks.push(
           { title: "Document Upload", link: "/doc-upload" },
-          { title: "Logout", link: "/logout" },
           {
             title:"Faculty",
             link:"/facultypanel",
-            }
+          },
+          { title: "Logout", link: "/logout" },
         );
       }
       setloginSignup([]);
@@ -165,19 +165,6 @@ const Navbar = () => {
           </Link>
         ))}
         </div>
-        <div className='hidden md:flex gap-4 '>
-        <Link to='/LogIn'
-        className='px-4 py-1 border border-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300'>LogIn
-        </Link>
-        <Link to= '/SignUp'
-        className='px-4 py-1 border border-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300' >SignUp
-        </Link>
-        
-
-        </div>
-        <button className='block md:hidden text-white text-2xl hover:text-zinc-400' onClick={()=> (MobileNav === "hidden" ? setMobileNav("block") : setMobileNav("hidden"))}>
-          <FaGripLines />
-        </button>
     </>
   );
 };

@@ -7,9 +7,7 @@ const Hero = () => {
     './lib1.jpg',
     './lib2.jpg',
     './lib3.jpg',
-    './lib4.jpg',
-    './lib5.jpg',
-    './lib6.jpg'
+    './lib4.jpg'
   ];
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -31,33 +29,36 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden">
-      {/* Current background image */}
-      <div 
+      {/* Current background image (dimmed) */}
+      <div
         className={`absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
         style={{
           backgroundImage: `url(${backgroundImages[currentImageIndex]})`,
-          zIndex: 1
+          zIndex: 1,
+          filter: 'brightness(0.7) blur(1px)' // Dim the image
         }}
       />
-      
-      {/* Next background image */}
-      <div 
+
+      {/* Next background image (dimmed) */}
+      <div
         className="absolute inset-0 w-full h-full bg-cover bg-center"
         style={{
           backgroundImage: `url(${backgroundImages[nextImageIndex]})`,
-          zIndex: 0
+          zIndex: 0,
+          filter: 'brightness(0.7) blur(1px)' // Dim the image
+          
         }}
       />
-      
-      {/* Semi-transparent overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-50 z-2"></div>
-      
+
+      {/* Semi-transparent overlay (darker) */}
+      <div className="absolute inset-0 bg-black bg-opacity-70 z-2"></div>
+
       {/* Content container */}
       <div className="relative z-10 flex flex-col items-center w-full min-h-screen">
         <div className="w-full lg:w-3/6 flex flex-col items-center px-4 lg:px-0 text-center pt-14 lg:pt-14">
-          <div className="rounded-lg p-8">
+          <div className="rounded-lg p-8"> {/* Add subtle background using bg-black bg-opacity-20 */}
             <div className="text-container">
-              <h1 className="text-4xl lg:text-6xl font-semibold text-yellow-100 leading-tight mb-4">
+              <h1 className="text-5xl lg:text-7xl font-bold text-yellow-100 leading-tight mb-4 text-shadow-md"> {/* Increased size, bold, shadow */}
                 <ReactTyped
                   strings={[
                     'Welcome to',
@@ -68,7 +69,7 @@ const Hero = () => {
                   loop={true}
                 />
               </h1>
-              <p className="mt-4 text-xl text-zinc-300 leading-relaxed">
+              <p className="mt-4 text-xl text-white leading-relaxed text-shadow-sm"> {/* Added shadow */}
                 An open source repository software package typically used for creating open access repositories for scholarly and/or published digital content.
               </p>
               <div className="mt-7 flex justify-center">
@@ -80,8 +81,8 @@ const Hero = () => {
               {/* Enhanced Book Animation */}
               <div className="w-full flex justify-center mt-12">
                 <div className="book-animation w-64 h-48 relative transform-style-preserve-3d perspective-1000">
-                  {/* Book Cover */}
-                  <div
+                  {/* ... (book animation code) ... */}
+                   <div
                     className="absolute w-full h-full bg-yellow-800 rounded-r-md shadow-lg transform-origin-left"
                     style={{
                       animation: 'bookCoverFlip 5s infinite ease-in-out',
@@ -90,8 +91,6 @@ const Hero = () => {
                   >
                     <div className="absolute inset-2 border-2 border-yellow-600 rounded-r-sm"></div>
                   </div>
-                  
-                  {/* Book Pages */}
                   {[...Array(5)].map((_, i) => (
                     <div
                       key={i}
@@ -101,7 +100,6 @@ const Hero = () => {
                         zIndex: 5 - i
                       }}
                     >
-                      {/* Page content - horizontal lines */}
                       <div className="h-full w-full p-4 flex flex-col justify-around">
                         {[...Array(6)].map((_, j) => (
                           <div
@@ -113,23 +111,21 @@ const Hero = () => {
                       </div>
                     </div>
                   ))}
-                  
-                  {/* Book Spine */}
                   <div className="absolute h-full w-4 bg-yellow-900 rounded-l-md shadow-inner left-0 top-0 z-10"></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        
+
         {/* Image slider indicators */}
         <div className="absolute bottom-8 flex space-x-2 z-10">
           {backgroundImages.map((_, index) => (
-            <button 
+            <button
               key={index}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                currentImageIndex === index 
-                  ? 'bg-yellow-100 w-6' 
+                currentImageIndex === index
+                  ? 'bg-yellow-100 w-6'
                   : 'bg-gray-400 bg-opacity-50'
               }`}
               onClick={() => {
@@ -145,7 +141,7 @@ const Hero = () => {
           ))}
         </div>
       </div>
-      
+
       {/* CSS Animations for the book */}
       <style>{`
         @keyframes bookCoverFlip {
@@ -153,7 +149,7 @@ const Hero = () => {
           50% { transform: rotateY(-160deg); }
           100% { transform: rotateY(0deg); }
         }
-        
+
         @keyframes bookPageTurn {
           0% { transform: rotateY(0deg); }
           50% { transform: rotateY(-140deg); }

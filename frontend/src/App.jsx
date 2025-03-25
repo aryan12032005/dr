@@ -22,12 +22,8 @@ const App = () => {
           <Route path='/about-us' element={<AboutUs/>}/>
           <Route path='/AdminPanel/*' element={<AdminPanel/>}/> 
           <Route path='/facultypanel' element={<Faculty/>}/>
-          
-
-
-          
-          
-          </Routes>
+  
+        </Routes>
         <Footer />
       </Router>
 

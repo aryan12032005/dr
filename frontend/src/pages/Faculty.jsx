@@ -331,6 +331,7 @@ const Faculty= () => {
             </button>
           </div>
         </div>
+        
 
         {/* Document List Section */}
         <div className="bg-white rounded-lg shadow-md p-6">

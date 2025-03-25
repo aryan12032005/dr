@@ -30,8 +30,8 @@ const Login = () => {
       const response=await req_client.fetchReq("login/", "POST", header, JSON.stringify(formData));
       if (response.ok) {
         const data= await response.json();
-        localStorage.setItem('access_token', data.access_token); 
-        localStorage.setItem('refresh_token', data.refresh_token);
+        sessionStorage.setItem('access_token', data.access_token); 
+        sessionStorage.setItem('refresh_token', data.refresh_token);
         req_client.accessToken=data.access_token;
         req_client.refreshToken=data.refresh_token
         navigate('/');

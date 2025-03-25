@@ -79,7 +79,7 @@ REST_FRAMEWORK = {
 # User authentications and accesstoken based settings
 SIMPLE_JWT={
     'ACCESS_TOKEN_LIFETIME':timedelta(minutes=10),
-    'REFRESH_TOKEN_LIFETIME':timedelta(hours=3),
+    'REFRESH_TOKEN_LIFETIME':timedelta(hours=1),
     'BLACKLIST_AFTER_ROTATION': False,
     'ROTATE_REFRESH_TOKEN':True,
     'BLACKLIST_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.RefreshToken'),

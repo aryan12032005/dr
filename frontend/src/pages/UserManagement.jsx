@@ -13,6 +13,7 @@ const UserManagement = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [newUser, setNewUser] = useState({
     email: "",
+    dep_code: "",
     username: "",
     password: "",
     first_name: "",
@@ -23,9 +24,25 @@ const UserManagement = () => {
     is_allowed: true,
   });
   const navigate = useNavigate();
-  const accessToken = localStorage.getItem("access_token");
   const [csvFile, setCSVFile] = useState("");
   const [uploadAsFaculty, toggleUploadFaculty] = useState(false);
+  const [allDepartments, setAllDepartments] = useState([]);
+
+  useEffect(() => {
+    getAllDepartments();
+  }, [navigate]);
+
+  const getAllDepartments = async () => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq("get_department/", "GET", headers);
+    const resultJson = await result.json();
+    if (result.ok) {
+      setAllDepartments(resultJson.departments);
+    }
+  };
 
   const resetNewUserState = () => {
     setNewUser({
@@ -42,18 +59,21 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
+    // on loading page refresh users in db
     fetchUsers();
   }, [navigate]);
 
   const fetchUsers = async () => {
-    if (!accessToken) {
+    // Fetch users from db
+    if (!req_client.accessToken) {
       navigate("/LogIn");
       return;
     }
     try {
-      const headers = { Authorization: `Bearer ${accessToken}` };
+      req_client.reload_tokens();
+      const headers = { Authorization: `Bearer ${req_client.accessToken}` };
       const result = await req_client.fetchReq(
-        "admin/?start_c=0&end_c=50",
+        "admin/?start_c=0&end_c=50&is_admin=False",
         "GET",
         headers
       );
@@ -63,7 +83,7 @@ const UserManagement = () => {
         setFilteredUsers(resultJson.users);
       } else {
         alert(resultJson.message);
-        localStorage.clear();
+        sessionStorage.clear();
         navigate("/LogIn");
       }
     } catch (error) {
@@ -72,6 +92,7 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
+    // on search term change
     setFilteredUsers(
       users.filter(
         (user) =>
@@ -83,6 +104,7 @@ const UserManagement = () => {
   }, [searchTerm]);
 
   const searchUser = async (query) => {
+    // search for specific user in database
     try {
       req_client.reload_tokens();
       const headers = {
@@ -90,7 +112,7 @@ const UserManagement = () => {
         "Content-Type": "application/json",
       };
       const result = await req_client.fetchReq(
-        `admin/?start_c=0&end_c=50&querry=${query}`,
+        `admin/?start_c=0&end_c=50&querry=${query}&is_admin=False`,
         "GET",
         headers
       );
@@ -107,6 +129,7 @@ const UserManagement = () => {
   };
 
   const downloadSampleCsv = async () => {
+    // downlaod sample csv format to upload users
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -124,6 +147,7 @@ const UserManagement = () => {
   };
 
   const uploadCSV = async () => {
+    // upload csv file to backend and create multiple users
     const body = new FormData();
     body.append("csvFile", csvFile[0]);
     body.append("is_faculty", uploadAsFaculty);
@@ -148,6 +172,7 @@ const UserManagement = () => {
   };
 
   const handleAddUser = async () => {
+    // add a single user to database
     if (newUser.password.length < 6) {
       alert("Password should be at least 6 characters long!");
       return;
@@ -184,6 +209,7 @@ const UserManagement = () => {
   };
 
   const handleUpdateUser = async (user) => {
+    // update user information to database
     const confirmation = window.confirm(
       `Are you sure to save user ${user.username}?`
     );
@@ -218,6 +244,7 @@ const UserManagement = () => {
   };
 
   const handleDelete = async (user) => {
+    // handle detele a user
     const confirmation = window.confirm(
       `Are you sure to delete user ${user.username}?`
     );
@@ -328,6 +355,22 @@ const UserManagement = () => {
             value={newUser.email}
             onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
           />
+          <select
+            className="border rounded px-3 py-2 mr-2 mb-2 w-full"
+            value={newUser.dep_code}
+            onChange={(e) =>
+              setNewUser({ ...newUser, dep_code: e.target.value })
+            }
+          >
+            <option value="" default disabled>
+              Select a department
+            </option>
+            {allDepartments.map((item) => (
+              <option value={item.dep_code} key={item.dep_code}>
+                {item.dep_name}
+              </option>
+            ))}
+          </select>
           <input
             required
             type="tel"

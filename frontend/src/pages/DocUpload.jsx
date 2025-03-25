@@ -6,31 +6,48 @@ import networkRequests from "../request_helper";
 const req_client = new networkRequests();
 const DocUpload = () => {
   const [showUploadOptions, setShowUploadOptions] = useState(false);
+
+  // Document upload fields
   const [documentType, setDocumentType] = useState("");
   const [coverType, setCoverType] = useState("");
   const [Cover, setCover] = useState("");
   const [documentFile, setDocument] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [category, setCategory] = useState("");
-  const [department,setDepartment] = useState("");
-  const [field,setField] = useState("");
-
+  const [department, setDepartment] = useState("");
+  const [subject, setSubject] = useState("");
   const [coverAcceptType, setCoverAcceptType] = useState("");
   const [documentAcceptType, setDocumentAcceptType] = useState("");
   const [title, setTitle] = useState("");
-  const navigate=useNavigate();
 
+  // form fields
+  const [allDepartments, setAllDepartments] = useState([]);
+  const [subjects,setSubjects]= useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (coverType === "img") {
       setCoverAcceptType("image/*");
     } else if (coverType === "link") {
       setCoverAcceptType("link");
-    }else if (coverType === "pdf") {
+    } else if (coverType === "pdf") {
       setCoverAcceptType(".pdf");
     }
     setCover(null);
   }, [coverType]);
+
+  const getAllDepartments = async () => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq("get_department/", "GET", headers);
+    const resultJson = await result.json();
+    if (result.ok) {
+      setAllDepartments(resultJson.departments);
+    }
+  };
+  
 
   useEffect(() => {
     if (documentType === "pdf") {
@@ -50,9 +67,6 @@ const DocUpload = () => {
   const toggleUploadOptions = () => {
     setShowUploadOptions(!showUploadOptions);
   };
-  const handleDepartmentChange = (e) => {
-    setDepartment(e.target.value);
-  }
   const handleCoverChange = (event) => {
     setCover(event.target.files);
   };
@@ -60,50 +74,70 @@ const DocUpload = () => {
     setDocument(event.target.files);
   };
 
+  const searchSubjects = async () => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq(
+      `get_department/?dep_code=${department}`,
+      "GET",
+      headers
+    );
+    const resultJson=await result.json();
+    console.log(resultJson);
+    if(result.ok){
+      setSubjects(resultJson.subjects);
+    }
+  };
+
   const handleUpload = async () => {
-    
     const data = new FormData();
     data.append("title", title);
     data.append("coverType", coverType);
     data.append("documentType", documentType);
     data.append("isPublic", isPublic);
     if (Cover && Cover.length > 0) {
-      data.append("cover", Cover[0]);  
+      data.append("cover", Cover[0]);
+    } else {
+      data.append("coverLink", Cover);
     }
-    else{
-      data.append('coverLink',Cover);
-    }
-  
+
     // Append documents (multiple files)
     if (documentFile && documentFile.length > 0) {
       Array.from(documentFile).forEach((doc) => {
-        data.append("documents", doc);  // 'documents' will be an array in the backend
+        data.append("documents", doc); // 'documents' will be an array in the backend
       });
-    }
-    else{
-      data.append('documentLink',documentFile);
+    } else {
+      data.append("documentLink", documentFile);
     }
     data.append("category", category);
-
+    data.append("department",department);
+    data.append("subject",subject);
     for (let [key, value] of data.entries()) {
-      if (!value) { 
+      if (!value) {
         alert(`Please fill in the ${key} field.`);
         return false;
       }
     }
 
     req_client.reload_tokens();
-    const headers={
+    const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
-    }
-    const response=await req_client.fetchReq('upload-document/', "POST", headers, data);
+    };
+    const response = await req_client.fetchReq(
+      "upload-document/",
+      "POST",
+      headers,
+      data
+    );
     if (response.ok) {
       alert("document uploaded successfully");
     }
   };
 
   return (
-    <div className="flex flex-col items-center p-4">
+    <div className="flex flex-col items-center p-4 mb-10">
       {/* Upload Button */}
       <button
         onClick={toggleUploadOptions}
@@ -125,7 +159,9 @@ const DocUpload = () => {
             value={coverType}
             onChange={(e) => setCoverType(e.target.value)}
           >
-            <option value="" selected disabled>Select</option>
+            <option value="" default disabled>
+              Select
+            </option>
             <option value="img">Image</option>
             <option value="pdf">PDF</option>
             <option value="link">Link</option>
@@ -161,7 +197,9 @@ const DocUpload = () => {
             onChange={(e) => setDocumentType(e.target.value)}
             required
           >
-            <option value="" disabled selected>Select</option>
+            <option value="" disabled default>
+              Select
+            </option>
             <option value="pdf">PDF</option>
             <option value="imgs">Multiple Images</option>
             <option value="link">Link</option>
@@ -199,39 +237,41 @@ const DocUpload = () => {
           />
 
           <h2 className="text-lg font-semibold text-gray-800">
-            Select a school
+            Select a Department
           </h2>
           <select
             className="border border-gray-300 rounded-lg p-2 w-full mt-2"
             value={department}
-            onChange={handleDepartmentChange}
+            onFocus={getAllDepartments}
+            onChange={(e) => setDepartment(e.target.value)}
+            onBlur={(e) => searchSubjects(e.target.value)}
             required
           >
-            <option value="" disabled selected>Select</option>
-            <option value="computer_science">Computer Science</option>
-            <option value="law">Law</option>
-            <option value="bsc">BSC</option>
-            <option value="mechanical">Mechanical</option>
-            <option value="mbbs">MBBS</option>
-            <option value="other">Other</option>
+            <option value="other" default>
+              Other
+            </option>
+            {allDepartments.map((item) => (
+              <option value={item.dep_code} key={item.dep_code}>{item.dep_name}</option>
+            ))}
           </select>
-          
+
           <h2 className="text-lg font-semibold text-gray-800">
-            Select a school
+            Select a Subject
           </h2>
           <select
             className="border border-gray-300 rounded-lg p-2 w-full mt-2"
-            value={field}
-            onChange={(e) => setField(e.target.value)}
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
             required
           >
-            <option value="" disabled selected>Select</option>
-            <option value="computer_science">Computer Science</option>
-            <option value="law">Law</option>
-            <option value="bsc">BSC</option>
-            <option value="mechanical">Mechanical</option>
-            <option value="mbbs">MBBS</option>
-            <option value="other">Other</option>
+            <option value="other" default>
+              Other
+            </option>
+            {subjects.length >0 &&
+            subjects.map((item) => (
+              <option value={item.code} key={item.code}>{item.name}</option>
+            ))
+            }
           </select>
 
           <h2 className="text-lg font-semibold text-gray-800">

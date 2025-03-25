@@ -242,16 +242,27 @@ class adminuserView(APIView):
 
     def get(self,request):
         querry=request.query_params.get('querry',None)
+        extra_params={}
+        is_admin=request.query_params.get('is_admin',None)
+        if is_admin:
+            extra_params["is_admin"]=is_admin
+        is_faculty=request.query_params.get('is_faculty',None)
+        if is_faculty:
+            extra_params["is_faculty"]=is_faculty
+        is_allowed=request.query_params.get('is_allowed',None)
+        if is_allowed:
+            extra_params["is_allowed"]=is_allowed
+
         if querry:
             querry=querry.strip()
             users=LibraryUser.objects.filter(
                 Q(username__icontains=querry) |
                 Q(email__icontains=querry) |
                 Q(id__icontains=querry) |
-                Q(phone_number__icontains=querry),is_admin=False
-            ).values('email','id','first_name','username','phone_number','is_faculty')
+                Q(phone_number__icontains=querry),**extra_params
+            ).values('email','id','first_name','username','phone_number','is_faculty')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
             return Response({"users":list(users),"user_count":len(users)},status=status.HTTP_200_OK)
-        users=LibraryUser.objects.filter(is_admin=False).values('email','id','first_name','username','phone_number','is_allowed')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
+        users=LibraryUser.objects.filter(**extra_params).values('email','id','first_name','username','phone_number','is_allowed')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
         user_count=LibraryUser.objects.filter(is_admin=False).aggregate(Count("id"))
         return Response({"users":list(users),"user_count":user_count['id__count']},status=status.HTTP_200_OK)
     
@@ -293,20 +304,29 @@ class deprtment_view(APIView):
 
     def get(self,request):
         dep_code=request.query_params.get('dep_code',None)
-        dep_details=Departments.objects.filter(dep_code=dep_code).first()
-        if dep_details:
-            return Response({"managers":dep_details.managers,"schools":dep_details.subjects},status=status.HTTP_200_OK)
+        if dep_code:
+            dep_details=Departments.objects.filter(dep_code=dep_code).first()
+            responseObj= {"managers":dep_details.managers,"subjects":dep_details.subjects}
         else:
-            return Response({"message":"No dep found"}, status=status.HTTP_404_NOT_FOUND)
+            dep_details=Departments.objects.all().values("dep_name","dep_code")
+            responseObj= {"departments":dep_details}
+        if dep_details:
+            return Response(responseObj,status=status.HTTP_200_OK)
+        else:
+            return Response({"message":"No dep details found"}, status=status.HTTP_404_NOT_FOUND)
         
     def post(self, request):
-        data=request.POST
+        data=request.data
         dep_form=DepartmentsForm(data)
+        existing_dep= Departments.objects.filter(dep_code=data.get("dep_code")).first()
+        if existing_dep:
+            return Response({"message":"Department code already exist"},status=status.HTTP_409_CONFLICT)
+        
         if dep_form.is_valid():
             dep_form.save()
-            return Response({"message":"department created successfull"},status=status.HTTP_200_OK)
+            return Response({"message":"Department created successfull"},status=status.HTTP_200_OK)
         else:
-            return Response({"message":"error creating department"},status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message":"Error creating department"},status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self,request):
         pass
@@ -331,6 +351,8 @@ class upload_document(APIView):
             'comments':[],
             'createDate':str(datetime.now()),
             'category':data.get('category'),
+            'department':data.get("department"),
+            "subject":data.get("subject")
         }
         
         if(data.get('coverType')=='link'):

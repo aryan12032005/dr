@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Settings from './Settings'; 
-import NewUserAdmin from './NewUserAdmin';
+import Settings from './Settings';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
 import DocumentManage from './DocumentManage';
 import UserManagement from './UserManagement';
@@ -12,8 +11,10 @@ import {
   FaChartLine,
   FaChalkboardTeacher,
   FaBell,
+  FaChalkboardTeacher
 } from 'react-icons/fa'; // Import icons
 import networkRequests from "../request_helper";
+import FacultyManage from './FacultyManage';
 
 const req_client = new networkRequests();
 

@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import networkRequests from "../request_helper";
+import { useNavigate } from 'react-router-dom';
 
+const req_client = new networkRequests();
 const FacultyManage = () => {
+  const navigate = useNavigate();
   // Sample faculty data
   const [faculty, setFaculty] = useState([
     { 
@@ -61,69 +65,29 @@ const FacultyManage = () => {
   ]);
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [allDepartments,setAllDepartments] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState('All');
   const [expandedFaculty, setExpandedFaculty] = useState(null);
   const [documentSearchQuery, setDocumentSearchQuery] = useState('');
 
-  // State for new faculty form
-  const [newFaculty, setNewFaculty] = useState({
-    name: '',
-    department: 'CSE',
-    designation: 'Assistant Professor',
-    email: '',
-    joinDate: new Date().toISOString().split('T')[0],
-    profileImage: '',
-    documents: []
-  });
 
   // List of departments
   const departments = ['CSE', 'Mechanical', 'Electrical', 'Civil', 'Chemical'];
 
-  // Handle new faculty input change
-  const handleNewFacultyChange = (e) => {
-    const { name, value } = e.target;
-    setNewFaculty({
-      ...newFaculty,
-      [name]: value
-    });
-  };
+  useEffect(() => {
+    getAllDepartments();
+  },[navigate]);
 
-  // Handle faculty profile upload
-  const handleUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      setNewFaculty({
-        ...newFaculty,
-        profileImage: file.name
-      });
-    }
-  };
-
-  // Handle adding new faculty
-  const handleAddFaculty = () => {
-    if (!newFaculty.name || !newFaculty.email) {
-      alert('Please fill in all required fields.');
-      return;
-    }
-
-    const facultyToAdd = {
-      ...newFaculty,
-      id: faculty.length + 1
+  const getAllDepartments = async () => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
     };
-
-    setFaculty([...faculty, facultyToAdd]);
-    alert(`New faculty profile created for ${facultyToAdd.name}`);
-
-    // Reset form
-    setNewFaculty({
-      name: '',
-      department: 'CSE',
-      designation: 'Assistant Professor',
-      email: '',
-      joinDate: new Date().toISOString().split('T')[0],
-      profileImage: '',
-      documents: []
-    });
+    const result = await req_client.fetchReq("get_department/", "GET", headers);
+    const resultJson = await result.json();
+    if (result.ok) {
+      setAllDepartments(resultJson.departments);
+    }
   };
 
   // Handle document upload for a faculty member
@@ -224,62 +188,6 @@ const FacultyManage = () => {
     <div className="p-8 bg-gray-100 min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Faculty Management System</h1>
 
-      {/* Upload Section */}
-      <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Add New Faculty Profile</h2>
-        <div className="space-y-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            value={newFaculty.name}
-            onChange={handleNewFacultyChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={newFaculty.email}
-            onChange={handleNewFacultyChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <select
-            name="department"
-            value={newFaculty.department}
-            onChange={handleNewFacultyChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {departments.map((dept) => (
-              <option key={dept} value={dept}>{dept}</option>
-            ))}
-          </select>
-          <input
-            type="text"
-            name="designation"
-            placeholder="Designation"
-            value={newFaculty.designation}
-            onChange={handleNewFacultyChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {/* <label className="bg-blue-500 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors">
-            Upload Profile Image
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleUpload}
-            />
-          </label> */}
-          <button
-            onClick={handleAddFaculty}
-            className="w-full bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
-          >
-            Add Faculty
-          </button>
-        </div>
-      </div>
-
       {/* View Faculty Profiles Section */}
       <div className="p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-xl font-semibold text-gray-800 mb-4">View Faculty Profiles</h2>
@@ -299,8 +207,8 @@ const FacultyManage = () => {
             className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="All">All Departments</option>
-            {departments.map((dept) => (
-              <option key={dept} value={dept}>{dept}</option>
+            {allDepartments.map((dept) => (
+              <option key={dept.dep_code} value={dept.dep_code}>{dept.dep_name}</option>
             ))}
           </select>
         </div>

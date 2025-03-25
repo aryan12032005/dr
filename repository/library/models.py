@@ -13,6 +13,7 @@ class LibraryUserManager(BaseUserManager):
 
 class LibraryUser(AbstractBaseUser):
     email = models.EmailField(unique=True)
+    dep_code= models.CharField(max_length=150,default="")
     username = models.CharField(max_length=150, unique=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)

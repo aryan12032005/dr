@@ -10,6 +10,7 @@ import {
   FaCog,
   FaUserPlus,
   FaChartLine,
+  FaChalkboardTeacher,
   FaBell,
 } from 'react-icons/fa'; // Import icons
 import networkRequests from "../request_helper";

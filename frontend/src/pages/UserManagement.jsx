@@ -13,6 +13,7 @@ const UserManagement = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [newUser, setNewUser] = useState({
     email: "",
+    dep_code: "",
     username: "",
     password: "",
     first_name: "",
@@ -25,6 +26,23 @@ const UserManagement = () => {
   const navigate = useNavigate();
   const [csvFile, setCSVFile] = useState("");
   const [uploadAsFaculty, toggleUploadFaculty] = useState(false);
+  const [allDepartments, setAllDepartments] = useState([]);
+
+  useEffect(() => {
+    getAllDepartments();
+  }, [navigate]);
+
+  const getAllDepartments = async () => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq("get_department/", "GET", headers);
+    const resultJson = await result.json();
+    if (result.ok) {
+      setAllDepartments(resultJson.departments);
+    }
+  };
 
   const resetNewUserState = () => {
     setNewUser({
@@ -40,11 +58,13 @@ const UserManagement = () => {
     });
   };
 
-  useEffect(() => { // on loading page refresh users in db
+  useEffect(() => {
+    // on loading page refresh users in db
     fetchUsers();
   }, [navigate]);
 
-  const fetchUsers = async () => {  // Fetch users from db
+  const fetchUsers = async () => {
+    // Fetch users from db
     if (!req_client.accessToken) {
       navigate("/LogIn");
       return;
@@ -71,7 +91,8 @@ const UserManagement = () => {
     }
   };
 
-  useEffect(() => {  // on search term change 
+  useEffect(() => {
+    // on search term change
     setFilteredUsers(
       users.filter(
         (user) =>
@@ -82,7 +103,8 @@ const UserManagement = () => {
     );
   }, [searchTerm]);
 
-  const searchUser = async (query) => {  // search for specific user in database
+  const searchUser = async (query) => {
+    // search for specific user in database
     try {
       req_client.reload_tokens();
       const headers = {
@@ -106,7 +128,8 @@ const UserManagement = () => {
     setAddUser(addNewUser ? false : true);
   };
 
-  const downloadSampleCsv = async () => {  // downlaod sample csv format to upload users
+  const downloadSampleCsv = async () => {
+    // downlaod sample csv format to upload users
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -123,7 +146,8 @@ const UserManagement = () => {
     setCSVFile(e.target.files);
   };
 
-  const uploadCSV = async () => {  // upload csv file to backend and create multiple users
+  const uploadCSV = async () => {
+    // upload csv file to backend and create multiple users
     const body = new FormData();
     body.append("csvFile", csvFile[0]);
     body.append("is_faculty", uploadAsFaculty);
@@ -147,7 +171,8 @@ const UserManagement = () => {
     }
   };
 
-  const handleAddUser = async () => {  // add a single user to database
+  const handleAddUser = async () => {
+    // add a single user to database
     if (newUser.password.length < 6) {
       alert("Password should be at least 6 characters long!");
       return;
@@ -183,7 +208,8 @@ const UserManagement = () => {
     setEditUser(user);
   };
 
-  const handleUpdateUser = async (user) => {  // update user information to database
+  const handleUpdateUser = async (user) => {
+    // update user information to database
     const confirmation = window.confirm(
       `Are you sure to save user ${user.username}?`
     );
@@ -217,7 +243,8 @@ const UserManagement = () => {
     }
   };
 
-  const handleDelete = async (user) => {  // handle detele a user
+  const handleDelete = async (user) => {
+    // handle detele a user
     const confirmation = window.confirm(
       `Are you sure to delete user ${user.username}?`
     );
@@ -328,6 +355,22 @@ const UserManagement = () => {
             value={newUser.email}
             onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
           />
+          <select
+            className="border rounded px-3 py-2 mr-2 mb-2 w-full"
+            value={newUser.dep_code}
+            onChange={(e) =>
+              setNewUser({ ...newUser, dep_code: e.target.value })
+            }
+          >
+            <option value="" default disabled>
+              Select a department
+            </option>
+            {allDepartments.map((item) => (
+              <option value={item.dep_code} key={item.dep_code}>
+                {item.dep_name}
+              </option>
+            ))}
+          </select>
           <input
             required
             type="tel"

@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import config from "../config.js";
+import { saveAs } from "file-saver";
 import networkRequests from "../request_helper";
 
 const req_client = new networkRequests();
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [addNewUser, setAddUser] = useState(false);
+  const [csvFile, setCSVFile] = useState("");
+  const [uploadAsFaculty, toggleUploadFaculty] = useState(false);
+  const [allDepartments, setAllDepartments] = useState([]);
+  const [newUser, setNewUser] = useState({
     email: "",
     dep_code: "",
     username: "",
@@ -19,11 +23,6 @@ const Signup = () => {
     is_admin: false,
     is_allowed: true,
   });
-  const [allDepartments,setAllDepartments] = useState([]);
-
-  useEffect(() => {
-    getAllDepartments();
-  },[navigate]);
 
   const getAllDepartments = async () => {
     req_client.reload_tokens();
@@ -36,204 +35,278 @@ const Signup = () => {
       setAllDepartments(resultJson.departments);
     }
   };
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const getCSRFToken = async () => {
-    const response = await fetch(`${config.backendUrl}signup/`, {
-      method: "GET",
+  
+  const resetNewUserState = () => {
+    setNewUser({
+      email: "",
+      username: "",
+      password: "",
+      first_name: "",
+      last_name: "",
+      phone_number: "",
+      is_faculty: false,
+      is_admin: false,
+      is_allowed: true,
     });
-    const data = await response.json();
-    return data.csrf_token;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const headers= {
-        "Content-Type": "application/json",
-      };
-      const response = await req_client.fetchReq("signup/","POST", headers, JSON.stringify(formData));
+  const toggleAddUser = () => {
+    setAddUser(addNewUser ? false : true);
+  };
 
-      if (response.ok) {
-        alert("Signup successful!");
-        navigate("/LogIn");
-      } else {
-        const errorData = await response.json();
-        alert(`Signup failed: ${errorData.message}`);
-      }
-    } catch (error) {
-      console.error("Signup error:", error);
-      alert("An error occurred during signup.");
+  const downloadSampleCsv = async () => {
+    // downlaod sample csv format to upload users
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq("get_sample_csv/", "GET", headers);
+    if (result.ok) {
+      saveAs(await result.blob(), "Sample_csv.csv");
+    } else {
+      alert("Error downloading format.");
     }
   };
 
+  const handleCsvChange = (e) => {
+    setCSVFile(e.target.files);
+  };
+
+  const uploadCSV = async () => {
+    // upload csv file to backend and create multiple users
+    const body = new FormData();
+    body.append("csvFile", csvFile[0]);
+    body.append("is_faculty", uploadAsFaculty);
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq(
+      "upload_csv/",
+      "POST",
+      headers,
+      body
+    );
+    if (result.ok) {
+      alert("User created successfull");
+    } else if (result.status === 409) {
+      const resultJson = await result.json();
+      alert(`${resultJson.message} : ${resultJson.users}`);
+    } else {
+      alert("User creation failed");
+    }
+  };
+
+  const handleAddUser = async () => {
+    // add a single user to database
+    if (newUser.password.length < 6) {
+      alert("Password should be at least 6 characters long!");
+      return;
+    }
+
+    try {
+      req_client.reload_tokens();
+      const headers = {
+        Authorization: `Bearer ${req_client.accessToken}`,
+        "Content-Type": "application/json",
+      };
+      const result = await req_client.fetchReq(
+        "signup/",
+        "POST",
+        headers,
+        JSON.stringify(newUser)
+      );
+
+      if (result.ok) {
+        alert("User added successfully!");
+        fetchUsers();
+      } else {
+        alert("Error creating user.");
+      }
+    } catch (error) {
+      console.error("Error adding user:", error);
+    }
+
+    resetNewUserState();
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 to-zinc-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-zinc-700 rounded-lg shadow-lg p-8 border border-zinc-600">
-        <h2 className="text-3xl font-semibold text-yellow-100 mb-6 text-center">
-          Sign Up
+    <>
+      <div className="flex flex-col items-center justify-center shadow-lg mb-5 mt-5 p-6 rounded-lg bg-white">
+        <h2 className="font-semibold mb-2 text-gray-600 mb-5">
+          Upload multiple users in csv, sample{" "}
+          <a
+            className="text-black hover:text-blue-500 transform hover:scale-110 transition-all duration-300 cursor-pointer"
+            onClick={downloadSampleCsv}
+          >
+            format here.
+          </a>
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-white mb-1">
-              Email:
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full p-3 rounded-md border border-zinc-600 bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="department" className="block text-white mb-1">
-              Department code:
-            </label>
-            <select
-              className="w-full p-3 rounded-md border border-zinc-600 bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={formData.dep_code}
-              onChange={handleChange}
-            >
-              <option value="" default disabled>
-                Select a department
+        <input
+          type="file"
+          accept=".csv"
+          required
+          className="bg-gray-800 text-white font-bold py-2 px-4 rounded-lg mb-4 transition-all duration-300 hover:scale-105 hover:bg-gray-700"
+          onChange={handleCsvChange}
+        />
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            className="border border-gray-400 rounded px-2 py-1"
+            name="upload_aculty"
+            value={uploadAsFaculty}
+            onChange={(e) => toggleUploadFaculty(e.target.checked)}
+          />
+          <label htmlFor="upload_aculty" className="ml-2 text-gray-700">
+            Upload as Faculty?
+          </label>
+        </div>
+        <button
+          onClick={uploadCSV}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out"
+        >
+          Upload CSV file
+        </button>
+      </div>
+      <button
+        onClick={toggleAddUser}
+        className="bg-blue-600 text-white px-6 py-2 mb-5 rounded-lg hover:bg-blue-700 transition"
+      >
+        Add Single User
+      </button>
+      {addNewUser && (
+        <div className="p-4 bg-gray-50 rounded-lg shadow-inner transition-all duration-300">
+          <h3 className="text-lg font-semibold mb-2 text-gray-700">
+            Add New User
+          </h3>
+          <input
+            required
+            type="text"
+            placeholder="First Name"
+            className="border rounded px-3 py-2 mr-2 mb-2 w-full"
+            value={newUser.first_name}
+            onChange={(e) =>
+              setNewUser({ ...newUser, first_name: e.target.value })
+            }
+          />
+          <input
+            required
+            type="text"
+            placeholder="Last Name"
+            className="border rounded px-3 py-2 mr-2 mb-2 w-full"
+            value={newUser.last_name}
+            onChange={(e) =>
+              setNewUser({ ...newUser, last_name: e.target.value })
+            }
+          />
+          <input
+            required
+            type="email"
+            placeholder="Email"
+            className="border rounded px-3 py-2 mr-2 mb-2 w-full"
+            value={newUser.email}
+            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+          />
+          <select
+            className="border rounded px-3 py-2 mr-2 mb-2 w-full"
+            value={newUser.dep_code}
+            onFocus={getAllDepartments}
+            onChange={(e) =>
+              setNewUser({ ...newUser, dep_code: e.target.value })
+            }
+          >
+            <option value="" default disabled>
+              Select a department
+            </option>
+            {allDepartments.map((item) => (
+              <option value={item.dep_code} key={item.dep_code}>
+                {item.dep_name}
               </option>
-              {allDepartments.map((item) => (
-              <option value={item.dep_code} key={item.dep_code}>{item.dep_name}</option>
             ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="username" className="block text-white mb-1">
-              Username:
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              className="w-full p-3 rounded-md border border-zinc-600 bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-white mb-1">
-              Password:
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full p-3 rounded-md border border-zinc-600 bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="first_name" className="block text-white mb-1">
-              First Name:
-            </label>
-            <input
-              type="text"
-              id="first_name"
-              name="first_name"
-              value={formData.first_name}
-              onChange={handleChange}
-              className="w-full p-3 rounded-md border border-zinc-600 bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="last_name" className="block text-white mb-1">
-              Last Name:
-            </label>
-            <input
-              type="text"
-              id="last_name"
-              name="last_name"
-              value={formData.last_name}
-              onChange={handleChange}
-              className="w-full p-3 rounded-md border border-zinc-600 bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="phone_number" className="block text-white mb-1">
-              Phone Number:
-            </label>
-            <input
-              type="text"
-              id="phone_number"
-              name="phone_number"
-              value={formData.phone_number}
-              onChange={handleChange}
-              className="w-full p-3 rounded-md border border-zinc-600 bg-zinc-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          </select>
+          <input
+            required
+            type="tel"
+            placeholder="Phone"
+            className="border rounded px-3 py-2 mr-2 mb-2 w-full"
+            value={newUser.phone_number}
+            onChange={(e) =>
+              setNewUser({ ...newUser, phone_number: e.target.value })
+            }
+          />
+          <input
+            required
+            type="text"
+            placeholder="Username"
+            className="border rounded px-3 py-2 mr-2 mb-2 w-full"
+            value={newUser.username}
+            onChange={(e) =>
+              setNewUser({ ...newUser, username: e.target.value })
+            }
+          />
+          <input
+            required
+            type="password"
+            placeholder="Password"
+            className="border rounded px-3 py-2 mr-2 mb-2 w-full"
+            value={newUser.password}
+            onChange={(e) =>
+              setNewUser({ ...newUser, password: e.target.value })
+            }
+          />
           <div className="flex flex-col md:flex-row gap-4 mb-4">
             <div className="flex items-center">
               <input
                 type="checkbox"
-                id="is_faculty"
-                name="is_faculty"
-                checked={formData.is_faculty}
-                onChange={handleChange}
+                name="isFaculty"
+                checked={newUser.is_faculty}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, is_faculty: e.target.checked })
+                }
                 className="mr-2"
               />
-              <label htmlFor="is_faculty" className="text-white">
+              <label htmlFor="isFaculty" className="text-gray-700">
                 Is Faculty?
               </label>
             </div>
             <div className="flex items-center">
               <input
                 type="checkbox"
-                id="is_admin"
-                name="is_admin"
-                checked={formData.is_admin}
-                onChange={handleChange}
+                name="isAdmin"
+                checked={newUser.is_admin}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, is_admin: e.target.checked })
+                }
                 className="mr-2"
               />
-              <label htmlFor="is_admin" className="text-white">
+              <label htmlFor="isAdmin" className="text-gray-700">
                 Is Admin?
               </label>
             </div>
             <div className="flex items-center">
               <input
                 type="checkbox"
-                id="is_allowed"
-                name="is_allowed"
-                checked={formData.is_allowed}
-                onChange={handleChange}
+                name="isAllowed"
+                checked={newUser.is_allowed}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, is_allowed: e.target.checked })
+                }
                 className="mr-2"
               />
-              <label htmlFor="is_allowed" className="text-white">
+              <label htmlFor="isAllowed" className="text-gray-700">
                 Is Allowed?
               </label>
             </div>
           </div>
           <button
-            type="submit"
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md transition duration-300"
+            onClick={handleAddUser}
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-all duration-300 hover:scale-105"
           >
-            Sign Up
+            Add User
           </button>
-        </form>
-        <div className="mt-6 text-center">
-          <p className="text-gray-300">
-            Already have an account?{" "}
-            <Link to="/login" className="text-blue-500 hover:underline">
-              Log In
-            </Link>
-          </p>
         </div>
-      </div>
-    </div>
+      )}{" "}
+    </>
   );
 };
 

@@ -1,44 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import Settings from './Settings';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import DocumentManage from './DocumentManage';
-import UserManagement from './UserManagement';
+import React, { useState, useEffect } from "react";
+import Settings from "./Settings";
 import {
-  FaUsers, FaFileAlt, FaCog, FaUserPlus, FaChartLine, 
-  FaBell, FaChalkboardTeacher, FaHome
-} from 'react-icons/fa';
-import FacultyManage from './FacultyManage';
-import Demo from './DemoGroups';
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+import DocumentManage from "./DocumentManage";
+import UserManagement from "./UserManagement";
+import {
+  FaUsers,
+  FaFileAlt,
+  FaCog,
+  FaUserPlus,
+  FaChartLine,
+  FaBell,
+  FaChalkboardTeacher,
+  FaHome,
+} from "react-icons/fa";
+import FacultyManage from "./FacultyManage";
+import Demo from "./DemoGroups";
 import networkRequests from "../request_helper";
 
 const req_client = new networkRequests();
 
 const AdminPanel = () => {
-  const navigate=useNavigate();
-  const [totalUsers,setTotalUsers]=useState(0);
-  const [totalDocs,setTotalDocs]=useState(0);
+  const navigate = useNavigate();
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalDocs, setTotalDocs] = useState(0);
 
-  const fetch_details = async() => {
+  const fetch_details = async () => {
     req_client.reload_tokens();
-    const header={
+    const header = {
       Authorization: `Bearer ${req_client.accessToken}`,
       "Content-Type": "application/json",
     };
-    const result=await req_client.fetchReq('total_details/', "GET", header);
-    if(result.ok){
-      const data= await result.json();
+    const result = await req_client.fetchReq("total_details/", "GET", header);
+    if (result.ok) {
+      const data = await result.json();
       setTotalUsers(data.total_users);
       setTotalDocs(data.total_docs);
     }
-  }
+  };
 
   useEffect(() => {
     fetch_details();
-  },[navigate]);
+  }, [navigate]);
   const location = useLocation();
-  
+
   // Check if we're on the main admin panel route
-  const isDashboardVisible = location.pathname === '/adminpanel';
+  const isDashboardVisible = location.pathname === "/adminpanel";
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -50,7 +63,7 @@ const AdminPanel = () => {
           <Link
             to="/adminpanel"
             className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel' ? 'bg-gray-700' : ''
+              location.pathname === "/adminpanel" ? "bg-gray-700" : ""
             }`}
           >
             <FaHome />
@@ -59,7 +72,9 @@ const AdminPanel = () => {
           <Link
             to="/adminpanel/UserManagement"
             className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel/UserManagement' ? 'bg-gray-700' : ''
+              location.pathname === "/adminpanel/UserManagement"
+                ? "bg-gray-700"
+                : ""
             }`}
           >
             <FaUsers />
@@ -68,7 +83,9 @@ const AdminPanel = () => {
           <Link
             to="/adminpanel/DocumentManage"
             className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel/DocumentManage' ? 'bg-gray-700' : ''
+              location.pathname === "/adminpanel/DocumentManage"
+                ? "bg-gray-700"
+                : ""
             }`}
           >
             <FaFileAlt />
@@ -77,7 +94,9 @@ const AdminPanel = () => {
           <Link
             to="/adminpanel/FacultyManage"
             className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel/FacultyManage' ? 'bg-gray-700' : ''
+              location.pathname === "/adminpanel/FacultyManage"
+                ? "bg-gray-700"
+                : ""
             }`}
           >
             <FaChalkboardTeacher />
@@ -86,7 +105,7 @@ const AdminPanel = () => {
           <Link
             to="/adminpanel/Settings"
             className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel/Settings' ? 'bg-gray-700' : ''
+              location.pathname === "/adminpanel/Settings" ? "bg-gray-700" : ""
             }`}
           >
             <FaCog />
@@ -109,30 +128,26 @@ const AdminPanel = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold">Total Users</h3>
-                  <p className="text-gray-600">150</p>
+                  <p className="text-gray-600">{totalUsers}</p>
                 </div>
               </div>
-              <div>
-                <h3 className="font-semibold">Total Users</h3>
-                <p className="text-gray-600">{totalUsers}</p>
+              <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
+                <div className="text-green-500 text-3xl">
+                  <FaFileAlt />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Uploaded Docs</h3>
+                  <p className="text-gray-600">{totalDocs}</p>
+                </div>
               </div>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
-              <div className="text-green-500 text-3xl">
-                <FaFileAlt />
-              </div>
-              <div>
-                <h3 className="font-semibold">Uploaded Docs</h3>
-                <p className="text-gray-600">{totalDocs}</p>
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
-              <div className="text-purple-500 text-3xl">
-                <FaChartLine />
-              </div>
-              <div>
-                <h3 className="font-semibold">Recent Activity</h3>
-                <p className="text-gray-600">10</p>
+              <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
+                <div className="text-purple-500 text-3xl">
+                  <FaChartLine />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Recent Activity</h3>
+                  <p className="text-gray-600">10</p>
+                </div>
               </div>
             </div>
           </div>

@@ -10,8 +10,7 @@ import {
   FaUserPlus,
   FaChartLine,
   FaChalkboardTeacher,
-  FaBell,
-  FaChalkboardTeacher
+  FaBell
 } from 'react-icons/fa'; // Import icons
 import networkRequests from "../request_helper";
 import FacultyManage from './FacultyManage';
@@ -49,8 +48,9 @@ const AdminPanel = () => {
         <nav>
           <Link
             to="/adminpanel/UserManagement"
-            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel/UserManagement' ? 'bg-gray-700' : ''
+            className={`flex items-center space-x-2 py-2 px-4 rounded-md transition-all duration-300 ease-in-out 
+              hover:scale-105 hover:shadow-lg hover:bg-gray-700 active:scale-95 ${
+              location.pathname === '/adminpanel/UserManagement' ? 'bg-gray-700 shadow-md scale-105' : ''
             }`}
           >
             <FaUsers />
@@ -58,8 +58,9 @@ const AdminPanel = () => {
           </Link>
           <Link
             to="/adminpanel/DocumentManage"
-            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel/DocumentManage' ? 'bg-gray-700' : ''
+            className={`flex items-center space-x-2 py-2 px-4 rounded-md transition-all duration-300 ease-in-out 
+              hover:scale-105 hover:shadow-lg hover:bg-gray-700 active:scale-95 ${
+              location.pathname === '/adminpanel/DocumentManage' ? 'bg-gray-700 shadow-md scale-105' : ''
             }`}
           >
             <FaFileAlt />
@@ -67,18 +68,24 @@ const AdminPanel = () => {
           </Link>
           {/* Added new link for Faculty Management */}
           <Link
-            to="/adminpanel/FacultyManage"
-            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel/FacultyManage' ? 'bg-gray-700' : ''
-            }`}
-          >
-            <FaChalkboardTeacher />
-            <span>Faculty Management</span>
+           to="/adminpanel/FacultyManage"
+           className={`flex items-center space-x-2 py-2 px-4 rounded-md transition-all duration-300 ease-in-out 
+              hover:scale-105 hover:shadow-lg hover:bg-gray-700 active:scale-95 
+              ${
+                location.pathname === '/adminpanel/FacultyManage'
+                  ? 'bg-gray-700 shadow-md scale-105'
+                  : ''
+              }`}
+              >
+            <FaChalkboardTeacher className="transition-transform duration-300 group-hover:rotate-12" />
+            <span className="transition-opacity duration-300 group-hover:opacity-90">Faculty Management</span>
           </Link>
+
           <Link
             to="/adminpanel/Settings"
-            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
-              location.pathname === '/adminpanel/Settings' ? 'bg-gray-700' : ''
+            className={`flex items-center space-x-2 py-2 px-4 rounded-md transition-all duration-300 ease-in-out 
+              hover:scale-105 hover:shadow-lg hover:bg-gray-700 active:scale-95  ${
+              location.pathname === '/adminpanel/Settings' ? 'bg-gray-700 shadow-md scale-105' : ''
             }`}
           >
             <FaCog />
@@ -93,7 +100,8 @@ const AdminPanel = () => {
           <h1 className="text-3xl font-semibold mb-4">Dashboard</h1>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Example Dashboard Cards */}
-            <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
+            <div className="`flex items-center space-x-2 py-2 px-4 rounded-md transition-all duration-300 ease-in-out 
+              hover:scale-105 hover:shadow-lg hover:bg-gray-700 active:scale-95 bg-white p-4 rounded-lg shadow-md flex items-center space-x-4 ">
               <div className="text-blue-500 text-3xl">
                 <FaUsers />
               </div>
@@ -102,7 +110,8 @@ const AdminPanel = () => {
                 <p className="text-gray-600">{totalUsers}</p>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
+            <div className="`flex items-center space-x-2 py-2 px-4 rounded-md transition-all duration-300 ease-in-out 
+              hover:scale-105 hover:shadow-lg hover:bg-gray-700 active:scale-95 bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
               <div className="text-green-500 text-3xl">
                 <FaFileAlt />
               </div>
@@ -111,7 +120,8 @@ const AdminPanel = () => {
                 <p className="text-gray-600">{totalDocs}</p>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
+            <div className="`flex items-center space-x-2 py-2 px-4 rounded-md transition-all duration-300 ease-in-out 
+              hover:scale-105 hover:shadow-lg hover:bg-gray-700 active:scale-95 bg-white p-4 rounded-lg shadow-md flex items-center space-x-4">
               <div className="text-purple-500 text-3xl">
                 <FaChartLine />
               </div>

@@ -310,7 +310,7 @@ const UserManagement = () => {
         </div>
         <button
           onClick={uploadCSV}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out"
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg  hover:scale-105 bg-blue-700 transition-all duration-300 ease-in-out"
         >
           Upload CSV file
         </button>
@@ -318,7 +318,7 @@ const UserManagement = () => {
 
       <button
         onClick={toggleAddUser}
-        className="bg-blue-600 text-white px-6 py-2 mb-5 rounded-lg hover:bg-blue-700 transition"
+        className="bg-blue-600 text-white px-6 py-2 mb-5 rounded-lg  hover:scale-105 :bg-blue-700 transition"
       >
         Add Single User
       </button>

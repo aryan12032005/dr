@@ -11,7 +11,7 @@ const AboutUs = () => {
         <div className="md:flex">
           <div className="md:w-1/2">
             <div className="p-6 md:p-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4 md:text-4xl">About Uss</h2>
+              <h2 className="text-3xl font-bold text-gray-800 mb-4 md:text-4xl">About Us</h2>
               <p className="text-base text-gray-700 leading-relaxed mb-6">
                 We are a team of passionate developers dedicated to crafting exceptional web experiences. Our mission is to build innovative and user-friendly applications that empower businesses and individuals alike. We believe in the power of technology to transform ideas into reality, and we strive to deliver solutions that exceed expectations.
               </p>

@@ -52,7 +52,7 @@ CORS_ALLOW_METHODS = [
     'OPTIONS',
 ]
 
-
+CORS_EXPOSE_HEADERS = ["Content-Disposition"]
 
 # Application definition
 

@@ -252,6 +252,9 @@ class adminuserView(APIView):
         is_allowed=request.query_params.get('is_allowed',None)
         if is_allowed:
             extra_params["is_allowed"]=is_allowed
+        dep_code=request.query_params.get('dep_code',None)
+        if dep_code:
+            extra_params['dep_code']=dep_code
 
         if querry:
             querry=querry.strip()
@@ -260,9 +263,10 @@ class adminuserView(APIView):
                 Q(email__icontains=querry) |
                 Q(id__icontains=querry) |
                 Q(phone_number__icontains=querry),**extra_params
-            ).values('email','id','first_name','username','phone_number','is_faculty')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
-            return Response({"users":list(users),"user_count":len(users)},status=status.HTTP_200_OK)
-        users=LibraryUser.objects.filter(**extra_params).values('email','id','first_name','username','phone_number','is_allowed')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
+            ).values('email','dep_code','id','first_name','username','phone_number','is_faculty')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
+            user_count=LibraryUser.objects.filter(is_admin=False).aggregate(Count("id"))
+            return Response({"users":list(users),"user_count":user_count['id__count']},status=status.HTTP_200_OK)
+        users=LibraryUser.objects.filter(**extra_params).values('email','dep_code','id','first_name','username','phone_number','is_allowed')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
         user_count=LibraryUser.objects.filter(is_admin=False).aggregate(Count("id"))
         return Response({"users":list(users),"user_count":user_count['id__count']},status=status.HTTP_200_OK)
     

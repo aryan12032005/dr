@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import Settings from './Settings';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import DocumentManage from './DocumentManage';
-import UserManagement from './UserManagement';
+import React, { useState, useEffect } from "react";
+import Settings from "./Settings";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+import DocumentManage from "./DocumentManage";
+import UserManagement from "./UserManagement";
 import {
   FaUsers,
   FaFileAlt,
@@ -13,32 +20,35 @@ import {
   FaBell
 } from 'react-icons/fa'; // Import icons
 import networkRequests from "../request_helper";
-import FacultyManage from './FacultyManage';
 
 const req_client = new networkRequests();
 
 const AdminPanel = () => {
-  const navigate=useNavigate();
-  const [totalUsers,setTotalUsers]=useState(0);
-  const [totalDocs,setTotalDocs]=useState(0);
+  const navigate = useNavigate();
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalDocs, setTotalDocs] = useState(0);
 
-  const fetch_details = async() => {
+  const fetch_details = async () => {
     req_client.reload_tokens();
-    const header={
+    const header = {
       Authorization: `Bearer ${req_client.accessToken}`,
       "Content-Type": "application/json",
     };
-    const result=await req_client.fetchReq('total_details/', "GET", header);
-    if(result.ok){
-      const data= await result.json();
+    const result = await req_client.fetchReq("total_details/", "GET", header);
+    if (result.ok) {
+      const data = await result.json();
       setTotalUsers(data.total_users);
       setTotalDocs(data.total_docs);
     }
-  }
+  };
 
   useEffect(() => {
     fetch_details();
-  },[navigate]);
+  }, [navigate]);
+  const location = useLocation();
+
+  // Check if we're on the main admin panel route
+  const isDashboardVisible = location.pathname === "/adminpanel";
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -46,6 +56,16 @@ const AdminPanel = () => {
       <aside className="bg-gray-800 text-white w-64 p-4">
         <h2 className="text-2xl font-semibold mb-6 text-center">Admin Panel</h2>
         <nav>
+          {/* Add a link to the dashboard */}
+          <Link
+            to="/adminpanel"
+            className={`flex items-center space-x-2 py-2 px-4 rounded-md hover:bg-gray-700 ${
+              location.pathname === "/adminpanel" ? "bg-gray-700" : ""
+            }`}
+          >
+            <FaHome />
+            <span>Dashboard</span>
+          </Link>
           <Link
             to="/adminpanel/UserManagement"
             className={`flex items-center space-x-2 py-2 px-4 rounded-md transition-all duration-300 ease-in-out 
@@ -66,7 +86,6 @@ const AdminPanel = () => {
             <FaFileAlt />
             <span>Document Management</span>
           </Link>
-          {/* Added new link for Faculty Management */}
           <Link
            to="/adminpanel/FacultyManage"
            className={`flex items-center space-x-2 py-2 px-4 rounded-md transition-all duration-300 ease-in-out 

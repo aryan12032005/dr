@@ -22,17 +22,17 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden">
-      {/* Background Images */}
+      {/* Current background image (dimmed) */}
       <div
-        className={`absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
-          isTransitioning ? "opacity-0" : "opacity-100"
-        }`}
+        className={`absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-1000 ease-in-out ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
         style={{
           backgroundImage: `url(${backgroundImages[currentImageIndex]})`,
           zIndex: 1,
-          filter: "brightness(40%)",
+          filter: 'brightness(0.7) blur(1px)' // Dim the image
         }}
       />
+
+      {/* Next background image (dimmed) */}
       <div
         className="absolute inset-0 w-full h-full bg-cover bg-center"
         style={{
@@ -90,13 +90,15 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Image Slider Indicators */}
+        {/* Image slider indicators */}
         <div className="absolute bottom-8 flex space-x-2 z-10">
           {backgroundImages.map((_, index) => (
             <button
               key={index}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                currentImageIndex === index ? "bg-yellow-100 w-6" : "bg-gray-400 bg-opacity-50"
+                currentImageIndex === index
+                  ? 'bg-yellow-100 w-6'
+                  : 'bg-gray-400 bg-opacity-50'
               }`}
               onClick={() => {
                 setIsTransitioning(true);
@@ -112,7 +114,7 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* CSS for 3D Book Animation */}
+      {/* CSS Animations for the book */}
       <style>{`
         .perspective-1000 {
           perspective: 1000px;
@@ -146,7 +148,7 @@ const Hero = () => {
           100% { transform: rotateY(0deg); }
         }
 
-        @keyframes pageFlip {
+        @keyframes bookPageTurn {
           0% { transform: rotateY(0deg); }
           30% { transform: rotateY(-120deg); }
           70% { transform: rotateY(-120deg); }

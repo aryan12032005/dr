@@ -100,10 +100,10 @@ const Navbar = () => {
     <>
       <nav className="z-50 relative flex bg-zinc-800 text-white px-4 py-4 items-center justify-between">
         <Link to="/" className="flex items-center">
-          <img className="h-10 me-4" src="vaibhavlogo.png" alt="logo" />
+          <img className="h-10 me-1" src="new_logo.png" alt="logo" />
           <h1 className="text-2xl font-semibold">Digital Repository</h1>
         </Link>
-        <div className="nav-links-repo block md:flex items-center gap-4">
+        <div className="nav-links-repo block md:flex items-center gap-4"> 
           <div className="hidden md:flex gap-4">
             {links.map((items, i) => (
               <Link

@@ -289,7 +289,7 @@ const Settings = () => {
             </div>
             <button
               onClick={handleAddSubject}
-              className="bg-blue-600 text-white px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out"
+              className="bg-blue-600 text-white px-6 rounded-lg hover:scale-105 hover:shadow-lg :bg-blue-700 transition-all duration-300 ease-in-out"
             >
               Add
             </button>
@@ -348,7 +348,7 @@ const Settings = () => {
             <div className="flex flex-row gap-5 mb-5">
               <button
                 onClick={openModal}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out"
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:scale-105 hover:shadow-lg: bg-blue-700 transition-all duration-300 ease-in-out"
               >
                 Add managers
               </button>
@@ -424,7 +424,7 @@ const Settings = () => {
         </div>
         <button
           onClick={handleAddDepartment}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out"
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:scale-105 hover:shadow-lg: bg-blue-700 transition-all duration-300 ease-in-out"
         >
           Add Department
         </button>

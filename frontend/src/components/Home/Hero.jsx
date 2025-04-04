@@ -61,10 +61,10 @@ const Hero = () => {
             <div className="mt-7">
               <Link
                 to="/Login"
-                className="text-yellow-100 text-xl lg:text-2xl font-semibold border border-yellow-100 px-10 py-3 hover:bg-zinc-800 rounded-full transition-colors duration-300 "
+                className="text-yellow-100 text-xl lg:text-2xl font-semibold border border-yellow-100 px-10 py-3 hover:bg-zinc-800  rounded-full transition-colors duration-300 "
               >
              
-                Login to Discover
+                Login to Discover 
               </Link>
             </div>
 

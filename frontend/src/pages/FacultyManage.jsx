@@ -1,129 +1,18 @@
 import React, { useEffect, useState } from "react";
 import networkRequests from "../request_helper";
 import { useNavigate } from "react-router-dom";
+import { saveAs } from "file-saver";
 
 const req_client = new networkRequests();
 const FacultyManage = () => {
   const navigate = useNavigate();
-  // Sample faculty data
-  const [faculty, setFaculty] = useState([
-    {
-      id: 1,
-      name: "Dr. Sarah Johnson",
-      department: "CSE",
-      designation: "Associate Professor",
-      email: "sarah.johnson@university.edu",
-      joinDate: "2020-08-15",
-      profileImage: "johnson.jpg",
-      documents: [
-        {
-          id: 101,
-          name: "Machine Learning Syllabus.pdf",
-          uploadDate: "2023-01-15",
-          size: "1.2 MB",
-        },
-        {
-          id: 102,
-          name: "Neural Networks Research.docx",
-          uploadDate: "2023-02-20",
-          size: "3.5 MB",
-        },
-        {
-          id: 103,
-          name: "Student Grading Sheet.xlsx",
-          uploadDate: "2023-03-10",
-          size: "0.8 MB",
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: "Prof. Michael Chen",
-      department: "Mechanical",
-      designation: "Professor",
-      email: "michael.chen@university.edu",
-      joinDate: "2018-05-22",
-      profileImage: "chen.jpg",
-      documents: [
-        {
-          id: 201,
-          name: "Thermodynamics Course Material.pdf",
-          uploadDate: "2023-01-05",
-          size: "5.2 MB",
-        },
-        {
-          id: 202,
-          name: "Fluid Mechanics Lab Manual.pdf",
-          uploadDate: "2023-02-12",
-          size: "2.7 MB",
-        },
-      ],
-    },
-    {
-      id: 3,
-      name: "Dr. Emily Rodriguez",
-      department: "CSE",
-      designation: "Assistant Professor",
-      email: "emily.rodriguez@university.edu",
-      joinDate: "2021-01-10",
-      profileImage: "rodriguez.jpg",
-      documents: [
-        {
-          id: 301,
-          name: "Data Structures Notes.pdf",
-          uploadDate: "2023-01-18",
-          size: "2.1 MB",
-        },
-        {
-          id: 302,
-          name: "Algorithm Analysis.pptx",
-          uploadDate: "2023-02-25",
-          size: "4.0 MB",
-        },
-        {
-          id: 303,
-          name: "Programming Assignment.zip",
-          uploadDate: "2023-03-05",
-          size: "1.5 MB",
-        },
-      ],
-    },
-    {
-      id: 4,
-      name: "Dr. Robert Wilson",
-      department: "Electrical",
-      designation: "Professor",
-      email: "robert.wilson@university.edu",
-      joinDate: "2017-09-01",
-      profileImage: "wilson.jpg",
-      documents: [
-        {
-          id: 401,
-          name: "Circuit Theory Handbook.pdf",
-          uploadDate: "2023-01-10",
-          size: "3.8 MB",
-        },
-        {
-          id: 402,
-          name: "Electronics Lab Manual.pdf",
-          uploadDate: "2023-02-15",
-          size: "2.3 MB",
-        },
-        {
-          id: 403,
-          name: "Signal Processing Lecture Notes.pdf",
-          uploadDate: "2023-03-20",
-          size: "1.9 MB",
-        },
-      ],
-    },
-  ]);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [facultyList,setFacultyList] = useState({});
+  const [facultyList, setFacultyList] = useState({});
   const [allDepartments, setAllDepartments] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [expandedFaculty, setExpandedFaculty] = useState(null);
+  const [facultyDocs, setFacultyDoc] = useState([]);
   const [documentSearchQuery, setDocumentSearchQuery] = useState("");
 
   useEffect(() => {
@@ -155,24 +44,26 @@ const FacultyManage = () => {
     );
     const resultJson = await result.json();
     if (result.ok && resultJson.users.length > 0) {
-      resultJson.users.forEach(user => {
+      resultJson.users.forEach((user) => {
         setFacultyList((facultyList) => ({
           ...facultyList,
-          [user.dep_code]: facultyList[user.dep_code] ? [...facultyList[user.dep_code], user] : [user]
-        }))
+          [user.dep_code]: facultyList[user.dep_code]
+            ? [...facultyList[user.dep_code], user]
+            : [user],
+        }));
       });
     }
   };
 
   const fetchFaculty = async (dep_code) => {
-    if(dep_code in facultyList){
+    if (dep_code in facultyList) {
       setFacultyList((facultyList) => {
-        const tempList = {...facultyList};
+        const tempList = { ...facultyList };
         delete tempList[dep_code];
         return tempList;
-      })
+      });
       return;
-    };
+    }
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -184,79 +75,84 @@ const FacultyManage = () => {
     );
     const resultJson = await result.json();
     if (result.ok) {
-      setFacultyList((facultyList) => ({...facultyList,[dep_code]:resultJson.users}));
+      setFacultyList((facultyList) => ({
+        ...facultyList,
+        [dep_code]: resultJson.users,
+      }));
     }
   };
 
-  // Handle faculty deletion
-  const handleDelete = (id) => {
-    setFaculty(faculty.filter((fac) => fac.id !== id));
-  };
-
-  // Handle document deletion
-  const handleDocumentDelete = (facultyId, documentId) => {
-    const updatedFaculty = faculty.map((fac) => {
-      if (fac.id === facultyId) {
-        return {
-          ...fac,
-          documents: fac.documents.filter((doc) => doc.id !== documentId),
-        };
-      }
-      return fac;
-    });
-
-    setFaculty(updatedFaculty);
-  };
-
-  // Toggle faculty expansion
-  const toggleFacultyExpansion = (facultyId) => {
-    if (expandedFaculty === facultyId) {
-      setExpandedFaculty(null);
-    } else {
-      setExpandedFaculty(facultyId);
-    }
-  };
-
-  // Group faculty by department
-  const groupedFaculty = () => {
-    // Filter faculty based on search query first
-    const filteredFaculty = faculty.filter((fac) => {
-      return (
-        fac.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        fac.email.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    });
-
-    // Group by department if not showing all departments
-    if (selectedDepartment !== "All") {
-      return {
-        [selectedDepartment]: filteredFaculty.filter(
-          (fac) => fac.department === selectedDepartment
-        ),
-      };
-    }
-
-    // Otherwise, group all faculty by their departments
-    return filteredFaculty.reduce((groups, fac) => {
-      const department = fac.department;
-      if (!groups[department]) {
-        groups[department] = [];
-      }
-      groups[department].push(fac);
-      return groups;
-    }, {});
-  };
-
-  // Filter documents based on search query
-  const filterDocuments = (documents) => {
-    if (!documentSearchQuery) return documents;
-
-    return documents.filter((doc) =>
-      doc.name.toLowerCase().includes(documentSearchQuery.toLowerCase())
+  const fetchDocuments = async (id) => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq(
+      `get_faculty_doc/?fac_id=${id}`,
+      "GET",
+      headers
     );
+    if (result.ok) {
+      const resultJson = await result.json();
+      setFacultyDoc(resultJson.documents);
+    } else if (result.status === 404) {
+      const resultJson = await result.json();
+      alert(resultJson.message);
+    }
+    setExpandedFaculty(id);
   };
 
-  const facultyByDepartment = groupedFaculty();
+  const downloadDoc = async (id) => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq(
+      `download_doc/?doc_id=${id}`,
+      "GET",
+      headers
+    );
+    if (result.ok) {
+      const contentType = result.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const resultJson = await result.json();
+        alert(resultJson.message);
+      } else {
+        const contentDisposition = result.headers.get("Content-Disposition");
+        let filename = "download.zip";
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="(.+?)"/);
+            if (match && match.length > 1) {
+                filename = match[1];  
+            }
+        }
+        saveAs(await result.blob(), filename);
+      }
+    } else if (result.status === 400) {
+      const resultJson = await result.json();
+      alert(resultJson.message);
+    }
+  };
+
+  const deleteDoc = async (id) => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq(
+      `delete_document/?doc_id=${id}`,
+      "DELETE",
+      headers
+    );
+    if (result.ok) {
+      const resultJson = await result.json();
+      alert(resultJson.message);
+      fetchDocuments(expandedFaculty);
+    } else {
+      const resultJson = await result.json();
+      alert(resultJson.message);
+    }
+  };
 
   return (
     <div className="p-8 bg-gray-100 min-h-screen">
@@ -305,14 +201,17 @@ const FacultyManage = () => {
         {allDepartments.length > 0 ? (
           allDepartments.map((dept) => (
             <div key={dept.dep_code} className="mb-8">
-              <h3
-                className="text-lg font-semibold text-gray-700 mb-3 bg-gray-200 p-2 rounded"
+              <div
+                className="flex items-center justify-between w-full bg-gray-200 p-2 pr-10 rounded cursor-pointer"
                 onClick={() => fetchFaculty(dept.dep_code)}
               >
-                {dept.dep_name} Department
-              </h3>
+                <h3 className="text-lg font-semibold text-gray-700 mb-3 bg-gray-200 p-2 rounded">
+                  {dept.dep_name} Department
+                </h3>
+                <h2>{dept.dep_code in facultyList ? "▼" : "▶"}</h2>
+              </div>
               <div className="rounded-lg overflow-hidden">
-                {(dept.dep_code in facultyList) ? (
+                {dept.dep_code in facultyList ? (
                   facultyList[dept.dep_code].map((fac) => (
                     <div
                       key={fac.id}
@@ -334,8 +233,7 @@ const FacultyManage = () => {
                                 {fac.first_name}
                               </h2>
                               <p className="text-sm text-gray-500">
-                                {fac.dep_code} •{" "}
-                                {fac.email}
+                                {fac.dep_code} • {fac.email}
                               </p>
                               <p className="text-sm text-gray-500">
                                 Contact • {fac.phone_number} {"  "} Document(s)
@@ -345,11 +243,9 @@ const FacultyManage = () => {
                           <div className="flex space-x-4">
                             <button
                               className="text-blue-500 hover:text-blue-700 transition-colors"
-                              onClick={() => toggleFacultyExpansion(fac.id)}
+                              onClick={() => fetchDocuments(fac.id)}
                             >
-                              {expandedFaculty === fac.id
-                                ? "Hide Documents"
-                                : "Show Documents"}
+                              Show documents
                             </button>
                             <button
                               className="text-green-500 hover:text-green-700 transition-colors"
@@ -358,12 +254,6 @@ const FacultyManage = () => {
                               }
                             >
                               Edit
-                            </button>
-                            <button
-                              className="text-red-500 hover:text-red-700 transition-colors"
-                              onClick={() => handleDelete(fac.id)}
-                            >
-                              Delete
                             </button>
                           </div>
                         </div>
@@ -387,20 +277,10 @@ const FacultyManage = () => {
                               }
                               className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
-                            <label className="bg-green-500 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-green-600 transition-colors">
-                              Upload New Document
-                              <input
-                                type="file"
-                                className="hidden"
-                                onChange={(e) =>
-                                  handleDocumentUpload(fac.id, e)
-                                }
-                              />
-                            </label>
                           </div>
 
                           {/* Document List */}
-                          {filterDocuments(fac.documents).length > 0 ? (
+                          {facultyDocs.length > 0 ? (
                             <div className="overflow-x-auto">
                               <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-100">
@@ -412,7 +292,7 @@ const FacultyManage = () => {
                                       Upload Date
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Size
+                                      Doc type
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                       Actions
@@ -420,35 +300,28 @@ const FacultyManage = () => {
                                   </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                  {filterDocuments(fac.documents).map((doc) => (
+                                  {facultyDocs.map((doc) => (
                                     <tr key={doc.id}>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {doc.name}
+                                        {doc.title}
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {doc.uploadDate}
+                                        {doc.createDate}
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {doc.size}
+                                        {doc.docType}
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         <div className="flex space-x-2">
                                           <button
                                             className="text-blue-500 hover:text-blue-700 transition-colors"
-                                            onClick={() =>
-                                              alert(`Downloading ${doc.name}`)
-                                            }
+                                            onClick={() => downloadDoc(doc.id)}
                                           >
                                             Download
                                           </button>
                                           <button
                                             className="text-red-500 hover:text-red-700 transition-colors"
-                                            onClick={() =>
-                                              handleDocumentDelete(
-                                                fac.id,
-                                                doc.id
-                                              )
-                                            }
+                                            onClick={() => deleteDoc(doc.id)}
                                           >
                                             Delete
                                           </button>

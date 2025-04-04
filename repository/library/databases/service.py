@@ -1,5 +1,9 @@
 from pymongo import MongoClient
 import os
+from bson import ObjectId
+import zipfile
+import base64
+
 class mongo_DB:
     def __init__(self, username=None, password=None, host="localhost", port=27017, db_name="Library", table_name="documents"):
         auth_database="admin"
@@ -17,18 +21,36 @@ class mongo_DB:
         inserted_id=self.doc.insert_one(item).inserted_id
         return inserted_id
     
-    def get_document(self, querry):
+    def search_document(self, querry):
         item=self.doc.find(
             {"$text": {"$search": querry}},
             {"score": {"$meta": "textScore"}}
         ).sort([("score", {"$meta": "textScore"})]).limit(10)
         if item:
-            return item
+            return item.to_list()
         else:
             return None
         
-    def update_doc(self,id, new_value):
-        query = {"id": id}
+    def get_faculty_doc(self,fac_id:str):
+        items=self.doc.find(
+            {"owner":int(fac_id)}
+        )
+        if items:
+            return items.to_list()
+        else:
+            return None
+        
+    def get_doc_by_id(self,doc_id:str):
+        items=self.doc.find_one(
+            {"_id":ObjectId(doc_id)}
+        )
+        if items:
+            return items
+        else:
+            return None
+        
+    def update_doc(self,id:str, new_value):
+        query = {"_id": ObjectId(id)}
         new_values = {"$set": new_value}
         result=self.doc.update_one(query,new_values)
         if result:
@@ -37,7 +59,7 @@ class mongo_DB:
             return None
         
     def delete_doc(self,id):
-        querry={'id':id}
+        querry={'_id':ObjectId(id)}
         result=self.doc.delete_one(querry)
         return result.deleted_count
        
@@ -68,13 +90,42 @@ class fsHandler:
                         new_file.write(chunks)
         except:
             return False
-        return temp_dir
+        return True
     
     def detele_files(self,category,id,filenames):
         temp_dir=self.work_dir+'/'+category+'/'+str(id)
         try:
             for f in filenames:
                 os.remove(temp_dir+'/'+f)
+            os.rmdir(temp_dir)
         except:
-            return 0
+            return False
         return True
+    
+    def getCover(self, category:str, doc_id:str):
+        folder_dir=self.work_dir+"/"+category+"/cover/"+doc_id
+        file_name= os.listdir(folder_dir)[0]
+        cover = open(folder_dir+"/"+file_name, "rb")
+        if cover:
+            return base64.b64encode(cover.read()).decode('utf-8')
+        else:
+            return None
+    
+    def getZip(self, category:str, doc_id:str):
+        folder_dir=self.work_dir+"/"+category+"/documents/"+doc_id
+        file_name=doc_id+".zip"
+        os.makedirs(self.work_dir+"/ZIP",exist_ok=True)
+        zip_path= self.work_dir+"/ZIP/"+file_name
+        try:
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                for root, _, files in os.walk(folder_dir): 
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_path, folder_dir) 
+                        zip_file.write(file_path, arcname)
+            zip_file=open(zip_path,"rb")
+            return zip_file, True
+        except:
+            return None, False
+            
+

@@ -8,33 +8,24 @@ const DocUpload = () => {
   const [showUploadOptions, setShowUploadOptions] = useState(false);
 
   // Document upload fields
+  const [coverAcceptType, setCoverAcceptType] = useState("");
+  const [documentAcceptType, setDocumentAcceptType] = useState("");
   const [documentType, setDocumentType] = useState("");
   const [coverType, setCoverType] = useState("");
+  const [coverLink,setCoverLink]= useState("");
+  const [documentLink,setDocumentLink]= useState("");
   const [Cover, setCover] = useState("");
   const [documentFile, setDocument] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [category, setCategory] = useState("");
   const [department, setDepartment] = useState("");
   const [subject, setSubject] = useState("");
-  const [coverAcceptType, setCoverAcceptType] = useState("");
-  const [documentAcceptType, setDocumentAcceptType] = useState("");
   const [title, setTitle] = useState("");
 
   // form fields
   const [allDepartments, setAllDepartments] = useState([]);
   const [subjects,setSubjects]= useState([]);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (coverType === "img") {
-      setCoverAcceptType("image/*");
-    } else if (coverType === "link") {
-      setCoverAcceptType("link");
-    } else if (coverType === "pdf") {
-      setCoverAcceptType(".pdf");
-    }
-    setCover(null);
-  }, [coverType]);
 
   const getAllDepartments = async () => {
     req_client.reload_tokens();
@@ -47,7 +38,17 @@ const DocUpload = () => {
       setAllDepartments(resultJson.departments);
     }
   };
-  
+
+  useEffect(() => {
+    if (coverType === "img") {
+      setCoverAcceptType("image/*");
+    } else if (coverType === "link") {
+      setCoverAcceptType("link");
+    } else if (coverType === "pdf") {
+      setCoverAcceptType(".pdf");
+    }
+    setCover(null);
+  }, [coverType]);
 
   useEffect(() => {
     if (documentType === "pdf") {
@@ -74,7 +75,7 @@ const DocUpload = () => {
     setDocument(event.target.files);
   };
 
-  const searchSubjects = async () => {
+  const searchSubjects = async (department) => {
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -85,7 +86,6 @@ const DocUpload = () => {
       headers
     );
     const resultJson=await result.json();
-    console.log(resultJson);
     if(result.ok){
       setSubjects(resultJson.subjects);
     }
@@ -97,23 +97,24 @@ const DocUpload = () => {
     data.append("coverType", coverType);
     data.append("documentType", documentType);
     data.append("isPublic", isPublic);
-    if (Cover && Cover.length > 0) {
+    if (Cover && Cover.length > 0 && coverType != 'link') {
       data.append("cover", Cover[0]);
     } else {
-      data.append("coverLink", Cover);
+      data.append("coverLink", coverLink);
     }
 
     // Append documents (multiple files)
-    if (documentFile && documentFile.length > 0) {
+    if (documentFile && documentFile.length > 0 && documentType != 'link') {
       Array.from(documentFile).forEach((doc) => {
         data.append("documents", doc); // 'documents' will be an array in the backend
       });
     } else {
-      data.append("documentLink", documentFile);
+      data.append("documentLink", documentLink);
     }
     data.append("category", category);
     data.append("department",department);
     data.append("subject",subject);
+
     for (let [key, value] of data.entries()) {
       if (!value) {
         alert(`Please fill in the ${key} field.`);
@@ -126,7 +127,7 @@ const DocUpload = () => {
       Authorization: `Bearer ${req_client.accessToken}`,
     };
     const response = await req_client.fetchReq(
-      "upload-document/",
+      "upload_document/",
       "POST",
       headers,
       data
@@ -168,24 +169,22 @@ const DocUpload = () => {
           </select>
 
           {/* Cover Input */}
-          {coverType === "link" ? (
             <input
               type="text"
-              className="mt-4 border p-2 rounded w-full"
+              className={`mt-4 border p-2 rounded w-full ${coverType === "link" ? "" : "hidden"}`}
               placeholder="Enter the link"
-              onChange={(e) => setCover(e.target.value)}
+              value={coverLink || ""}
+              onChange={(e) => setCoverLink(e.target.value)}
               required
             />
-          ) : (
             <input
               type="file"
-              className="mt-4 border p-2 rounded w-full"
+              className={`mt-4 border p-2 rounded w-full ${coverType === "link" ? "hidden" : ""}`}
               multiple
               accept={coverAcceptType}
               onChange={handleCoverChange}
               required
             />
-          )}
           <h2 className="text-lg font-semibold text-gray-800">
             Select Document Type
           </h2>
@@ -208,24 +207,22 @@ const DocUpload = () => {
           </select>
 
           {/* Document Input */}
-          {documentType === "link" ? (
             <input
               type="text"
-              className="mt-4 border p-2 rounded w-full"
+              className={`mt-4 border p-2 rounded w-full ${documentType === "link" ? "" : "hidden"}`}
               placeholder="Enter the link"
-              onChange={(e) => setDocument(e.target.value)}
+              value={documentLink || ""}
+              onChange={(e) => setDocumentLink(e.target.value)}
               required
             />
-          ) : (
             <input
               type="file"
-              className="mt-4 border p-2 rounded w-full"
+              className={`mt-4 border p-2 rounded w-full ${documentType === "link" ? "hidden" : ""}`}
               multiple
               accept={documentAcceptType}
               onChange={handleDocumentChange}
               required
             />
-          )}
 
           <h2 className="text-lg font-semibold text-gray-800">Title</h2>
           <input
@@ -268,7 +265,7 @@ const DocUpload = () => {
               Other
             </option>
             {subjects.length >0 &&
-            subjects.map((item) => (
+              subjects.map((item) => (
               <option value={item.code} key={item.code}>{item.name}</option>
             ))
             }

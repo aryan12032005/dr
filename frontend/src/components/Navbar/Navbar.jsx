@@ -6,7 +6,6 @@ import networkRequests from "../../request_helper";
 
 const req_client = new networkRequests();
 
-
 const get_status = async () => {
   await req_client.reload_tokens();
   if (!req_client.accessToken || !req_client.refreshToken) {
@@ -42,18 +41,20 @@ const Navbar = () => {
   ]);
   const [MobileNav, setMobileNav] = useState("hidden");
 
-
   useEffect(() => {
     get_status().then((result) => {
+      sessionStorage.setItem("user_status", result);
       set_user_status(result);
     });
     const interval = setInterval(() => {
       get_status().then((result) => {
+        sessionStorage.setItem("user_status", result);
+        console.log(result);
         set_user_status(result);
       });
     }, 10000);
     return () => clearInterval(interval);
-  }, [location,navigate,window.location.pathname]);
+  }, [location, navigate, window.location.pathname]);
 
   // Side-effect when user status changes
   useEffect(() => {
@@ -85,10 +86,10 @@ const Navbar = () => {
         updatedLinks.push(
           { title: "Document Upload", link: "/doc-upload" },
           {
-            title:"Faculty",
-            link:"/facultypanel",
+            title: "Faculty",
+            link: "/facultypanel",
           },
-          { title: "Logout", link: "/logout" },
+          { title: "Logout", link: "/logout" }
         );
       }
       setloginSignup([]);
@@ -164,7 +165,7 @@ const Navbar = () => {
             {items.tittle}{" "}
           </Link>
         ))}
-        </div>
+      </div>
     </>
   );
 };

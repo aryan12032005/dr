@@ -613,6 +613,6 @@ const UserManagement = () => {
       </table>
     </div>
   );
-};
+};  
 
 export default UserManagement;

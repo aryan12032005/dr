@@ -177,7 +177,7 @@ const FacultyManage = () => {
           />
           <button
             onClick={searchFaculty}
-            className="bg-blue-600 text-white px-6 py-2 mb-5 rounded-lg hover:bg-blue-700 transition"
+            className="bg-blue-600 text-white px-6 py-2 mb-5 rounded-lg hover:scale-105 hover:shadow-lg: bg-blue-700 transition"
           >
             Search
           </button>

@@ -58,14 +58,14 @@ const Hero = () => {
         <div className="w-full lg:w-3/6 flex flex-col items-center px-4 lg:px-0 text-center pt-14 lg:pt-14">
           <div className="rounded-lg p-8"> {/* Add subtle background using bg-black bg-opacity-20 */}
             <div className="text-container">
-              <h1 className="text-5xl lg:text-7xl font-bold text-yellow-100 leading-tight mb-4 text-shadow-md"> {/* Increased size, bold, shadow */}
+              <h1 className="text-5xl lg:text-7xl font-kalam text-yellow-400 leading-tight mb-4 text-shadow-lg"> {/* Increased size, bold, shadow */}
                 <ReactTyped
                   strings={[
                     'Welcome to',
                     'Institutional Digital Resource Library',
                   ]}
-                  typeSpeed={40}
-                  backSpeed={40}
+                  typeSpeed={80}
+                  backSpeed={30}
                   loop={true}
                 />
               </h1>

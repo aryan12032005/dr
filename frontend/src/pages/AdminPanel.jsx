@@ -21,7 +21,6 @@ import {
   FaHome,
 } from "react-icons/fa";
 import FacultyManage from "./FacultyManage";
-import Demo from "./DemoGroups";
 import networkRequests from "../request_helper";
 
 const req_client = new networkRequests();

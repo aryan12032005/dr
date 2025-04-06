@@ -236,6 +236,51 @@ class SearchView(APIView):
             return Response({"documents":documents},status=status.HTTP_200_OK)
         return Response({"message":"no document found"},status=status.HTTP_404_NOT_FOUND)
 
+# class SearchView(APIView):
+    # def get(self,request):
+    #     querry=request.query_params.get('querry')
+    #     start_date = request.query_params.get('start_date')  
+    #     end_date = request.query_params.get('end_date') 
+    #     doc_type_filter = request.query_params.get('doc_type')
+    #     # dateFilter= request.query_params.get('dateFilter')
+    #     dateFilter=True
+    #     mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
+    #     search_filter = {
+    #         "$or": [
+    #             {"title": {"$regex": querry, "$options": "i"}},  
+    #             {"docType": {"$regex": querry, "$options": "i"}}  
+    #         ]
+    #     }
+    #     if start_date or end_date:
+    #         date_filter = {}
+    #         if start_date:
+    #             date_filter["$gte"] = start_date
+    #         if end_date:
+    #             date_filter["$lte"] = end_date
+    #         search_filter["createDate"] = date_filter
+    #     if doc_type_filter:
+    #         search_filter["docType"] = doc_type_filter
+    #     result=mongo_client.search_document(str(querry),search_filter)
+    #     if len(result) > 0:
+    #         documents = []
+    #         for doc in result:
+    #             date_str = doc.get('createDate', '')  
+    #             try:
+    #                 date = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f').date() if date_str else None
+    #             except ValueError:
+    #                 date = None  
+
+    #             documents.append({
+    #                 'id': str(doc['_id']),
+    #                 'title': doc.get('title', ''),
+    #                 'docType': doc.get('docType', ''),
+    #                 'date': date
+    #             })
+    #         print(documents)
+    #         return Response({"documents":documents},status=status.HTTP_200_OK)
+    #     return Response({"message":"no document found"},status=status.HTTP_404_NOT_FOUND)
+
+
 class getDocDetails(APIView):
     authentication_classes=[JWTAuthentication]
     permission_classes=[IsAuthenticated,IsActive]
@@ -354,11 +399,23 @@ class downloadDoc(APIView):
 
 class adminuserView(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated,IsAdmin,IsActive]
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [IsAuthenticated(), IsAdmin_or_Faculty(), IsActive()]
+        if self.request.method == "POST":
+            return [IsAuthenticated(), IsAdmin(), IsActive()]
+        if self.request.method == "DELETE":
+            return [IsAuthenticated(), IsAdmin(), IsActive()]
+        
+        return super().get_permissions()
 
     def get(self,request):
         querry=request.query_params.get('querry',None)
         extra_params={}
+        user_id = request.query_params.get('user_id',None)
+        if user_id:
+            extra_params['id']= int(user_id)
         is_admin=request.query_params.get('is_admin',None)
         if is_admin:
             extra_params["is_admin"]=is_admin
@@ -371,18 +428,24 @@ class adminuserView(APIView):
         dep_code=request.query_params.get('dep_code',None)
         if dep_code:
             extra_params['dep_code']=dep_code
+        fetch_fields = ['email','dep_code','id','first_name','username','phone_number','is_allowed']
+
+        if request.user.is_faculty==True:
+            extra_params['is_allowed']= True
+            fetch_fields = ['dep_code','id','first_name','username']
 
         if querry:
             querry=querry.strip()
             users=LibraryUser.objects.filter(
+                Q(first_name__icontains=querry) |
                 Q(username__icontains=querry) |
                 Q(email__icontains=querry) |
                 Q(id__icontains=querry) |
                 Q(phone_number__icontains=querry),**extra_params
-            ).values('email','dep_code','id','first_name','username','phone_number','is_faculty')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
+            ).values(*fetch_fields)[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
             user_count=LibraryUser.objects.filter(is_admin=False).aggregate(Count("id"))
             return Response({"users":list(users),"user_count":user_count['id__count']},status=status.HTTP_200_OK)
-        users=LibraryUser.objects.filter(**extra_params).values('email','dep_code','id','first_name','username','phone_number','is_allowed')[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
+        users=LibraryUser.objects.filter(**extra_params).values(*fetch_fields)[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
         user_count=LibraryUser.objects.filter(is_admin=False).aggregate(Count("id"))
         return Response({"users":list(users),"user_count":user_count['id__count']},status=status.HTTP_200_OK)
     
@@ -411,14 +474,13 @@ class adminuserView(APIView):
 
 class deprtment_view(APIView):
     authentication_classes=[JWTAuthentication]
-    permission_classes=[IsAuthenticated]
     
     def get_permissions(self):
         if self.request.method=='POST':
-            return [IsAdmin(),IsActive()]
+            return [IsAdmin(),IsActive(),IsAuthenticated()]
         
         if self.request.method=='GET':
-            return [IsActive(),IsAdmin_or_Faculty()]
+            return [IsActive(),IsAdmin_or_Faculty(), IsAuthenticated()]
         
         return super().get_permissions()
 
@@ -493,3 +555,82 @@ class upload_document(APIView):
 
         return Response({'message':'docs uploaded'},status=status.HTTP_200_OK)
     
+class GroupView(APIView):
+    authentication_classes=[JWTAuthentication]
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [IsActive(), IsAuthenticated()]
+        if self.request.method == 'POST':
+            return [IsAuthenticated(), IsActive(), IsAdmin_or_Faculty()]
+        return super().get_permissions()
+
+    def get(self,request):
+        user = request.user
+        group_id = request.query_params.get('group_id')
+        if group_id:
+            mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
+            group_details= mongo_client.get_doc_by_id(str(group_id))
+            if group_details:
+                group_details['id'] = str(group_details['_id'])
+                group_details.pop('_id',None)
+                return Response({'group_details':group_details},status=status.HTTP_200_OK)
+            else:
+                return Response({"message":"No groups found"},status=status.HTTP_400_BAD_REQUEST)
+
+        
+        member_id = request.query_params.get('member_id')
+        if member_id:
+            my_groups = LibraryUser.objects.filter(id= member_id).values("my_groups")
+            if my_groups:
+                for grp in my_groups:
+                    grp['id'] = str(grp['_id'])
+                    grp.pop('_id',None)
+                return Response({"groups":my_groups},status=status.HTTP_200_OK)
+            else:
+                return Response({'message':"No groups found"},status=status.HTTP_400_BAD_REQUEST)
+        
+        if user.is_faculty == True:
+            mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
+            groups= mongo_client.get_faculty_doc(str(user.id))
+            if groups:
+                for grp in groups:
+                    grp['id'] = str(grp['_id'])
+                    grp.pop('_id', None)
+                return Response({'groups':groups},status=status.HTTP_200_OK)
+            else:
+                return Response({"message":"No groups found"},status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message":'error fetching groups'},status=status.HTTP_400_BAD_REQUEST)
+            
+    def post(self,request):
+        user = request.user
+        group_details = request.data
+        if group_details == None:
+            return Response({'message':'no group to be added'},status=status.HTTP_400_BAD_REQUEST)
+        group_details['owner']= user.id
+        mongo_client = mongo_DB(username=MONGO_USERNAME, password=MONGO_PASSWORD, db_name="Library", table_name="groups")
+        group_id= mongo_client.insert(group_details)
+        try:
+            for member in group_details['members']:
+                user = LibraryUser.objects.filter(username= str(member['username'])).first()
+                user.groups.append(str(group_id))
+                user.save()
+            return Response({'message':'group created successfull'},status=status.HTTP_200_OK)
+        except Exception as e:
+            existing_group= mongo_client.get_doc_by_id(str(group_id))
+            if existing_group:
+                mongo_client.delete_doc(str(group_id))
+            return Response({'message':'error creating group'},status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self, request):
+        group_id = request.query_params.get('group_id',None)
+        if not group_id:
+            return Response({'message':'please provide group id'},status=status.HTTP_400_BAD_REQUEST)
+        mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
+        existing_group = mongo_client.get_doc_by_id(str(group_id))
+        if existing_group:
+            delete_status = mongo_client.delete_doc(str(group_id))
+            if delete_status:
+                return Response({'message':'group deleted successfull'},status=status.HTTP_200_OK)
+            else:
+                return Response({'message':'error deleting group'}, status=status.HTTP_400_BAD_REQUEST)

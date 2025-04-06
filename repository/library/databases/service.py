@@ -58,7 +58,7 @@ class mongo_DB:
         else:
             return None
         
-    def delete_doc(self,id):
+    def delete_doc(self,id:str):
         querry={'_id':ObjectId(id)}
         result=self.doc.delete_one(querry)
         return result.deleted_count

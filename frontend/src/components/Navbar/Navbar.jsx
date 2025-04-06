@@ -49,7 +49,6 @@ const Navbar = () => {
     const interval = setInterval(() => {
       get_status().then((result) => {
         sessionStorage.setItem("user_status", result);
-        console.log(result);
         set_user_status(result);
       });
     }, 10000);

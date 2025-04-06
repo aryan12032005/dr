@@ -32,7 +32,7 @@ const UserManagement = () => {
       req_client.reload_tokens();
       const headers = { Authorization: `Bearer ${req_client.accessToken}` };
       const result = await req_client.fetchReq(
-        "admin/?start_c=0&end_c=50&is_admin=False",
+        "search_user/?start_c=0&end_c=50&is_admin=False",
         "GET",
         headers
       );
@@ -71,7 +71,7 @@ const UserManagement = () => {
         "Content-Type": "application/json",
       };
       const result = await req_client.fetchReq(
-        `admin/?start_c=0&end_c=50&querry=${query}&is_admin=False`,
+        `search_user/?start_c=0&end_c=50&querry=${query}&is_admin=False`,
         "GET",
         headers
       );
@@ -147,7 +147,7 @@ const UserManagement = () => {
           "Content-Type": "application/json",
         };
         const result = await req_client.fetchReq(
-          "admin/delete_user/",
+          "delete_user/",
           "DELETE",
           headers,
           JSON.stringify(user)

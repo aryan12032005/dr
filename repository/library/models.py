@@ -18,6 +18,7 @@ class LibraryUser(AbstractBaseUser):
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     phone_number = models.CharField(max_length=10)
+    groups = models.JSONField(default=list)
     is_faculty = models.BooleanField(default=False)
     is_admin= models.BooleanField(default=False)
     is_allowed=models.BooleanField(default=True)

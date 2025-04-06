@@ -205,8 +205,8 @@ const FacultyManage = () => {
                 className="flex items-center justify-between w-full bg-gray-200 p-2 pr-10 rounded cursor-pointer"
                 onClick={() => fetchFaculty(dept.dep_code)}
               >
-                <h3 className="text-lg font-semibold text-gray-700 mb-3 bg-gray-200 p-2 rounded">
-                  {dept.dep_name} Department
+                <h3 className="text-lg font-semibold text-gray-700 mb-3 bg-gray-200 rounded">
+                  {dept.dep_name}
                 </h3>
                 <h2>{dept.dep_code in facultyList ? "▼" : "▶"}</h2>
               </div>

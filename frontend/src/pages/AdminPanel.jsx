@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Settings from './Settings';
 import {
-  BrowserRouter as Router,
   Routes,
   Route,
   Link,
@@ -47,103 +46,77 @@ const AdminPanel = () => {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
       {/* Sidebar */}
-      <aside className="bg-gray-800 text-white w-64 p-4">
-        <h2 className="text-2xl font-semibold mb-6 text-center">Admin Panel</h2>
-        <nav className="space-y-2 divide-y divide-gray-700">
-          <div className="pb-2">
-            <Link
-              to="/adminpanel/UserManagement"
-              className={`flex items-center space-x-3 py-3 px-4 rounded-md transition-all duration-300 ease-in-out 
-                hover:bg-gray-700 hover:shadow-lg active:scale-95 ${
-                location.pathname === '/adminpanel/UserManagement' ? 'bg-gray-700 shadow-md' : ''
-              }`}
-            >
-              <FaUsers />
-              <span>User Management</span>
-            </Link>
-          </div>
-
-          <div className="py-2">
-            <Link
-              to="/adminpanel/DocumentManage"
-              className={`flex items-center space-x-3 py-3 px-4 rounded-md transition-all duration-300 ease-in-out 
-                hover:bg-gray-700 hover:shadow-lg active:scale-95 ${
-                location.pathname === '/adminpanel/DocumentManage' ? 'bg-gray-700 shadow-md' : ''
-              }`}
-            >
-              <FaFileAlt />
-              <span>Document Management</span>
-            </Link>
-          </div>
-
-          <div className="py-2">
-            <Link
-              to="/adminpanel/FacultyManage"
-              className={`flex items-center space-x-3 py-3 px-4 rounded-md transition-all duration-300 ease-in-out 
-                hover:bg-gray-700 hover:shadow-lg active:scale-95 ${
-                location.pathname === '/adminpanel/FacultyManage' ? 'bg-gray-700 shadow-md' : ''
-              }`}
-            >
-              <FaChalkboardTeacher />
-              <span>Faculty Management</span>
-            </Link>
-          </div>
-
-          <div className="pt-2">
-            <Link
-              to="/adminpanel/Settings"
-              className={`flex items-center space-x-3 py-3 px-4 rounded-md transition-all duration-300 ease-in-out 
-                hover:bg-gray-700 hover:shadow-lg active:scale-95 ${
-                location.pathname === '/adminpanel/Settings' ? 'bg-gray-700 shadow-md' : ''
-              }`}
-            >
-              <FaCog />
-              <span>Settings</span>
-            </Link>
-          </div>
-        </nav>
+      <aside className="bg-[#1f2937] text-white w-64 p-6 shadow-2xl flex flex-col justify-between">
+        <div>
+          <h2 className="text-3xl font-bold mb-8 text-center tracking-wide">Admin</h2>
+          <nav className="space-y-4">
+            {[
+              { label: 'User Management', icon: <FaUsers />, path: '/adminpanel/UserManagement' },
+              { label: 'Document Management', icon: <FaFileAlt />, path: '/adminpanel/DocumentManage' },
+              { label: 'Faculty Management', icon: <FaChalkboardTeacher />, path: '/adminpanel/FacultyManage' },
+              { label: 'Settings', icon: <FaCog />, path: '/adminpanel/Settings' }
+            ].map(({ label, icon, path }) => (
+              <Link
+                key={path}
+                to={path}
+                className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 
+                  hover:bg-gray-700 hover:shadow-lg active:scale-[0.98] ${
+                    location.pathname === path ? 'bg-gray-700 shadow-md' : ''
+                  }`}
+              >
+                <span className="text-xl">{icon}</span>
+                <span className="font-medium">{label}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
+       
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-semibold mb-4">Dashboard</h1>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded-lg shadow-lg flex items-center space-x-4">
-              <div className="text-blue-500 text-3xl">
-                <FaUsers />
-              </div>
-              <div>
-                <h3 className="font-semibold">Total Users</h3>
-                <p className="text-gray-600">{totalUsers}</p>
-              </div>
+      <main className="flex-1 p-8 overflow-y-auto">
+        <div className="mb-10">
+          <h1 className="text-4xl font-bold mb-6 text-gray-800">Dashboard</h1>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            {
+              icon: <FaUsers />,
+              title: 'Total Users',
+              value: totalUsers,
+              color: 'text-blue-500',
+              shadow: 'hover:shadow-blue-400'
+            },
+            {
+              icon: <FaFileAlt />,
+              title: 'Uploaded Docs',
+              value: totalDocs,
+              color: 'text-green-500',
+              shadow: 'hover:shadow-green-400'
+            },
+            {
+              icon: <FaChartLine />,
+              title: 'Recent Activity',
+              value: '10',
+              color: 'text-purple-500',
+              shadow: 'hover:shadow-purple-400'
+            }
+          ].map(({ icon, title, value, color, shadow }, i) => (
+            <div
+              key={i}
+              className={`bg-white p-6 rounded-2xl shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${shadow}`}
+            >
+              <div className={`text-4xl mb-4 ${color}`}>{icon}</div>
+              <h3 className="text-lg font-semibold text-gray-700">{title}</h3>
+              <p className="text-gray-600 text-xl font-medium">{value}</p>
             </div>
-
-            <div className="bg-white p-4 rounded-lg shadow-lg flex items-center space-x-4">
-              <div className="text-green-500 text-3xl">
-                <FaFileAlt />
-              </div>
-              <div>
-                <h3 className="font-semibold">Uploaded Docs</h3>
-                <p className="text-gray-600">{totalDocs}</p>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-lg shadow-lg flex items-center space-x-4">
-              <div className="text-purple-500 text-3xl">
-                <FaChartLine />
-              </div>
-              <div>
-                <h3 className="font-semibold">Recent Activity</h3>
-                <p className="text-gray-600">10</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Routes */}
+        </div>
+
+        {/* Dynamic Routes */}
         <Routes>
           <Route path="/Settings" element={<Settings />} />
           <Route path="/DocumentManage" element={<DocumentManage />} />

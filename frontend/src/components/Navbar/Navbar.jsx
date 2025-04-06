@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaGripLines } from "react-icons/fa";
-import { useNavigate, useLocation } from "react-router-dom";
 import networkRequests from "../../request_helper";
 
 const req_client = new networkRequests();
@@ -29,6 +28,8 @@ const get_status = async () => {
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const currentPath = location.pathname;
+
   const [loginSignup, setloginSignup] = useState([
     { tittle: "Log in", link: "/LogIn" },
     { tittle: "Sign Up", link: "/SignUp" },
@@ -49,14 +50,12 @@ const Navbar = () => {
     const interval = setInterval(() => {
       get_status().then((result) => {
         sessionStorage.setItem("user_status", result);
-        console.log(result);
         set_user_status(result);
       });
     }, 10000);
     return () => clearInterval(interval);
-  }, [location, navigate, window.location.pathname]);
+  }, [location, navigate]);
 
-  // Side-effect when user status changes
   useEffect(() => {
     if (user_status === -1) {
       setloginSignup([
@@ -75,7 +74,6 @@ const Navbar = () => {
         { title: "About Us", link: "/about-us" },
         { title: "Search documents", link: "/search-doc" },
       ];
-
       if (user_status.is_admin) {
         updatedLinks.push(
           { title: "Document Upload", link: "/doc-upload" },
@@ -85,10 +83,7 @@ const Navbar = () => {
       } else if (user_status.is_faculty) {
         updatedLinks.push(
           { title: "Document Upload", link: "/doc-upload" },
-          {
-            title: "Faculty",
-            link: "/facultypanel",
-          },
+          { title: "Faculty", link: "/facultypanel" },
           { title: "Logout", link: "/logout" }
         );
       }
@@ -99,70 +94,74 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="z-50 relative flex bg-zinc-800 text-white px-4 py-4 items-center justify-between">
+      <nav className="z-50 relative flex bg-[#0f1320] text-white px-4 py-4 items-center justify-between shadow-md">
         <Link to="/" className="flex items-center">
           <img className="h-10 me-1" src="new_logo.png" alt="logo" />
           <h1 className="text-2xl font-semibold">Digital Repository</h1>
         </Link>
-        <div className="nav-links-repo block md:flex items-center gap-4"> 
+        <div className="nav-links-repo block md:flex items-center gap-4">
           <div className="hidden md:flex gap-4">
-            {links.map((items, i) => (
+            {links.map((item, i) => (
               <Link
-                to={items.link}
-                className="hover:text-blue-500 transition-all duration-300"
+                to={item.link}
                 key={i}
+                className={`transition-all duration-300 ${
+                  currentPath === item.link
+                    ? "border-b-2 border-yellow-300 pb-1 text-yellow-300"
+                    : "hover:text-gray-300"
+                }`}
               >
-                {items.title}{" "}
+                {item.title || item.tittle}
               </Link>
             ))}
           </div>
-          <div className="hidden md:flex gap-4 ">
+          <div className="hidden md:flex gap-4">
             {loginSignup.map(({ tittle, link }, i) => (
               <Link
                 to={link}
                 key={i}
-                className="px-4 py-1 border border-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300"
+                className="px-4 py-1 border border-gray-400 rounded hover:bg-white hover:text-black transition-all duration-300"
               >
-                {tittle}{" "}
+                {tittle}
               </Link>
             ))}
           </div>
           <button
-            className="block md:hidden text-white text-2xl hover:text-zinc-400"
+            className="block md:hidden text-white text-2xl hover:text-gray-300"
             onClick={() =>
-              MobileNav === "hidden"
-                ? setMobileNav("block")
-                : setMobileNav("hidden")
+              setMobileNav(MobileNav === "hidden" ? "block" : "hidden")
             }
           >
             <FaGripLines />
           </button>
         </div>
       </nav>
+
+      {/* Mobile Nav */}
       <div
-        className={`${MobileNav} bg-zinc-800 h-screen absolute top-0 left-0 w-full z-40 flex flex-col items-center justify-center`}
+        className={`${MobileNav} bg-[#0f1320] h-screen absolute top-0 left-0 w-full z-40 flex flex-col items-center justify-center`}
       >
-        {links.map((items, i) => (
+        {links.map((item, i) => (
           <Link
-            to={items.link}
-            className={` ${MobileNav}"text-white text-4xl font-semibold mb-8 hover:text-blue-500 transition-all duration-300 `}
+            to={item.link}
             key={i}
-            onClick={() =>
-              MobileNav === "hidden"
-                ? setMobileNav("block")
-                : setMobileNav("hidden")
-            }
+            onClick={() => setMobileNav("hidden")}
+            className={`text-4xl font-semibold mb-8 transition-all duration-300 ${
+              currentPath === item.link
+                ? "text-yellow-300 underline"
+                : "text-white hover:text-gray-300"
+            }`}
           >
-            {items.title}{" "}
+            {item.title || item.tittle}
           </Link>
         ))}
-        {loginSignup.map((items, i) => (
+        {loginSignup.map((item, i) => (
           <Link
-            to={items.link}
+            to={item.link}
             key={i}
-            className={` ${MobileNav}px-4 mb-8 text-3xl font-semibold py-2  bg-blue-500 rounded hover:bg-white hover:text-zinc-800 transition-all duration-300 `}
+            className="px-6 mb-8 text-3xl font-semibold py-2 bg-gray-800 text-white rounded hover:bg-white hover:text-black transition-all duration-300"
           >
-            {items.tittle}{" "}
+            {item.tittle}
           </Link>
         ))}
       </div>

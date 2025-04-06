@@ -11,10 +11,7 @@ const Settings = () => {
   const [managers, setManagers] = useState([]);
   const [subjects, setSubjects] = useState([]);
 
-  const [newSubject, setNewSubject] = useState({
-    code: "",
-    name: "",
-  });
+  const [newSubject, setNewSubject] = useState({ code: "", name: "" });
 
   const handleSubjectChange = (e) => {
     const { name, value } = e.target;
@@ -24,10 +21,7 @@ const Settings = () => {
   const handleAddSubject = () => {
     if (validateInputs()) {
       setSubjects((subjects) => [...subjects, newSubject]);
-      setNewSubject({
-        code: "",
-        name: "",
-      });
+      setNewSubject({ code: "", name: "" });
     }
   };
 
@@ -55,7 +49,7 @@ const Settings = () => {
   };
 
   const handleAddManager = (username, email) => {
-    const newManager = { username: username, email: email };
+    const newManager = { username, email };
     setManagers((managers) => [...managers, newManager]);
   };
 
@@ -73,7 +67,6 @@ const Settings = () => {
     );
     if (result.ok) {
       const resultJson = await result.json();
-      console.log(resultJson, managerSearchTerm);
       setSearchedManagers(resultJson.users);
     } else {
       setSearchedManagers([]);
@@ -86,9 +79,6 @@ const Settings = () => {
     data.append("dep_code", dep_code);
     data.append("managers", JSON.stringify(managers));
     data.append("subjects", JSON.stringify(subjects));
-    console.log(managers);
-    console.log(subjects);
-    console.log(data);
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -106,229 +96,114 @@ const Settings = () => {
       setSubjects([]);
       setDepCode("");
       setDepName("");
-    }
-    else{
+    } else {
       alert(resultJson.message);
     }
-    
   };
 
   const inputRef = useRef(null);
   useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (inputRef.current) inputRef.current.focus();
   }, [managerSearchTerm]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
-  const Modal = ({ onClose, children }) => {
-    return (
-      <div style={styles.modalOverlay}>
-        <div style={styles.modalContent}>
-          <button onClick={onClose} style={styles.closeButton}>
-            X
-          </button>
-          {children}
-        </div>
-      </div>
-    );
-  };
 
-  const styles = {
-    modalOverlay: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 1000,
-    },
-    modalContent: {
-      backgroundColor: "white",
-      padding: "20px",
-      borderRadius: "5px",
-      maxWidth: "500px",
-      width: "100%",
-      position: "relative",
-    },
-    closeButton: {
-      position: "absolute",
-      top: "10px",
-      right: "10px",
-      backgroundColor: "grey",
-      color: "white",
-      border: "none",
-      padding: "5px 10px",
-      cursor: "pointer",
-    },
-    inactiveBackground: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
-      zIndex: 999,
-    },
-  };
+  const Modal = ({ onClose, children }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+      <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-xl relative transform scale-100 transition-transform duration-300">
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 bg-gray-700 text-white px-3 py-1 rounded-full hover:bg-gray-900"
+        >
+          X
+        </button>
+        {children}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="bg-white shadow-lg rounded-2xl p-6 max-w-3xl mx-auto mt-10">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Settings ⚙️</h2>
+    <div className="bg-gradient-to-r from-blue-50 to-white shadow-2xl rounded-3xl p-10 max-w-5xl mx-auto mt-10">
+      <h2 className="text-3xl font-bold text-blue-800 mb-8 drop-shadow-md">Settings ⚙️</h2>
 
-      <div className="flex flex-col items-center justify-center shadow-lg mb-5 mt-5 p-6 rounded-lg bg-white">
-        <h2 className="text-xl font-semibold mb-2 text-gray-600 mb-5">
-          Add new department.
-        </h2>
+      <div className="bg-white rounded-3xl shadow-xl p-8 space-y-8">
+        <h3 className="text-xl font-semibold text-gray-700">Add New Department</h3>
 
-        <div className="flex flex-col items-center mb-4">
-          <label htmlFor="dep_name" className="block text-gray-700 font-medium">
-            Department name
-          </label>
-          <input
-            type="text"
-            id="dep_name"
-            className="border rounded-lg p-2 mb-5 mt-1"
-            placeholder="Enter Dep Name"
-            value={dep_name}
-            onChange={(e) => setDepName(e.target.value)}
-          />
-          <label htmlFor="dep_code" className="block text-gray-700 font-medium">
-            Department Code
-          </label>
-          <input
-            type="text"
-            id="dep_code"
-            className="border rounded-lg p-2 mb-5 mt-1"
-            placeholder="Enter Dep Code"
-            value={dep_code}
-            onChange={(e) => setDepCode(e.target.value)}
-          />
-          {subjects.length > 0 ? (
-            <div className="mb-7 flex flex-col items-center">
-              <label
-                htmlFor="sub_list"
-                className="block text-gray-700 font-medium"
-              >
-                Subjects list
-              </label>
-              <table name="sub_list" className="divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Subject Code
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      SUbject Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {subjects.map((sub) => (
-                    <tr key={sub.code} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                        {sub.code}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {sub.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button
-                          onClick={() => handleDelete(sub.code)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-6">
-              No Subjects added yet.
-            </p>
-          )}
-          <div className="flex flex-row gap-5 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="text-gray-700 font-medium">Department Name</label>
+            <input
+              type="text"
+              value={dep_name}
+              onChange={(e) => setDepName(e.target.value)}
+              className="w-full p-3 border rounded-xl shadow-inner focus:ring-2 focus:ring-blue-400"
+              placeholder="Enter department name"
+            />
+          </div>
+          <div>
+            <label className="text-gray-700 font-medium">Department Code</label>
+            <input
+              type="text"
+              value={dep_code}
+              onChange={(e) => setDepCode(e.target.value)}
+              className="w-full p-3 border rounded-xl shadow-inner focus:ring-2 focus:ring-blue-400"
+              placeholder="Enter department code"
+            />
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-lg font-semibold text-gray-600">Subjects</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Subject Code
-              </label>
+              <label className="text-sm text-gray-600">Subject Code</label>
               <input
-                type="text"
                 name="code"
                 value={newSubject.code}
                 onChange={handleSubjectChange}
+                className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
                 placeholder="e.g. SE"
-                className={`w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                maxLength="10"
               />
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Subject Name
-              </label>
+              <label className="text-sm text-gray-600">Subject Name</label>
               <input
-                type="text"
                 name="name"
                 value={newSubject.name}
                 onChange={handleSubjectChange}
+                className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-400"
                 placeholder="e.g. Software Engineering"
-                className={`w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
               />
             </div>
             <button
               onClick={handleAddSubject}
-              className="bg-blue-600 text-white px-6 rounded-lg hover:scale-105 hover:shadow-lg :bg-blue-700 transition-all duration-300 ease-in-out"
+              className="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-4 py-2 rounded-lg shadow-lg hover:scale-105 transition-transform"
             >
-              Add
+              Add Subject
             </button>
           </div>
-          {managers.length > 0 ? (
-            <div className="mb-7 flex flex-col items-center">
-              <label
-                htmlFor="sub_list"
-                className="block text-gray-700 font-medium"
-              >
-                Managers list
-              </label>
-              <table name="sub_list" className="divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+
+          {subjects.length > 0 && (
+            <div className="mt-6 overflow-auto">
+              <table className="min-w-full bg-white border rounded-xl shadow-md">
+                <thead className="bg-blue-100">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Username
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-blue-800">Code</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-blue-800">Name</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-blue-800">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {managers.map((item) => (
-                    <tr key={item.username} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                        {item.username}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <tbody>
+                  {subjects.map((sub) => (
+                    <tr key={sub.code} className="hover:bg-blue-50">
+                      <td className="px-6 py-4 text-blue-600 font-medium">{sub.code}</td>
+                      <td className="px-6 py-4 text-gray-700">{sub.name}</td>
+                      <td className="px-6 py-4">
                         <button
-                          onClick={() => handleRemoveManager(item.username)}
-                          className="text-red-500 hover:text-red-700"
+                          onClick={() => handleDelete(sub.code)}
+                          className="text-red-500 hover:underline"
                         >
                           Delete
                         </button>
@@ -338,96 +213,105 @@ const Settings = () => {
                 </tbody>
               </table>
             </div>
-          ) : (
-            <p className="text-gray-500 text-center py-6">
-              No Managers added yet.
-            </p>
           )}
-
-          <div>
-            <div className="flex flex-row gap-5 mb-5">
-              <button
-                onClick={openModal}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:scale-105 hover:shadow-lg: bg-blue-700 transition-all duration-300 ease-in-out"
-              >
-                Add managers
-              </button>
-            </div>
-            {isModalOpen && <div style={styles.inactiveBackground} />}
-            {isModalOpen && (
-              <Modal onClose={closeModal}>
-                <div className="flex flex-row gap-5 mb-5 mt-10">
-                  <input
-                    type="text"
-                    name="managersSearch"
-                    value={managerSearchTerm}
-                    onChange={(e) => setManagerSearchTerm(e.target.value)}
-                    placeholder="Search for managers"
-                    className="w-full p-2 border rounded-md"
-                    ref={inputRef}
-                  />
-                  <button
-                    onClick={searchManagers}
-                    className="bg-blue-600 text-white px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out"
-                  >
-                    Search
-                  </button>
-                </div>
-                {searchedManagers.length > 0 ? (
-                  <div className="mb-7 flex flex-col items-center">
-                    <table name="sub_list" className="divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Username
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Email
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {searchedManagers.map((item) => (
-                          <tr key={item.username} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                              {item.username}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {item.email}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              <button
-                                onClick={() =>
-                                  handleAddManager(item.username, item.email)
-                                }
-                                className="text-red-500 hover:text-red-700"
-                              >
-                                Add
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-center py-6">
-                    No Managers added yet.
-                  </p>
-                )}
-              </Modal>
-            )}
-          </div>
         </div>
-        <button
-          onClick={handleAddDepartment}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:scale-105 hover:shadow-lg: bg-blue-700 transition-all duration-300 ease-in-out"
-        >
-          Add Department
-        </button>
+
+        <div>
+          <h4 className="text-lg font-semibold text-gray-600">Managers</h4>
+          <button
+            onClick={openModal}
+            className="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-4 py-2 rounded-lg shadow-lg hover:scale-105 transition-transform mb-4"
+          >
+            Add Managers
+          </button>
+
+          {managers.length > 0 && (
+            <div className="overflow-auto">
+              <table className="min-w-full bg-white border rounded-xl shadow-md">
+                <thead className="bg-blue-100">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-blue-800">Username</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-blue-800">Email</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-blue-800">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {managers.map((item) => (
+                    <tr key={item.username} className="hover:bg-blue-50">
+                      <td className="px-6 py-4 text-blue-600 font-medium">{item.username}</td>
+                      <td className="px-6 py-4 text-gray-700">{item.email}</td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => handleRemoveManager(item.username)}
+                          className="text-red-500 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {isModalOpen && (
+          <Modal onClose={closeModal}>
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={managerSearchTerm}
+                onChange={(e) => setManagerSearchTerm(e.target.value)}
+                ref={inputRef}
+                placeholder="Search for managers"
+                className="w-full p-3 border rounded-lg shadow-inner"
+              />
+              <button
+                onClick={searchManagers}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-800"
+              >
+                Search
+              </button>
+              {searchedManagers.length > 0 && (
+                <table className="min-w-full bg-white border rounded-xl shadow-md">
+                  <thead className="bg-blue-100">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-blue-800">Username</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-blue-800">Email</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-blue-800">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {searchedManagers.map((item) => (
+                      <tr key={item.username} className="hover:bg-blue-50">
+                        <td className="px-6 py-4 text-blue-600 font-medium">{item.username}</td>
+                        <td className="px-6 py-4 text-gray-700">{item.email}</td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => handleAddManager(item.username, item.email)}
+                            className="text-green-600 hover:underline"
+                          >
+                            Add
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </Modal>
+        )}
+
+        <div className="pt-6">
+          <button
+            onClick={handleAddDepartment}
+            className="w-full bg-gradient-to-r from-green-500 to-green-700 text-white font-semibold py-3 rounded-xl shadow-xl hover:scale-105 transition-transform"
+          >
+            Add Department
+          </button>
+        </div>
       </div>
     </div>
   );

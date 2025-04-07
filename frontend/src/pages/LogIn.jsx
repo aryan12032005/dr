@@ -82,14 +82,14 @@ const Login = () => {
             Log In
           </button>
         </form>
-        <div className="mt-6 text-center">
+        {/* <div className="mt-6 text-center">
           <p className="text-gray-300">
-            Don’t have an account?{' '}
+            Don't have an account?{' '}
             <Link to="/signup" className="text-blue-400 hover:text-blue-500 underline">
               Sign Up
             </Link>
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );

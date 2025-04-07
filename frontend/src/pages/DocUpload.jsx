@@ -203,7 +203,7 @@ const DocUpload = () => {
             <option value="imgs">Multiple Images</option>
             <option value="link">Link</option>
             <option value="mp4">Video</option>
-            <option value="self-guided">Self-Guided (All Types)</option>
+            <option value="*">Self-Guided (All Types)</option>
           </select>
 
           {/* Document Input */}

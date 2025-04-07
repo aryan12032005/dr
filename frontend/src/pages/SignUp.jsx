@@ -6,7 +6,6 @@ import networkRequests from "../request_helper";
 const req_client = new networkRequests();
 
 const Signup = () => {
-  const navigate = useNavigate();
   const [addNewUser, setAddUser] = useState(false);
   const [csvFile, setCSVFile] = useState("");
   const [uploadAsFaculty, toggleUploadFaculty] = useState(false);
@@ -163,14 +162,15 @@ const Signup = () => {
         </div>
         <button
           onClick={uploadCSV}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out"
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg  hover:scale-105 bg-blue-700 transition-all duration-300 ease-in-out"
         >
           Upload CSV file
         </button>
       </div>
+
       <button
         onClick={toggleAddUser}
-        className="bg-blue-600 text-white px-6 py-2 mb-5 rounded-lg hover:bg-blue-700 transition"
+        className="bg-blue-600 text-white px-6 py-2 mb-5 rounded-lg  hover:scale-105 :bg-blue-700 transition"
       >
         Add Single User
       </button>
@@ -210,7 +210,6 @@ const Signup = () => {
           <select
             className="border rounded px-3 py-2 mr-2 mb-2 w-full"
             value={newUser.dep_code}
-            onFocus={getAllDepartments}
             onChange={(e) =>
               setNewUser({ ...newUser, dep_code: e.target.value })
             }

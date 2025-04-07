@@ -5,6 +5,7 @@ urlpatterns=[
     path('',views.index),
     path('get_csrf/',views.get_csrf_token),
     path('refresh_token/',views.refresh_token.as_view()),
+    path('send_query/', views.QueryView.as_view()),
     path('login/',views.LoginView.as_view()),
     path('signup/',views.SignupView.as_view()),
     path('get_sample_csv/',views.uploadCsv.as_view()),

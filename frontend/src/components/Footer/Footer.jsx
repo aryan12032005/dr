@@ -1,4 +1,4 @@
-import React from 'react'
+import { React, useEffect, useState } from 'react'
 import {
   FaFacebookF,
   FaInstagram,
@@ -10,8 +10,19 @@ import {
 import { Link } from 'react-router-dom'
 
 const Footer = () => {
-  return (
-    <div className="bg-[#0f1320] text-white py-4 w-full flex-shrink-0 shadow-inner">
+  const [showFooter, setShowFooter] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 100; // or whatever threshold
+      setShowFooter(scrolled);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+  return showFooter ? (
+    <div className="bg-[#0f1320] text-white py-4 w-full flex-shrink-0 shadow-inner bottom-0">
       <footer className="bg-[#0f1320] text-white py-0 w-full flex-shrink-0">
         <div className="container mx-auto">
           {/* Social Icons */}
@@ -63,7 +74,7 @@ const Footer = () => {
         </h1>
       </footer>
     </div>
-  )
+  ) : <div></div>;
 }
 
 export default Footer

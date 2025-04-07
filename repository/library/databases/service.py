@@ -21,11 +21,15 @@ class mongo_DB:
         inserted_id=self.doc.insert_one(item).inserted_id
         return inserted_id
     
-    def search_document(self, querry):
+    def search_document(self, querry, extra_params:dict={}, dateOrder:int = 0):
+        projections= [("score", { "$meta": "textScore" })]
+        if dateOrder!=0:
+            projections.append(("date", dateOrder))
+            
         item=self.doc.find(
-            {"$text": {"$search": querry}},
+            {"$text": {"$search": querry},**extra_params},
             {"score": {"$meta": "textScore"}}
-        ).sort([("score", {"$meta": "textScore"})]).limit(10)
+        ).sort(projections).limit(10)
         if item:
             return item.to_list()
         else:

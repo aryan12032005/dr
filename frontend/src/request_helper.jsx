@@ -12,7 +12,7 @@ class networkRequests {
   async reload_tokens() {
     this.accessToken = sessionStorage.getItem("access_token");
     this.refreshToken = sessionStorage.getItem("refresh_token");
-    return this.accessToken ? true : false;
+    return this.accessToken === null ? false : true;
   }
 
   async getCSRFToken() {

@@ -37,3 +37,8 @@ class Departments(models.Model):
     managers = models.JSONField(default=list)
     subjects = models.JSONField(default=dict)
 
+class UserQuery(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    query = models.CharField(max_length=500)
+

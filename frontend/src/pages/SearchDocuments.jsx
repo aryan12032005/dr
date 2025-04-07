@@ -4,19 +4,19 @@ import { saveAs } from "file-saver";
 
 const req_client = new networkRequests();
 
-const SearchDocument = () => {
+const SearchDocument = ({ userStatus }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredDocuments, setDocuments] = useState([]);
   const [viewingDocument, setViewDocument] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-
+  const [allDepartments, setAllDepartments] = useState([]);
   const filterRef = useRef(null);
 
   const [filters, setFilters] = useState({
     docType: "",
     department: "",
-    sortOrder: "latest", // new sortOrder field
+    sortOrder: 0,
   });
 
   const openModal = () => setIsModalOpen(true);
@@ -41,37 +41,31 @@ const SearchDocument = () => {
     };
   }, [isFilterOpen]);
 
+  const getAllDepartments = async () => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq("get_department/", "GET", headers);
+    const resultJson = await result.json();
+    if (result.ok) {
+      setAllDepartments(resultJson.departments);
+    }
+  };
+
   const searchDocument = async () => {
     const headers = {
       "Content-Type": "application/json",
     };
-
     const response = await req_client.fetchReq(
-      `search_document/?querry=${searchTerm}`,
+      `search_document/?querry=${searchTerm}&docType=${filters.docType}&department=${filters.department}&order=${filters.sortOrder}`,
       "GET",
       headers
     );
 
     if (response.ok) {
       const data = await response.json();
-      let docs = data.documents;
-
-      if (filters.docType) {
-        docs = docs.filter((doc) => doc.docType === filters.docType);
-      }
-      if (filters.department) {
-        docs = docs.filter((doc) => doc.department === filters.department);
-      }
-
-      docs.sort((a, b) => {
-        const dateA = new Date(a.date);
-        const dateB = new Date(b.date);
-        return filters.sortOrder === "latest"
-          ? dateB - dateA
-          : dateA - dateB;
-      });
-
-      setDocuments(docs);
+      setDocuments(data.documents);
     } else if (response.status === 404) {
       const responseJson = await response.json();
       alert(responseJson.message);
@@ -80,7 +74,7 @@ const SearchDocument = () => {
 
   const openDoc = async (doc_id) => {
     const token_status = req_client.reload_tokens();
-    if (!token_status) {
+    if (token_status == false) {
       alert("Please Login to open documents!");
       return;
     }
@@ -99,9 +93,8 @@ const SearchDocument = () => {
       const resultJson = await result.json();
       setViewDocument(resultJson.document);
       openModal();
-    } else if (result.status === 400) {
-      const resultJson = await result.json();
-      alert(resultJson.message);
+    } else {
+      alert('please login to view documents');
     }
   };
 
@@ -133,16 +126,34 @@ const SearchDocument = () => {
         }
         saveAs(await result.blob(), filename);
       }
-    } else if (result.status === 400) {
+    } else{
+      alert("Please login to download");
+    }
+  };
+
+  const deleteDoc = async() => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+
+    const result = await req_client.fetchReq(
+      `delete_document/?doc_id=${id}`,
+      "GET",
+      headers
+    );
+    if(result.ok){
       const resultJson = await result.json();
-      alert(resultJson.message);
+      searchDocument();
     }
   };
 
   const Modal = ({ onClose, children }) => (
     <div style={styles.modalOverlay}>
       <div style={styles.modalContent}>
-        <button onClick={onClose} style={styles.closeButton}>X</button>
+        <button onClick={onClose} style={styles.closeButton}>
+          X
+        </button>
         {children}
       </div>
     </div>
@@ -184,7 +195,9 @@ const SearchDocument = () => {
 
   return (
     <div className="bg-white shadow-lg rounded-lg p-6 mb-4 relative">
-      <h2 className="text-xl font-semibold mb-2 text-gray-700">Search Documents</h2>
+      <h2 className="text-xl font-semibold mb-2 text-gray-700">
+        Search Documents
+      </h2>
 
       <input
         type="text"
@@ -212,46 +225,61 @@ const SearchDocument = () => {
           {isFilterOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-10 p-4 space-y-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Document Type
-                </label>
-                <input
-                  type="text"
+                <select
+                  className="border border-gray-300 rounded-lg p-2 w-full mt-2"
                   value={filters.docType}
                   onChange={(e) =>
-                    setFilters({ ...filters, docType: e.target.value })
+                    setFilters((filters) => ({
+                      ...filters,
+                      docType: e.target.value,
+                    }))
                   }
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-1"
-                  placeholder="e.g. PDF"
-                />
+                  required
+                >
+                  <option value="" disabled default>
+                    Document Type
+                  </option>
+                  <option value="pdf">PDF</option>
+                  <option value="imgs">Multiple Images</option>
+                  <option value="link">Link</option>
+                  <option value="mp4">Video</option>
+                  <option value="*">Self-Guided (All Types)</option>
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Department
-                </label>
-                <input
-                  type="text"
+                <select
+                  className="border border-gray-300 rounded-lg p-2 w-full mt-2"
                   value={filters.department}
+                  onFocus={getAllDepartments}
                   onChange={(e) =>
-                    setFilters({ ...filters, department: e.target.value })
+                    setFilters((filters) => ({
+                      ...filters,
+                      department: e.target.value,
+                    }))
                   }
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-1"
-                  placeholder="e.g. SOE"
-                />
+                  required
+                >
+                  <option value="" disabled default>
+                    Department
+                  </option>
+                  {allDepartments.length > 0 &&
+                    allDepartments.map((dept) => (
+                      <option value={dept.dep_code} key={dept.dep_code}>
+                        {dept.dep_name}
+                      </option>
+                    ))}
+                </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Sort By Date
-                </label>
                 <select
                   value={filters.sortOrder}
                   onChange={(e) =>
                     setFilters({ ...filters, sortOrder: e.target.value })
                   }
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-1"
+                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-1 mt-4"
                 >
-                  <option value="latest">Latest First</option>
-                  <option value="oldest">Oldest First</option>
+                  <option value="-1">Latest First</option>
+                  <option value="1">Oldest First</option>
                 </select>
               </div>
             </div>
@@ -276,7 +304,8 @@ const SearchDocument = () => {
                     {doc.title}
                   </h2>
                   <p className="text-sm text-gray-500">
-                    Uploaded on : {doc.date}<br />
+                    Uploaded on : {doc.date}
+                    <br />
                     File type: {doc.docType}
                   </p>
                 </div>
@@ -293,6 +322,14 @@ const SearchDocument = () => {
                   >
                     Download
                   </button>
+                  {(userStatus.is_admin && userStatus.is_admin == true) || (userStatus.user_id && userStatus.user_id == doc.owner) && (
+                    <button
+                      className="text-green-500 hover:text-green-700"
+                      onClick={() => deleteDoc(doc.id)}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -307,19 +344,36 @@ const SearchDocument = () => {
       {isModalOpen && viewingDocument && (
         <Modal onClose={closeModal}>
           <div className="flex flex-col items-center p-6">
-            <h2 className="text-2xl font-bold text-blue-800">{viewingDocument.title}</h2>
-            <p className="text-gray-600"><strong>Category:</strong> {viewingDocument.category}</p>
-            <p className="text-gray-600"><strong>Document Type:</strong> {viewingDocument.docType}</p>
-            <p className="text-gray-600"><strong>Department:</strong> {viewingDocument.department}</p>
-            <p className="text-gray-600"><strong>Subject:</strong> {viewingDocument.subject}</p>
-            <p className="text-gray-500 text-sm"><strong>Uploaded On:</strong> {viewingDocument.createDate}</p>
+            <h2 className="text-2xl font-bold text-blue-800">
+              {viewingDocument.title}
+            </h2>
+            <p className="text-gray-600">
+              <strong>Category:</strong> {viewingDocument.category}
+            </p>
+            <p className="text-gray-600">
+              <strong>Document Type:</strong> {viewingDocument.docType}
+            </p>
+            <p className="text-gray-600">
+              <strong>Department:</strong> {viewingDocument.department}
+            </p>
+            <p className="text-gray-600">
+              <strong>Subject:</strong> {viewingDocument.subject}
+            </p>
+            <p className="text-gray-500 text-sm">
+              <strong>Uploaded On:</strong> {viewingDocument.createDate}
+            </p>
             {viewingDocument.isPublic ? (
-              <p className="text-green-800"><strong>Public</strong></p>
+              <p className="text-green-800">
+                <strong>Public</strong>
+              </p>
             ) : (
-              <p className="text-red-500"><strong>Private</strong></p>
+              <p className="text-red-500">
+                <strong>Private</strong>
+              </p>
             )}
 
-            {viewingDocument.cover && viewingDocument.coverType.includes("pdf") ? (
+            {viewingDocument.cover &&
+            viewingDocument.coverType.includes("pdf") ? (
               <iframe
                 src={`data:application/pdf;base64,${viewingDocument.cover}`}
                 className="max-w-[80vw] min-w-[50vw] min-h-[80vh] rounded-lg shadow-lg mt-5"

@@ -25,18 +25,17 @@ const get_status = async () => {
   }
 };
 
-const Navbar = () => {
+const Navbar = ({ setUserStatus }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const currentPath = location.pathname;
+  const currentPath = window.location.href;
 
   const [loginSignup, setloginSignup] = useState([
     { tittle: "Log in", link: "/LogIn" },
-    { tittle: "Sign Up", link: "/SignUp" },
   ]);
   const [user_status, set_user_status] = useState(1);
   const [links, setLinks] = useState([
-    { title: "Home", link: "/" },
+    { title: "Home", link: "/home" },
     { title: "About Us", link: "/about-us" },
     { tittle: "Search documents", link: "/search-doc" },
   ]);
@@ -45,11 +44,13 @@ const Navbar = () => {
   useEffect(() => {
     get_status().then((result) => {
       sessionStorage.setItem("user_status", result);
+      setUserStatus(result);
       set_user_status(result);
     });
     const interval = setInterval(() => {
       get_status().then((result) => {
         sessionStorage.setItem("user_status", result);
+        setUserStatus(result);
         set_user_status(result);
       });
     }, 10000);
@@ -60,17 +61,16 @@ const Navbar = () => {
     if (user_status === -1) {
       setloginSignup([
         { tittle: "Log in", link: "/LogIn" },
-        { tittle: "Sign Up", link: "/SignUp" },
       ]);
       setLinks([
-        { title: "Home", link: "/" },
+        { title: "Home", link: "/home" },
         { title: "About Us", link: "/about-us" },
         { tittle: "Search documents", link: "/search-doc" },
       ]);
       navigate("/");
     } else {
       const updatedLinks = [
-        { title: "Home", link: "/" },
+        { title: "Home", link: "/home" },
         { title: "About Us", link: "/about-us" },
         { title: "Search documents", link: "/search-doc" },
       ];
@@ -106,7 +106,7 @@ const Navbar = () => {
                 to={item.link}
                 key={i}
                 className={`transition-all duration-300 ${
-                  currentPath === item.link
+                  currentPath.includes(item.link)
                     ? "border-b-2 border-yellow-300 pb-1 text-yellow-300"
                     : "hover:text-gray-300"
                 }`}

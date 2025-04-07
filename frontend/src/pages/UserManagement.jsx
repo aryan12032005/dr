@@ -9,54 +9,9 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [editUser, setEditUser] = useState(null);
-  const [addNewUser, setAddUser] = useState(false);
   const [filteredUsers, setFilteredUsers] = useState([]);
-  const [newUser, setNewUser] = useState({
-    email: "",
-    dep_code: "",
-    username: "",
-    password: "",
-    first_name: "",
-    last_name: "",
-    phone_number: "",
-    is_faculty: false,
-    is_admin: false,
-    is_allowed: true,
-  });
   const navigate = useNavigate();
-  const [csvFile, setCSVFile] = useState("");
-  const [uploadAsFaculty, toggleUploadFaculty] = useState(false);
-  const [allDepartments, setAllDepartments] = useState([]);
 
-  useEffect(() => {
-    getAllDepartments();
-  }, [navigate]);
-
-  const getAllDepartments = async () => {
-    req_client.reload_tokens();
-    const headers = {
-      Authorization: `Bearer ${req_client.accessToken}`,
-    };
-    const result = await req_client.fetchReq("get_department/", "GET", headers);
-    const resultJson = await result.json();
-    if (result.ok) {
-      setAllDepartments(resultJson.departments);
-    }
-  };
-
-  const resetNewUserState = () => {
-    setNewUser({
-      email: "",
-      username: "",
-      password: "",
-      first_name: "",
-      last_name: "",
-      phone_number: "",
-      is_faculty: false,
-      is_admin: false,
-      is_allowed: true,
-    });
-  };
 
   useEffect(() => {
     // on loading page refresh users in db
@@ -81,10 +36,9 @@ const UserManagement = () => {
       if (result.ok) {
         setUsers(resultJson.users);
         setFilteredUsers(resultJson.users);
+        console.log(resultJson.users);
       } else {
         alert(resultJson.message);
-        sessionStorage.clear();
-        navigate("/LogIn");
       }
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -122,86 +76,6 @@ const UserManagement = () => {
     } catch (error) {
       console.error("Error searching users:", error);
     }
-  };
-
-  const toggleAddUser = () => {
-    setAddUser(addNewUser ? false : true);
-  };
-
-  const downloadSampleCsv = async () => {
-    // downlaod sample csv format to upload users
-    req_client.reload_tokens();
-    const headers = {
-      Authorization: `Bearer ${req_client.accessToken}`,
-    };
-    const result = await req_client.fetchReq("get_sample_csv/", "GET", headers);
-    if (result.ok) {
-      saveAs(await result.blob(), "Sample_csv.csv");
-    } else {
-      alert("Error downloading format.");
-    }
-  };
-
-  const handleCsvChange = (e) => {
-    setCSVFile(e.target.files);
-  };
-
-  const uploadCSV = async () => {
-    // upload csv file to backend and create multiple users
-    const body = new FormData();
-    body.append("csvFile", csvFile[0]);
-    body.append("is_faculty", uploadAsFaculty);
-    req_client.reload_tokens();
-    const headers = {
-      Authorization: `Bearer ${req_client.accessToken}`,
-    };
-    const result = await req_client.fetchReq(
-      "upload_csv/",
-      "POST",
-      headers,
-      body
-    );
-    if (result.ok) {
-      alert("User created successfull");
-    } else if (result.status === 409) {
-      const resultJson = await result.json();
-      alert(`${resultJson.message} : ${resultJson.users}`);
-    } else {
-      alert("User creation failed");
-    }
-  };
-
-  const handleAddUser = async () => {
-    // add a single user to database
-    if (newUser.password.length < 6) {
-      alert("Password should be at least 6 characters long!");
-      return;
-    }
-
-    try {
-      req_client.reload_tokens();
-      const headers = {
-        Authorization: `Bearer ${req_client.accessToken}`,
-        "Content-Type": "application/json",
-      };
-      const result = await req_client.fetchReq(
-        "signup/",
-        "POST",
-        headers,
-        JSON.stringify(newUser)
-      );
-
-      if (result.ok) {
-        alert("User added successfully!");
-        fetchUsers();
-      } else {
-        alert("Error creating user.");
-      }
-    } catch (error) {
-      console.error("Error adding user:", error);
-    }
-
-    resetNewUserState();
   };
 
   const handleEdit = (user) => {
@@ -321,7 +195,7 @@ const UserManagement = () => {
               <td className="border px-4 py-2">
                 {editUser?.id === user.id ? (
                   <input
-                    type="text"
+                    type="text"No
                     value={editUser.first_name}
                     onChange={(e) =>
                       setEditUser({
@@ -368,7 +242,7 @@ const UserManagement = () => {
                 {/* Phone number cell */}
                 {editUser?.id === user.id ? (
                   <input
-                    type="tel"
+                    type="text"
                     value={editUser.phone_number}
                     onChange={(e) =>
                       setEditUser({

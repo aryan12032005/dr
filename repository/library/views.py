@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.decorators import action
 from .serializers import LoginSerializer,LibraryUserSerializer
-from .forms import DepartmentsForm
+from .forms import DepartmentsForm, UserQueryForm
 from .models import LibraryUser, Departments
 import os
 from rest_framework.permissions import IsAuthenticated
@@ -78,6 +78,27 @@ class total_details(APIView):
         total_users=LibraryUser.objects.count()
         total_docs=mongo_client_usual.get_count()
         return Response({'total_users':total_users,'total_docs':total_docs},status=status.HTTP_200_OK)
+    
+class QueryView(APIView):
+    authentication_classes=[JWTAuthentication]
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [IsActive(), IsAuthenticated(), IsAdmin()]
+        if self.request.method == "POST":
+            return []
+        if self.request.method == "DELETE":
+            return [IsActive(), IsAuthenticated(), IsAdmin()]
+    
+    def post(self,request):
+        data= request.POST
+        queryForm = UserQueryForm(data)
+        if queryForm.is_valid():
+            queryForm.save()
+            return Response({'message':'Querry submitted'}, status = status.HTTP_200_OK)
+        else:
+            return Response({'message': 'error submit Querry'},status=status.HTTP_400_BAD_REQUEST)
+
         
 class user_type(APIView):
     authentication_classes = [JWTAuthentication]
@@ -106,6 +127,7 @@ class user_type(APIView):
                 return Response({
                     'is_admin':user.is_admin,
                     'is_faculty':user.is_faculty,
+                    'user_id':user.id
                 },status=status.HTTP_200_OK)
             except:
                 return Response({'message':'token expired'},status=status.HTTP_401_UNAUTHORIZED)
@@ -209,7 +231,6 @@ class uploadCsv(APIView):
                 else:
                     existing_users.append(str(new_user['username'].value))
                 new_user={}
-            print(existing_users)
             if len(existing_users)>0:
                 return Response({"message":"Existing or Invalid users","users":existing_users},status=status.HTTP_409_CONFLICT)
             return Response({"message":"Users created Successfully"},status=status.HTTP_200_OK)
@@ -218,67 +239,51 @@ class uploadCsv(APIView):
             print(e)
             return Response({"message":"failed to add users"},status=status.HTTP_400_BAD_REQUEST)
 
+# class SearchView(APIView):
+#     def get(self,request):
+#         querry=request.query_params.get('querry')
+#         mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
+#         result=mongo_client.search_document(str(querry))
+#         if len(result) > 0:
+#             documents = [
+#                 {
+#                     'id': str(doc['_id']),
+#                     'title': doc.get('title', ''),
+#                     'docType': doc.get('docType', ''),
+#                     'date': datetime.strptime(doc.get('createDate', 0),'%Y-%m-%d %H:%M:%S.%f').date()
+#                 }
+#                 for doc in result
+#             ]
+#             return Response({"documents":documents},status=status.HTTP_200_OK)
+#         return Response({"message":"no document found"},status=status.HTTP_404_NOT_FOUND)
+
 class SearchView(APIView):
     def get(self,request):
         querry=request.query_params.get('querry')
+        extra_params={}
+        docType = request.query_params.get('docType',None) 
+        if docType:
+            extra_params['docType']=docType
+        dep_code = request.query_params.get('department',None)
+        if dep_code:
+            extra_params['department']=dep_code
+        order = request.query_params.get('order',0)
+
         mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
-        result=mongo_client.search_document(str(querry))
+
+        result=mongo_client.search_document(str(querry), extra_params=extra_params, dateOrder= int(order))
         if len(result) > 0:
-            documents = [
-                {
+            documents = []
+            for doc in result:
+                documents.append({
                     'id': str(doc['_id']),
                     'title': doc.get('title', ''),
                     'docType': doc.get('docType', ''),
+                    'owner': doc.get('owner',''),
                     'date': datetime.strptime(doc.get('createDate', 0),'%Y-%m-%d %H:%M:%S.%f').date()
-                }
-                for doc in result
-            ]
+                })
             return Response({"documents":documents},status=status.HTTP_200_OK)
         return Response({"message":"no document found"},status=status.HTTP_404_NOT_FOUND)
-
-# class SearchView(APIView):
-    # def get(self,request):
-    #     querry=request.query_params.get('querry')
-    #     start_date = request.query_params.get('start_date')  
-    #     end_date = request.query_params.get('end_date') 
-    #     doc_type_filter = request.query_params.get('doc_type')
-    #     # dateFilter= request.query_params.get('dateFilter')
-    #     dateFilter=True
-    #     mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
-    #     search_filter = {
-    #         "$or": [
-    #             {"title": {"$regex": querry, "$options": "i"}},  
-    #             {"docType": {"$regex": querry, "$options": "i"}}  
-    #         ]
-    #     }
-    #     if start_date or end_date:
-    #         date_filter = {}
-    #         if start_date:
-    #             date_filter["$gte"] = start_date
-    #         if end_date:
-    #             date_filter["$lte"] = end_date
-    #         search_filter["createDate"] = date_filter
-    #     if doc_type_filter:
-    #         search_filter["docType"] = doc_type_filter
-    #     result=mongo_client.search_document(str(querry),search_filter)
-    #     if len(result) > 0:
-    #         documents = []
-    #         for doc in result:
-    #             date_str = doc.get('createDate', '')  
-    #             try:
-    #                 date = datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S.%f').date() if date_str else None
-    #             except ValueError:
-    #                 date = None  
-
-    #             documents.append({
-    #                 'id': str(doc['_id']),
-    #                 'title': doc.get('title', ''),
-    #                 'docType': doc.get('docType', ''),
-    #                 'date': date
-    #             })
-    #         print(documents)
-    #         return Response({"documents":documents},status=status.HTTP_200_OK)
-    #     return Response({"message":"no document found"},status=status.HTTP_404_NOT_FOUND)
 
 
 class getDocDetails(APIView):
@@ -355,11 +360,11 @@ class downloadDoc(APIView):
                 document=mongo_client.get_doc_by_id(doc_id)
                 if not document:
                     raise "no document"
-                if document['docType'] == "link":
-                    doc_link= document['documentLink']
-                    return Response({"message":f"Doc link : {doc_link}","link":True},status=status.HTTP_200_OK)
                 
-                if document['isPublic']=="true" or user.is_admin==True:
+                if document['isPublic']=="true" or user.is_admin==True or document['owner']==request.user.id:
+                    if document['docType'] == "link":
+                        doc_link= document['documentLink']
+                        return Response({"message":f"Doc link : {doc_link}","link":True},status=status.HTTP_200_OK)
                     fshandler=fsHandler(FS_DIR)
                     zip_file, zip_status = fshandler.getZip(document['category'],str(doc_id))
                     if zip_status:
@@ -430,7 +435,7 @@ class adminuserView(APIView):
             extra_params['dep_code']=dep_code
         fetch_fields = ['email','dep_code','id','first_name','username','phone_number','is_allowed']
 
-        if request.user.is_faculty==True:
+        if request.user.is_faculty==True and request.user.is_admin==False:
             extra_params['is_allowed']= True
             fetch_fields = ['dep_code','id','first_name','username']
 

@@ -18,23 +18,22 @@ import SearchDocument from "./pages/SearchDocuments";
 import Faculty from "./pages/Faculty";
 
 const App = () => {
-  const [isInitialized, setInitialized] = useState(false);
+  const [userStatus, setUserStatus] = useState({});
+
   return (
     <div>
       <Router>
-        <Navbar isInitialized={isInitialized} setInitialized={setInitialized} />
+        <Navbar setUserStatus={setUserStatus} />
         <Routes>
           <Route exact path="/" element={<Home />} />
-          <Route
-            path="/LogIn"
-            element={<Login setInitialized={setInitialized} />}
-          />
+          <Route exact path="/home" element={<Home />} />
+          <Route path="/LogIn" element={<Login />} />
           <Route path="/SignUp" element={<Signup />} />
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/AdminPanel/*" element={<AdminPanel />} />
           <Route path="/doc-upload" element={<DocUpload />} />
           <Route path="/logout" element={<LogOut />} />
-          <Route path="/search-doc" element={<SearchDocument />} />
+          <Route path="/search-doc" element={<SearchDocument userStatus={userStatus} />} />
           <Route path="/facultypanel" element={<Faculty />} />
         </Routes>
         <Footer />

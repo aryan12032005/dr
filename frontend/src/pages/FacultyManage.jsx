@@ -13,11 +13,20 @@ const FacultyManage = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [expandedFaculty, setExpandedFaculty] = useState(null);
   const [facultyDocs, setFacultyDoc] = useState([]);
+  const [filteredFacultyDocs, setFilteredFacultyDoc] = useState([]);
   const [documentSearchQuery, setDocumentSearchQuery] = useState("");
 
   useEffect(() => {
     getAllDepartments();
   }, [navigate]);
+
+  useEffect(() => {
+    setFilteredFacultyDoc(
+      facultyDocs.filter((doc) =>
+        doc.title.toLowerCase().includes(documentSearchQuery.toLowerCase())
+      )
+    )
+  },[documentSearchQuery])
 
   const getAllDepartments = async () => {
     req_client.reload_tokens();
@@ -38,7 +47,7 @@ const FacultyManage = () => {
       Authorization: `Bearer ${req_client.accessToken}`,
     };
     const result = await req_client.fetchReq(
-      `admin/?start_c=0&end_c=50&querry=${searchQuery}&is_faculty=True&dep_code=${selectedDepartment}`,
+      `search_user/?start_c=0&end_c=50&querry=${searchQuery}&is_faculty=True&dep_code=${selectedDepartment}`,
       "GET",
       headers
     );
@@ -69,7 +78,7 @@ const FacultyManage = () => {
       Authorization: `Bearer ${req_client.accessToken}`,
     };
     const result = await req_client.fetchReq(
-      `admin/?start_c=0&end_c=50&is_faculty=True&dep_code=${dep_code}`,
+      `search_user/?start_c=0&end_c=50&is_faculty=True&dep_code=${dep_code}`,
       "GET",
       headers
     );
@@ -94,6 +103,7 @@ const FacultyManage = () => {
     );
     if (result.ok) {
       const resultJson = await result.json();
+      setFilteredFacultyDoc(resultJson.documents);
       setFacultyDoc(resultJson.documents);
     } else if (result.status === 404) {
       const resultJson = await result.json();
@@ -280,7 +290,7 @@ const FacultyManage = () => {
                           </div>
 
                           {/* Document List */}
-                          {facultyDocs.length > 0 ? (
+                          {filteredFacultyDocs.length > 0 ? (
                             <div className="overflow-x-auto">
                               <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-100">
@@ -300,7 +310,7 @@ const FacultyManage = () => {
                                   </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                  {facultyDocs.map((doc) => (
+                                  {filteredFacultyDocs.map((doc) => (
                                     <tr key={doc.id}>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {doc.title}

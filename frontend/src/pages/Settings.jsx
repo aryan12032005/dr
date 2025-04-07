@@ -61,7 +61,7 @@ const Settings = () => {
     req_client.reload_tokens();
     const headers = { Authorization: `Bearer ${req_client.accessToken}` };
     const result = await req_client.fetchReq(
-      `admin/?start_c=0&end_c=50&querry=${managerSearchTerm}&is_admin=True`,
+      `search_user/?start_c=0&end_c=50&querry=${managerSearchTerm}&is_admin=True`,
       "GET",
       headers
     );
@@ -111,18 +111,49 @@ const Settings = () => {
   const closeModal = () => setIsModalOpen(false);
 
   const Modal = ({ onClose, children }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
-      <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-xl relative transform scale-100 transition-transform duration-300">
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 bg-gray-700 text-white px-3 py-1 rounded-full hover:bg-gray-900"
-        >
+    <div style={styles.modalOverlay}>
+      <div style={styles.modalContent}>
+        <button onClick={onClose} style={styles.closeButton}>
           X
         </button>
         {children}
       </div>
     </div>
   );
+
+  const styles = {
+    modalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+    },
+    modalContent: {
+      backgroundColor: "white",
+      padding: "20px",
+      borderRadius: "8px",
+      maxWidth: "80%",
+      maxHeight: "90vh",
+      overflowY: "auto",
+      position: "relative",
+    },
+    closeButton: {
+      position: "absolute",
+      top: "10px",
+      right: "10px",
+      backgroundColor: "grey",
+      color: "white",
+      border: "none",
+      padding: "5px 10px",
+      cursor: "pointer",
+    },
+  };
 
   return (
     <div className="bg-gradient-to-r from-blue-50 to-white shadow-2xl rounded-3xl p-10 max-w-5xl mx-auto mt-10">
@@ -258,7 +289,7 @@ const Settings = () => {
 
         {isModalOpen && (
           <Modal onClose={closeModal}>
-            <div className="space-y-4">
+            <div className="space-y-4 px-10 py-10">
               <input
                 type="text"
                 value={managerSearchTerm}

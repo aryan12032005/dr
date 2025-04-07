@@ -10,19 +10,29 @@ import {
 import { Link } from 'react-router-dom'
 
 const Footer = () => {
-  const [showFooter, setShowFooter] = useState(false);
+  const [showFooter, setShowFooter] = useState(true);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrolled = window.scrollY > 100; // or whatever threshold
-      setShowFooter(scrolled);
+    const checkFooterVisibility = () => {
+      const scrolled = window.scrollY > 0;
+      const isScrollable = document.documentElement.scrollHeight > window.innerHeight;
+      setShowFooter(scrolled || !isScrollable);
     };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+  
+    // Initial check
+    checkFooterVisibility();
+  
+    // Add event listeners
+    window.addEventListener('scroll', checkFooterVisibility);
+    window.addEventListener('resize', checkFooterVisibility);
+  
+    return () => {
+      window.removeEventListener('scroll', checkFooterVisibility);
+      window.removeEventListener('resize', checkFooterVisibility);
+    };
   }, []);
   return showFooter ? (
-    <div className="bg-[#0f1320] text-white py-4 w-full flex-shrink-0 shadow-inner bottom-0">
+    <div className="bg-[#0f1320] text-white py-2 w-full flex-shrink-0 shadow-inner mt-auto">
       <footer className="bg-[#0f1320] text-white py-0 w-full flex-shrink-0">
         <div className="container mx-auto">
           {/* Social Icons */}

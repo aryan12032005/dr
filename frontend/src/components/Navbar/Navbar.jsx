@@ -83,7 +83,7 @@ const Navbar = ({ setUserStatus }) => {
       } else if (user_status.is_faculty) {
         updatedLinks.push(
           { title: "Document Upload", link: "/doc-upload" },
-          { title: "Faculty", link: "/facultypanel" },
+          { title: "Faculty Panel", link: "/facultypanel" },
           { title: "Logout", link: "/logout" }
         );
       }

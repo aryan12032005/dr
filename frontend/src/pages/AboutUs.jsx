@@ -45,14 +45,14 @@ const AboutUs = () => {
                 Manav Rachna University (MRU)
               </span>{" "}
               — a hub of innovation, academic excellence, and holistic
-              development. Rooted in a legacy of values and vision, MRIIRS is a
+              development. Rooted in a legacy of values and vision, MRU is a
               multidisciplinary institute nurturing future leaders and
               changemakers.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed mb-5">
               At the heart of our academic ecosystem is the{" "}
               <span className="font-semibold text-indigo-600">
-                Central Library
+                Swami Vivekananda Library and Resource Center
               </span>
               , a dynamic knowledge resource center that supports learning,
               research, and personal growth. Equipped with modern facilities,

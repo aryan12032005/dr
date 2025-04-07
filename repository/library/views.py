@@ -571,7 +571,7 @@ class GroupView(APIView):
         return super().get_permissions()
 
     def get(self,request):
-        user = request.user
+        user = request.user 
         group_id = request.query_params.get('group_id')
         if group_id:
             mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")

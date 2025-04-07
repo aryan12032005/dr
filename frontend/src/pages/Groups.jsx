@@ -65,7 +65,6 @@ const Groups = () => {
     Object.entries(newGroup).forEach(([key, value]) => {
       data.append(key, value);
     });
-    console.log(data);
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -124,14 +123,14 @@ const Groups = () => {
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
     };
-    const fetch_url = `get_groups/`;
+    let fetch_url = `get_groups/`;
     if (groupSearchQuery != "") {
       fetch_url = `get_groups/?query=${groupSearchQuery}`;
     }
     const result = await req_client.fetchReq(fetch_url, "GET", headers);
     if (result.ok) {
       const resultJson = await result.json();
-      console.log(resultJson);
+      console.log(resultJson.groups);
       setFilteredGroups(resultJson.groups);
       setGroups(resultJson.groups);
     } else {

@@ -20,10 +20,6 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     // Fetch users from db
-    if (!req_client.accessToken) {
-      navigate("/LogIn");
-      return;
-    }
     try {
       req_client.reload_tokens();
       const headers = { Authorization: `Bearer ${req_client.accessToken}` };
@@ -36,7 +32,6 @@ const UserManagement = () => {
       if (result.ok) {
         setUsers(resultJson.users);
         setFilteredUsers(resultJson.users);
-        console.log(resultJson.users);
       } else {
         alert(resultJson.message);
       }

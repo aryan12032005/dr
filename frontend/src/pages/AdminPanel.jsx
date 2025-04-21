@@ -23,7 +23,7 @@ import networkRequests from "../request_helper";
 
 const req_client = new networkRequests();
 
-const AdminPanel = () => {
+const AdminPanel = ({ userStatus }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [totalUsers, setTotalUsers] = useState(0);
@@ -141,7 +141,7 @@ const AdminPanel = () => {
         {/* Dynamic Routes */}
         <Routes>
           <Route path="/Settings" element={<Settings />} />
-          <Route path="/DocumentManage" element={<DocumentManage />} />
+          <Route path="/DocumentManage" element={<DocumentManage userStatus={userStatus}/>} />
           <Route path="/UserManagement" element={<UserManagement />} />
           <Route path="/FacultyManage" element={<FacultyManage />} />
         </Routes>

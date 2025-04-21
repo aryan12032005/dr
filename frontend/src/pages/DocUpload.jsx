@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import config from "../config";
 import { useNavigate } from "react-router-dom";
 import networkRequests from "../request_helper";
 
@@ -229,6 +228,7 @@ const DocUpload = () => {
             type="text"
             className="mt-4 border p-2 rounded w-full"
             placeholder="Enter Title"
+            value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
           />
@@ -280,6 +280,7 @@ const DocUpload = () => {
             onChange={(e) => setCategory(e.target.value)}
             required
           >
+            <option value="" disabled default>Select</option>
             <option value="research_paper">Research Paper</option>
             <option value="book">Book</option>
             <option value="article">Article</option>

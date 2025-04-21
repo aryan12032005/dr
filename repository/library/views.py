@@ -306,14 +306,65 @@ class getDocDetails(APIView):
                 'coverType':result.get('coverType',''),
                 'isPublic':result.get('isPublic')
             }
-            if result['docType']=='link':
-                document['documentLink']= result.get('documentLink','')
+            if result['coverType']=='link':
+                document['coverLink']= result.get('coverLink','')
             else:
                 coverFile= fs_handler_usual.getCover(result['category'],str(result['_id']))
                 document['cover']= coverFile
             return Response({"document": document},status=status.HTTP_200_OK)
         else:
             return Response({"message": "error fetching document"},status=status.HTTP_400_BAD_REQUEST)
+        
+    def post(self,request):
+        doc_id = request.query_params.get("doc_id",None)
+        data = request.POST.dict()
+        files = request.FILES
+        user = request.user
+        if doc_id:
+            update_id=None
+            try:
+                new_data = {
+                    'coverType' : data.get('coverType'),
+                    'isPublic' : data.get('isPublic'),
+                    'title' : data.get('title')
+                }
+                mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD)
+                existing_doc = mongo_client.get_doc_by_id(str(doc_id))
+                owner = existing_doc.get('owner')
+                category = existing_doc.get('category')
+                if not owner == user.id and not user.is_admin == True:
+                    return Response({'message':'Document does not belong to user'}, status = status.HTTP_400_BAD_REQUEST)
+                print(data)
+                if data.get('coverType') == 'link':
+                    new_data['coverLink'] = data.get('coverLink')
+                    update_id = mongo_client.update_doc(str(doc_id), data)
+                    if update_id:
+                        if not existing_doc.get('coverType') == 'link':
+                            fs_handler = fsHandler(FS_DIR)
+                            fs_handler.detele_files(category, str(doc_id),'cover')
+                        mongo_client.commit_transaction(update_id)
+                    else:
+                        mongo_client.abort_transaction(update_id)
+                        return Response({'message':'cannot update document'}, status= status.HTTP_400_BAD_REQUEST)
+                else:
+                    update_id = mongo_client.update_doc(str(doc_id), data)
+                    if update_id:
+                        fs_handler = fsHandler(FS_DIR)
+                        cover_file_names= [i.name for i in files.getlist('cover')]
+                        update_status= fs_handler.update_file(category, str(doc_id),'cover', cover_file_names, files.getlist('cover'))
+                        if update_status:
+                            mongo_client.commit_transaction(update_id)
+                        else:
+                            mongo_client.abort_transaction(update_id)
+                            return Response({'message':'cannot update document'}, status= status.HTTP_400_BAD_REQUEST)
+
+                return Response({'message':'updated document'}, status= status.HTTP_200_OK)
+            except Exception as e:
+                print(e)
+                if update_id:
+                    mongo_client.abort_transaction(update_id)
+                return Response({'message':'cannot update document'}, status= status.HTTP_400_BAD_REQUEST)
+
     
 class GetFacultyDoc(APIView):
     authentication_classes=[JWTAuthentication]
@@ -321,6 +372,8 @@ class GetFacultyDoc(APIView):
 
     def get(self,request):
         fac_id=request.query_params.get('fac_id')
+        if not fac_id == request.user.id:
+            return Response({"message":"faculty id not match"}, status = status.HTTP_400_BAD_REQUEST)
         mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
         result= mongo_client.get_faculty_doc(fac_id)
         if len(result) > 0:
@@ -391,7 +444,14 @@ class downloadDoc(APIView):
             if not document:
                 return Response({'message':"no doument to delete"},status=status.HTTP_400_BAD_REQUEST)
             if document['owner']== user.id or user.is_admin == True:
-                delete_status= mongo_client.delete_doc(str(doc_id))
+                session_id = mongo_client.delete_doc(str(doc_id))
+                if session_id:
+                    fs_handler  = fsHandler(FS_DIR)
+                    delete_status = fs_handler.detele_files(document['category'],str(doc_id),None)
+                    if delete_status:
+                        mongo_client.commit_transaction(session_id)
+                    else:
+                        mongo_client.abort_transaction(session_id)
                 if delete_status:
                     return Response({"message":"Document deleted Successfull"}, status= status.HTTP_200_OK)
                 else:
@@ -493,10 +553,12 @@ class deprtment_view(APIView):
         dep_code=request.query_params.get('dep_code',None)
         if dep_code:
             dep_details=Departments.objects.filter(dep_code=dep_code).first()
-            responseObj= {"managers":dep_details.managers,"subjects":dep_details.subjects}
+            if dep_details:
+                responseObj= {"managers":dep_details.managers,"subjects":dep_details.subjects}
         else:
             dep_details=Departments.objects.all().values("dep_name","dep_code")
-            responseObj= {"departments":dep_details}
+            if dep_details:
+                responseObj= {"departments":dep_details}
         if dep_details:
             return Response(responseObj,status=status.HTTP_200_OK)
         else:
@@ -552,11 +614,11 @@ class upload_document(APIView):
 
         if(data.get('coverType')!='link'):
             cover_file_names= [i.name for i in files.getlist('cover')]
-            fshandler.create_file(data.get('category')+'/cover',insert_id,cover_file_names,files.getlist('cover'))
+            fshandler.create_file(data.get('category'), insert_id, 'cover', cover_file_names, files.getlist('cover'))
 
         if(data.get('documentType')!='link'):
             document_file_names= [i.name for i in files.getlist('documents')]
-            fshandler.create_file(data.get('category')+'/documents',insert_id,document_file_names,files.getlist('documents'))
+            fshandler.create_file(data.get('category'), insert_id, 'document', document_file_names, files.getlist('documents'))
 
         return Response({'message':'docs uploaded'},status=status.HTTP_200_OK)
     

@@ -24,6 +24,7 @@ urlpatterns=[
     path('upload_document/',views.upload_document.as_view()),
     path('get_document/',views.getDocDetails.as_view()),
     path('download_doc/',views.downloadDoc.as_view()),
+    path('update_document/',views.getDocDetails.as_view()),
     path('get_faculty_doc/',views.GetFacultyDoc.as_view(),name="get_faculty_doc"),
     path('delete_document/',views.downloadDoc.as_view(),name="delete_doc"),
     

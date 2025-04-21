@@ -1,8 +1,9 @@
 from pymongo import MongoClient
-import os
+import os, shutil
 from bson import ObjectId
 import zipfile
 import base64
+import uuid
 
 class mongo_DB:
     def __init__(self, username=None, password=None, host="localhost", port=27017, db_name="Library", table_name="documents"):
@@ -11,6 +12,35 @@ class mongo_DB:
         self.client=MongoClient(db_string)
         self.db=self.client[db_name]
         self.doc=self.db[table_name]
+        self.__sessions={}
+
+    def __start_session(self):
+        session= self.client.start_session()
+        session.start_transaction()
+        session_id = str(uuid.uuid4())
+        self.__sessions[session_id] = session
+        return session_id
+    
+    def commit_transaction(self, session_id:str):
+        if session_id in self.__sessions.keys():
+            session = self.__sessions[session_id]
+            session.commit_transaction()
+            session.end_session()
+            self.__sessions.pop(session_id)
+            return True
+        else:
+            return False
+        
+    def abort_transaction(self,session_id:str):
+        if session_id in self.__sessions:
+            session = self.__sessions[session_id]
+            session.abort_transaction()
+            session.end_session()
+            self.__sessions.pop(session_id)
+            return True
+        else:
+            return False
+
 
     def get_count(self,db_name="Library",collection="documents"):
         db=self.client[db_name]
@@ -53,19 +83,24 @@ class mongo_DB:
         else:
             return None
         
-    def update_doc(self,id:str, new_value):
+    def update_doc(self, id:str, new_value):
         query = {"_id": ObjectId(id)}
         new_values = {"$set": new_value}
-        result=self.doc.update_one(query,new_values)
-        if result:
-            return result.upserted_id
+        session_id = self.__start_session()
+        result=self.doc.update_one(query,new_values, session=self.__sessions[session_id])
+        if result.modified_count > 0:
+            return session_id
         else:
-            return None
+            return False
         
     def delete_doc(self,id:str):
         querry={'_id':ObjectId(id)}
-        result=self.doc.delete_one(querry)
-        return result.deleted_count
+        session_id = self.__start_session()
+        result=self.doc.delete_one(querry, session=self.__sessions[session_id])
+        if result.deleted_count>0:
+            return session_id
+        else:
+            return False
        
         
 class fsHandler:
@@ -73,8 +108,8 @@ class fsHandler:
         os.makedirs(working_dir,exist_ok=True)
         self.work_dir=working_dir
     
-    def create_file(self,category,id,filenames,files):
-        temp_dir=self.work_dir+'/'+category+'/'+str(id)
+    def create_file(self,category,id,doc_type,filenames,files):
+        temp_dir=self.work_dir+'/'+category+'/'+str(id)+'/'+doc_type
         os.makedirs(temp_dir,exist_ok=True)
         try:
             for i,f in enumerate(filenames):
@@ -85,29 +120,37 @@ class fsHandler:
             return False
         return temp_dir
 
-    def update_file(self,category,id,filenames,files):
-        temp_dir=self.work_dir+'/'+category+'/'+str(id)
+    def update_file(self,category,id,doc_type,filenames,files):
+        temp_dir=self.work_dir+'/'+category+'/'+str(id)+'/'+doc_type
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        os.mkdir(temp_dir)
         try:
             for i,f in enumerate(filenames):
-                with open(temp_dir+ '/'+ str(f), 'wb+') as new_file:
+                with open(temp_dir+ '/'+ str(i)+ '_'+ str(f), 'wb+') as new_file:
                     for chunks in files[i]:
                         new_file.write(chunks)
         except:
             return False
         return True
     
-    def detele_files(self,category,id,filenames):
-        temp_dir=self.work_dir+'/'+category+'/'+str(id)
+    def detele_files(self,category,id,doc_type,filenames = None):
         try:
-            for f in filenames:
-                os.remove(temp_dir+'/'+f)
-            os.rmdir(temp_dir)
+            if doc_type:
+                temp_dir=self.work_dir+'/'+category+'/'+str(id) + '/'+ doc_type
+            else:
+                temp_dir=self.work_dir+'/'+category+'/'+str(id)
+            if filenames and doc_type:
+                for f in filenames:
+                    os.remove(temp_dir+'/'+f)
+            else:
+                shutil.rmtree(temp_dir)
         except:
             return False
         return True
     
     def getCover(self, category:str, doc_id:str):
-        folder_dir=self.work_dir+"/"+category+"/cover/"+doc_id
+        folder_dir=self.work_dir+"/"+category+"/"+doc_id+'/cover'
         file_name= os.listdir(folder_dir)[0]
         cover = open(folder_dir+"/"+file_name, "rb")
         if cover:
@@ -116,7 +159,7 @@ class fsHandler:
             return None
     
     def getZip(self, category:str, doc_id:str):
-        folder_dir=self.work_dir+"/"+category+"/documents/"+doc_id
+        folder_dir=self.work_dir+"/"+category+"/"+doc_id+'/document'
         file_name=doc_id+".zip"
         os.makedirs(self.work_dir+"/ZIP",exist_ok=True)
         zip_path= self.work_dir+"/ZIP/"+file_name

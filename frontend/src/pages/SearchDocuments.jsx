@@ -1,10 +1,44 @@
 import React, { useState, useRef, useEffect } from "react";
 import networkRequests from "../request_helper";
 import { saveAs } from "file-saver";
+import DocEdit from "./DocEdit.jsx";
 
 const req_client = new networkRequests();
 
 const SearchDocument = ({ userStatus }) => {
+  const styles = {
+    modalOverlay: {
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      zIndex: 1000,
+    },
+    modalContent: {
+      backgroundColor: "white",
+      padding: "20px",
+      borderRadius: "8px",
+      maxWidth: "80%",
+      maxHeight: "90vh",
+      overflowY: "auto",
+      position: "relative",
+    },
+    closeButton: {
+      position: "absolute",
+      top: "10px",
+      right: "10px",
+      backgroundColor: "grey",
+      color: "white",
+      border: "none",
+      padding: "5px 10px",
+      cursor: "pointer",
+    },
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredDocuments, setDocuments] = useState([]);
   const [viewingDocument, setViewDocument] = useState(null);
@@ -54,6 +88,8 @@ const SearchDocument = ({ userStatus }) => {
   };
 
   const searchDocument = async () => {
+    console.log(userStatus);
+    console.log(userStatus.is_admin);
     const headers = {
       "Content-Type": "application/json",
     };
@@ -68,6 +104,7 @@ const SearchDocument = ({ userStatus }) => {
       setDocuments(data.documents);
     } else if (response.status === 404) {
       const responseJson = await response.json();
+      setDocuments([]);
       alert(responseJson.message);
     }
   };
@@ -94,7 +131,7 @@ const SearchDocument = ({ userStatus }) => {
       setViewDocument(resultJson.document);
       openModal();
     } else {
-      alert('please login to view documents');
+      alert("please login to view documents");
     }
   };
 
@@ -126,25 +163,28 @@ const SearchDocument = ({ userStatus }) => {
         }
         saveAs(await result.blob(), filename);
       }
-    } else{
+    } else {
       alert("Please login to download");
     }
   };
 
-  const deleteDoc = async() => {
+  const deleteDoc = async (doc_id) => {
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
     };
 
     const result = await req_client.fetchReq(
-      `delete_document/?doc_id=${id}`,
-      "GET",
+      `delete_document/?doc_id=${doc_id}`,
+      "DELETE",
       headers
     );
-    if(result.ok){
+    if (result.ok) {
       const resultJson = await result.json();
+      alert("document deleted");
       searchDocument();
+    } else {
+      alert("error deleting document");
     }
   };
 
@@ -159,39 +199,7 @@ const SearchDocument = ({ userStatus }) => {
     </div>
   );
 
-  const styles = {
-    modalOverlay: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      width: "100%",
-      height: "100%",
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 1000,
-    },
-    modalContent: {
-      backgroundColor: "white",
-      padding: "20px",
-      borderRadius: "8px",
-      maxWidth: "80%",
-      maxHeight: "90vh",
-      overflowY: "auto",
-      position: "relative",
-    },
-    closeButton: {
-      position: "absolute",
-      top: "10px",
-      right: "10px",
-      backgroundColor: "grey",
-      color: "white",
-      border: "none",
-      padding: "5px 10px",
-      cursor: "pointer",
-    },
-  };
+  
 
   return (
     <div className="bg-white shadow-lg rounded-lg p-6 mb-4 relative">
@@ -322,7 +330,9 @@ const SearchDocument = ({ userStatus }) => {
                   >
                     Download
                   </button>
-                  {(userStatus.is_admin && userStatus.is_admin == true) || (userStatus.user_id && userStatus.user_id == doc.owner) && (
+                  {((userStatus.is_admin && userStatus.is_admin == true) ||
+                    (userStatus.user_id &&
+                      userStatus.user_id == doc.owner)) && (
                     <button
                       className="text-green-500 hover:text-green-700"
                       onClick={() => deleteDoc(doc.id)}
@@ -332,6 +342,10 @@ const SearchDocument = ({ userStatus }) => {
                   )}
                 </div>
               </div>
+              {((userStatus.is_admin && userStatus.is_admin == true) ||
+                (userStatus.user_id && userStatus.user_id == doc.owner)) && (
+                <DocEdit doc_id={doc.id} />
+              )}
             </div>
           ))
         ) : (
@@ -362,7 +376,7 @@ const SearchDocument = ({ userStatus }) => {
             <p className="text-gray-500 text-sm">
               <strong>Uploaded On:</strong> {viewingDocument.createDate}
             </p>
-            {viewingDocument.isPublic ? (
+            {viewingDocument.isPublic === "true" ? (
               <p className="text-green-800">
                 <strong>Public</strong>
               </p>
@@ -378,6 +392,12 @@ const SearchDocument = ({ userStatus }) => {
                 src={`data:application/pdf;base64,${viewingDocument.cover}`}
                 className="max-w-[80vw] min-w-[50vw] min-h-[80vh] rounded-lg shadow-lg mt-5"
               ></iframe>
+            ) : viewingDocument.coverType.includes("link") ? (
+              <img
+                src={viewingDocument.coverLink}
+                style={{ width: "700px", height: "100%" }}
+                alt="error loading image"
+              />
             ) : (
               <img
                 src={`data:${viewingDocument.coverType};base64,${viewingDocument.cover}`}

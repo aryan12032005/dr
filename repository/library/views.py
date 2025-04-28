@@ -628,6 +628,7 @@ class GroupView(APIView):
     def get_permissions(self):
         if self.request.method == "GET":
             return [IsActive(), IsAuthenticated()]
+        
         if self.request.method == 'POST':
             return [IsAuthenticated(), IsActive(), IsAdmin_or_Faculty()]
         return super().get_permissions()
@@ -637,6 +638,7 @@ class GroupView(APIView):
         group_id = request.query_params.get('group_id')
         if group_id:
             mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
+            print(group_id)
             group_details= mongo_client.get_doc_by_id(str(group_id))
             if group_details:
                 group_details['id'] = str(group_details['_id'])
@@ -644,18 +646,6 @@ class GroupView(APIView):
                 return Response({'group_details':group_details},status=status.HTTP_200_OK)
             else:
                 return Response({"message":"No groups found"},status=status.HTTP_400_BAD_REQUEST)
-
-        
-        member_id = request.query_params.get('member_id')
-        if member_id:
-            my_groups = LibraryUser.objects.filter(id= member_id).values("my_groups")
-            if my_groups:
-                for grp in my_groups:
-                    grp['id'] = str(grp['_id'])
-                    grp.pop('_id',None)
-                return Response({"groups":my_groups},status=status.HTTP_200_OK)
-            else:
-                return Response({'message':"No groups found"},status=status.HTTP_400_BAD_REQUEST)
         
         if user.is_faculty == True:
             mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
@@ -678,15 +668,19 @@ class GroupView(APIView):
         mongo_client = mongo_DB(username=MONGO_USERNAME, password=MONGO_PASSWORD, db_name="Library", table_name="groups")
         group_id= mongo_client.insert(group_details)
         try:
+            user = LibraryUser.objects.filter(username= str(member['username'])).first()
             for member in group_details['members']:
-                user = LibraryUser.objects.filter(username= str(member['username'])).first()
                 user.groups.append(str(group_id))
-                user.save()
+            user.save()
             return Response({'message':'group created successfull'},status=status.HTTP_200_OK)
         except Exception as e:
             existing_group= mongo_client.get_doc_by_id(str(group_id))
             if existing_group:
-                mongo_client.delete_doc(str(group_id))
+                delete_id=mongo_client.delete_doc(str(group_id))
+                if delete_id:
+                    mongo_client.commit_transaction(delete_id)
+                else:
+                    mongo_client.abort_transaction(delete_id)
             return Response({'message':'error creating group'},status=status.HTTP_400_BAD_REQUEST)
         
     def delete(self, request):
@@ -696,8 +690,58 @@ class GroupView(APIView):
         mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
         existing_group = mongo_client.get_doc_by_id(str(group_id))
         if existing_group:
-            delete_status = mongo_client.delete_doc(str(group_id))
+            delete_id = mongo_client.delete_doc(str(group_id))
+            delete_status=False
+            if delete_id:
+                delete_status= mongo_client.commit_transaction(delete_id)
+            else:
+                delete_status = mongo_client.abort_transaction(delete_id)
             if delete_status:
                 return Response({'message':'group deleted successfull'},status=status.HTTP_200_OK)
             else:
                 return Response({'message':'error deleting group'}, status=status.HTTP_400_BAD_REQUEST)
+            
+
+class GroupDocumentView(APIView):
+    def get_permissions(self):
+        if self.request.method =='GET':
+            return [IsActive(), IsAuthenticated()]
+        if self.request.method == "POST":
+            return [IsActive(), IsAdmin_or_Faculty(), IsAuthenticated()]
+        return super().get_permissions()
+
+    def post(self,request):
+        group_id = request.query_params.get('group_id', None)
+        documents = request.data
+        user = request.user
+        print(documents, request.POST)
+        if not group_id:
+            return Response({'message':'please provide group id'},status=status.HTTP_400_BAD_REQUEST)
+        mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
+        existing_group = mongo_client.get_doc_by_id(str(group_id))
+        if not user.is_admin == True and not existing_group['owner'] == user.id:
+            return Response({'message': "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        existing_docs = [doc['id'] for doc in existing_group['documents']]
+        for doc in documents:
+            if not doc['id'] in existing_docs:
+                existing_group['documents'].append(doc)
+        update_id=mongo_client.update_doc(str(group_id), {'documents': existing_group['documents']})
+        if update_id:
+            mongo_client.commit_transaction(update_id)
+        else:
+            mongo_client.abort_transaction(update_id)
+        return Response({'message': 'documents added'}, status=status.HTTP_200_OK)
+    
+class MemberGroupView(APIView):
+    def get_permissions(self):
+        return super().get_permissions()
+    
+    def get(self,request):
+        user = request.user
+        member_id = user.id
+        my_groups = LibraryUser.objects.filter(id= member_id).values("groups")[:20]
+        if my_groups:
+            return Response({"groups":my_groups},status=status.HTTP_200_OK)
+        else:
+            return Response({'message':"No groups found"},status=status.HTTP_400_BAD_REQUEST)

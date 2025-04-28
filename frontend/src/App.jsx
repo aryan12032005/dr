@@ -16,6 +16,7 @@ import DocUpload from "./pages/DocUpload";
 import LogOut from "./pages/LogOut";
 import SearchDocument from "./pages/SearchDocuments";
 import Faculty from "./pages/Faculty";
+import ViewGroups from "./pages/ViewGroups";
 
 const App = () => {
   const [userStatus, setUserStatus] = useState({});
@@ -34,6 +35,7 @@ const App = () => {
           <Route path="/doc-upload" element={<DocUpload />} />
           <Route path="/logout" element={<LogOut />} />
           <Route path="/search-doc" element={<SearchDocument userStatus={userStatus} />} />
+          <Route path="/my-groups" element={<ViewGroups />} />
           <Route path="/facultypanel" element={<Faculty />} />
         </Routes>
         <Footer />

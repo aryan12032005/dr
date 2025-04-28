@@ -26,12 +26,14 @@ urlpatterns=[
     path('download_doc/',views.downloadDoc.as_view()),
     path('update_document/',views.getDocDetails.as_view()),
     path('get_faculty_doc/',views.GetFacultyDoc.as_view(),name="get_faculty_doc"),
-    path('delete_document/',views.downloadDoc.as_view(),name="delete_doc"),
+    path('delete_document/',views.downloadDoc.as_view(),name="delete_document"),
     
     path('get_department/',views.deprtment_view.as_view()),
     path('add_department/',views.deprtment_view.as_view()),
 
     path('get_groups/',views.GroupView.as_view()),
+    path('get_member_group/',views.MemberGroupView.as_view()),
     path('create_group/',views.GroupView.as_view()),
     path('delete_group/',views.GroupView.as_view()),
+    path('add_group_documents/',views.GroupDocumentView.as_view()),
 ]

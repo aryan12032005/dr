@@ -6,9 +6,10 @@ const req_client = new networkRequests();
 const Groups = () => {
   // State variables
   const navigate = useNavigate();
+  const [groupSearchQuery, setGroupSearchQuery] = useState("");
+  const [showGroupModal, setShowGroupModal] = useState(false);
   const [groups, setGroups] = useState([]);
   const [filteredGroups, setFilteredGroups] = useState([]);
-  const [groupSearchQuery, setGroupSearchQuery] = useState("");
   const [newGroup, setNewGroup] = useState({
     group_name: "",
     members: [],
@@ -16,13 +17,18 @@ const Groups = () => {
     comments: [],
     ownerManaged: true,
   });
-  const [editingGroupMembers, setEditingGroupMembers] = useState([]);
   const [editingGroup, setEditingGroup] = useState(false);
-  const [showGroupModal, setShowGroupModal] = useState(false);
-  const [showGroupMembersModal, setShowGroupMembersModal] = useState(false);
+
+  const [editingGroupMembers, setEditingGroupMembers] = useState([]);
   const [groupMemberSearchQuery, setGroupMemberSearchQuery] = useState("");
+  const [showGroupMembersModal, setShowGroupMembersModal] = useState(false);
   const [searchedMembers, setSearchedMembers] = useState([]);
   const [filteredSearchedMembers, setFilteredSearchedMembers] = useState([]);
+
+  const [showAddDocumentModal, setShowAddDocumentModal] = useState(false);
+  const [documentSearchQuery, setDocumentSearchQuery] = useState("");
+  const [searchedDocuments, setSearchedDocuments] = useState([]);
+  const [editingDocuments, setEditingDocuments] = useState([]);
 
   const resetNewGroupData = () => {
     setNewGroup({
@@ -42,6 +48,39 @@ const Groups = () => {
     );
   };
 
+  const addDocToEditingGroup = (doc) => {
+    setEditingDocuments((editingDocuments) =>
+      editingDocuments.some((obj) => obj.id === doc.id)
+        ? editingDocuments.filter((obj) => obj.id != doc.id)
+        : [...editingDocuments, doc]
+    );
+  };
+
+  const saveNewGroupDocuments = async() => {
+    setNewGroup((newGroup) => ({ ...newGroup, documents: editingDocuments}));
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
+    };
+    const result = await req_client.fetchReq(
+      `add_group_documents/?group_id=${newGroup.id}`,
+      "POST",
+      headers,
+      JSON.stringify(editingDocuments)
+    );
+    if (result.ok){
+      alert('documents added.');
+      setEditingDocuments([]);
+      setSearchedDocuments([]);
+      setDocumentSearchQuery("");
+      setShowAddDocumentModal(false);
+    }
+    else{
+      alert('error adding documents');
+    }
+  };
+
   const saveNewGroupMembers = () => {
     setNewGroup((newGroup) => ({ ...newGroup, members: editingGroupMembers }));
     setEditingGroupMembers([]);
@@ -52,6 +91,7 @@ const Groups = () => {
   };
 
   const handleCreateGroup = () => {
+    resetNewGroupData();
     setShowGroupModal(true);
   };
 
@@ -60,36 +100,14 @@ const Groups = () => {
     setShowGroupMembersModal(true);
   };
 
-  const handleSaveGroup = async () => {
-    const data = new FormData();
-    Object.entries(newGroup).forEach(([key, value]) => {
-      data.append(key, value);
-    });
-    req_client.reload_tokens();
-    const headers = {
-      Authorization: `Bearer ${req_client.accessToken}`,
-      "Content-Type": "application/json",
-    };
-    const result = await req_client.fetchReq(
-      `create_group/`,
-      "POST",
-      headers,
-      JSON.stringify(newGroup)
-    );
+  const handleCancelGroup = () => {
+    resetNewGroupData();
     setShowGroupModal(false);
-    if (result.ok) {
-      const resultJson = await result.json();
-      alert(resultJson.message);
-    } else if (result.status == 400) {
-      const resultJson = await result.json();
-      alert(resultJson.message);
-    }
-    searchGroups();
   };
 
-  const handleCancelGroup = () => {
-    setNewGroup({ group_name: "", members: [], documents: [], comments: [] });
-    setShowGroupModal(false);
+  const handleAddDocument = (group) => {
+    setNewGroup(group);
+    setShowAddDocumentModal(true);
   };
 
   useEffect(() => {
@@ -118,6 +136,53 @@ const Groups = () => {
     );
   }, [groupMemberSearchQuery]);
 
+  const handleSaveGroup = async () => {
+    const data = new FormData();
+    Object.entries(newGroup).forEach(([key, value]) => {
+      data.append(key, value);
+    });
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
+    };
+    const result = await req_client.fetchReq(
+      `create_group/`,
+      "POST",
+      headers,
+      JSON.stringify(newGroup)
+    );
+
+    setShowGroupModal(false);
+    if (result.ok) {
+      const resultJson = await result.json();
+      alert(resultJson.message);
+    } else if (result.status == 400) {
+      const resultJson = await result.json();
+      alert(resultJson.message);
+    }
+    searchGroups();
+  };
+
+  const searchDocuments = async() => {
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    const response = await req_client.fetchReq(
+      `search_document/?querry=${documentSearchQuery}`,
+      "GET",
+      headers
+    );
+    if (response.ok){
+      const resultJson = await response.json();
+      setSearchedDocuments(resultJson.documents);
+    }
+    else{
+      setSearchedDocuments(null);
+    }
+  };
+  
+
   const searchGroups = async () => {
     req_client.reload_tokens();
     const headers = {
@@ -130,7 +195,6 @@ const Groups = () => {
     const result = await req_client.fetchReq(fetch_url, "GET", headers);
     if (result.ok) {
       const resultJson = await result.json();
-      console.log(resultJson.groups);
       setFilteredGroups(resultJson.groups);
       setGroups(resultJson.groups);
     } else {
@@ -161,6 +225,7 @@ const Groups = () => {
     setNewGroup(group);
     setShowGroupModal(true);
     setEditingGroup(true);
+    setEditingGroupMembers(group.members);
   };
 
   const handleDeleteGroup = async (group_id) => {
@@ -232,6 +297,13 @@ const Groups = () => {
                 </div>
                 <div className="flex space-x-2">
                   <button
+                    onClick={() => handleAddDocument(group)}
+                    className="text-green-500 hover:text-green-600"
+                    title="Add Document"
+                  >
+                    ➕
+                  </button>
+                  <button
                     onClick={() => handleEditGroup(group)}
                     className="text-blue-500 hover:text-blue-600"
                     title="Edit Group"
@@ -269,14 +341,40 @@ const Groups = () => {
                 </div>
               </div>
 
-              {/* {newDocument.visibility === "members" && (
-                <button
-                  onClick={() => addGroupToSelection(group.id)}
-                  className="mt-3 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1 rounded-md transition-colors w-full"
-                >
-                  Add to document selection
-                </button>
-              )} */}
+              {/* Documents Section */}
+              <div className="mt-3">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-sm font-medium text-gray-700">Documents:</h4>
+                  <button
+                    onClick={() => handleAddDocument(group)}
+                    className="text-green-500 hover:text-green-600 text-sm flex items-center"
+                    title="Add Document"
+                  >
+                    <span className="mr-1">+</span> Add Document
+                  </button>
+                </div>
+                <div className="mt-1 border-t pt-2">
+                  {group.documents && group.documents.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {group.documents.slice(0, 3).map((doc, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full"
+                        >
+                          {doc.title || `Document ${index + 1}`}
+                        </span>
+                      ))}
+                      {group.documents.length > 3 && (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
+                          +{group.documents.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-400 text-xs">No documents added yet</p>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -433,6 +531,74 @@ const Groups = () => {
               </button>
               <button
                 onClick={() => setShowGroupMembersModal(false)}
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAddDocumentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Select Documents
+              </h3>
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="Search documents..."
+                  value={documentSearchQuery}
+                  onChange={(e) => setDocumentSearchQuery(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md mb-2"
+                />
+                <button
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
+                  onClick={searchDocuments}
+                >
+                  Search
+                </button>
+              </div>
+              <div className="max-h-60 overflow-y-auto border rounded-md">
+                {searchedDocuments.length > 0 ? (
+                  <ul className="divide-y divide-gray-200">
+                    {searchedDocuments.map((doc) => (
+                      <li key={doc.id} className="p-2 hover:bg-gray-50">
+                        <label className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            checked={editingDocuments.some(
+                              (obj) => obj.id == doc.id
+                            )}
+                            onChange={() => addDocToEditingGroup(doc)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <span className="text-sm text-gray-700">
+                            {doc.title} - {doc.docType}
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="p-4 text-gray-500 text-center">
+                    No Documents found
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+              <button
+                onClick={saveNewGroupDocuments}
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setShowAddDocumentModal(false)}
                 className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
               >
                 Cancel

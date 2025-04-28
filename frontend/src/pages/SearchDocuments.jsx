@@ -2,10 +2,13 @@ import React, { useState, useRef, useEffect } from "react";
 import networkRequests from "../request_helper";
 import { saveAs } from "file-saver";
 import DocEdit from "./DocEdit.jsx";
+import { useNavigate } from "react-router-dom";
 
 const req_client = new networkRequests();
 
 const SearchDocument = ({ userStatus }) => {
+
+  const navigate = useNavigate()
   const styles = {
     modalOverlay: {
       position: "fixed",
@@ -88,8 +91,6 @@ const SearchDocument = ({ userStatus }) => {
   };
 
   const searchDocument = async () => {
-    console.log(userStatus);
-    console.log(userStatus.is_admin);
     const headers = {
       "Content-Type": "application/json",
     };
@@ -202,8 +203,22 @@ const SearchDocument = ({ userStatus }) => {
   
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-6 mb-4 relative">
-      <h2 className="text-xl font-semibold mb-2 text-gray-700">
+    <div className="bg-white shadow-lg rounded-lg p-6 mb-4 relative flex flex-col items-center">
+    <div className="bg-gray-200 p-1 rounded-full w-fit flex">
+      <button
+        onClick={() => navigate('/search-doc')}
+        className={`px-4 py-2 rounded-full text-sm font-medium transition-all bg-blue-500 text-white shadow`}
+      >
+        Search Docs
+      </button>
+      <button
+        onClick={() => navigate('/my-groups')}
+        className={`px-4 py-2 rounded-full text-sm font-medium transition-all text-gray-700`}
+      >
+        View Groups
+      </button>
+    </div>
+      <h2 className="text-xl font-semibold mb-2 text-gray-700 mt-5">
         Search Documents
       </h2>
 
@@ -306,7 +321,7 @@ const SearchDocument = ({ userStatus }) => {
               key={doc.id}
               className="p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors"
             >
-              <div className="flex justify-between items-center">
+              <div className="flex flex-row space-x-10 items-center">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-800">
                     {doc.title}

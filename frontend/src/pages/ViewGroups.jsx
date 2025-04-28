@@ -4,14 +4,14 @@ import { useNavigate } from "react-router-dom";
 
 const req_client = new networkRequests();
 const ViewGroups = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [groupSearchQuery, setGroupSearchQuery] = useState("");
   const [filteredGroups, setFilteredGroups] = useState([]);
   const [searchedGroups, setSearchedGroups] = useState([]);
 
   useEffect(() => {
     searchGroups();
-  },[navigate]);
+  }, [navigate]);
 
   const searchGroups = async () => {
     req_client.reload_tokens();
@@ -26,6 +26,7 @@ const ViewGroups = () => {
     );
     if (result.ok) {
       const resultJson = await result.json();
+      console.log(resultJson);
       setSearchedGroups(resultJson.groups);
     } else {
       alert("no groups found");
@@ -33,32 +34,43 @@ const ViewGroups = () => {
   };
 
   useEffect(() => {
-    console.log("searched_groups",searchedGroups);
     const fetchGroupDetails = async () => {
       const headers = {
         Authorization: `Bearer ${req_client.accessToken}`,
         "Content-Type": "application/json",
       };
-      const details = await Promise.all(
+      let details = await Promise.all(
         searchedGroups.map(async (group_id) => {
           try {
-            
-            const response = await req_client.fetchReq(`/get_groups/?group_id=${group_id}`,"GET", headers);
-            const data = await response.json();
-            return data;
+            console.log("Sending group_id:", group_id); // Now a single string
+            const response = await req_client.fetchReq(
+              `/get_groups/?group_id=${encodeURIComponent(group_id)}`,
+              "GET",
+              headers
+            );
+      
+            if (response.ok) {
+              const data = await response.json();
+              return data.group_details;  // Return the result for this group_id
+            } else {
+              return null;
+            }
           } catch (error) {
             return null;
           }
         })
       );
-      console.log("detsils",details);
-      setFilteredGroups(details.filter(Boolean));
+      
+      // Filter out any null or undefined values from the result
+      details = details.filter(detail => detail !== null);
+      
+      setFilteredGroups(details);
     };
 
     if (searchedGroups.length > 0) {
       fetchGroupDetails();
     }
-    console.log("filtered_groups",filteredGroups);
+    console.log("filtered_groups", filteredGroups);
   }, [searchedGroups]);
 
   return (
@@ -97,7 +109,7 @@ const ViewGroups = () => {
 
         {/* Groups List */}
         {filteredGroups.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
             {filteredGroups.map((group) => (
               <div
                 key={group.id}

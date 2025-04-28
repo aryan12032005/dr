@@ -350,7 +350,7 @@ const Groups = () => {
                     className="text-green-500 hover:text-green-600 text-sm flex items-center"
                     title="Add Document"
                   >
-                    <span className="mr-1">+</span> Add Document
+                  {group.documents.length > 0 ? (<span className="mr-1">Edit Documents</span>) : (<span className="mr-1">+ Add Document</span> )}
                   </button>
                 </div>
                 <div className="mt-1 border-t pt-2">

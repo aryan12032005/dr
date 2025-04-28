@@ -640,6 +640,7 @@ class GroupView(APIView):
             mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
             print(group_id)
             group_details= mongo_client.get_doc_by_id(str(group_id))
+            print(group_details)
             if group_details:
                 group_details['id'] = str(group_details['_id'])
                 group_details.pop('_id',None)
@@ -668,10 +669,10 @@ class GroupView(APIView):
         mongo_client = mongo_DB(username=MONGO_USERNAME, password=MONGO_PASSWORD, db_name="Library", table_name="groups")
         group_id= mongo_client.insert(group_details)
         try:
-            user = LibraryUser.objects.filter(username= str(member['username'])).first()
             for member in group_details['members']:
+                user = LibraryUser.objects.filter(username= str(member['username'])).first()
                 user.groups.append(str(group_id))
-            user.save()
+                user.save()
             return Response({'message':'group created successfull'},status=status.HTTP_200_OK)
         except Exception as e:
             existing_group= mongo_client.get_doc_by_id(str(group_id))
@@ -742,6 +743,6 @@ class MemberGroupView(APIView):
         member_id = user.id
         my_groups = LibraryUser.objects.filter(id= member_id).values("groups")[:20]
         if my_groups:
-            return Response({"groups":my_groups},status=status.HTTP_200_OK)
+            return Response({"groups":list(my_groups)[0]['groups']},status=status.HTTP_200_OK)
         else:
             return Response({'message':"No groups found"},status=status.HTTP_400_BAD_REQUEST)

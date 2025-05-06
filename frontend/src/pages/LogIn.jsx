@@ -39,7 +39,6 @@ const Login = () => {
         alert(`Login failed: ${errorData.message}`);
       }
     } catch (error) {
-      console.error('Login error:', error);
       alert('An error occurred during login.');
     }
   };

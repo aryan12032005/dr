@@ -75,6 +75,7 @@ const Groups = () => {
       setSearchedDocuments([]);
       setDocumentSearchQuery("");
       setShowAddDocumentModal(false);
+      searchGroups();
     }
     else{
       alert('error adding documents');
@@ -106,6 +107,10 @@ const Groups = () => {
   };
 
   const handleAddDocument = (group) => {
+    if (group.documents.length > 0){
+      setSearchedDocuments(group.documents);
+      setEditingDocuments(group.documents);
+    }
     setNewGroup(group);
     setShowAddDocumentModal(true);
   };
@@ -198,8 +203,6 @@ const Groups = () => {
       setFilteredGroups(resultJson.groups);
       setGroups(resultJson.groups);
     } else {
-      const resultJson = await result.json();
-      alert(resultJson.message);
     }
   };
 
@@ -209,6 +212,7 @@ const Groups = () => {
       Authorization: `Bearer ${req_client.accessToken}`,
       "Content-Type": "application/json",
     };
+    if (groupMemberSearchQuery === "") return;
     const result = await req_client.fetchReq(
       `search_user/?start_c=0&end_c=50&querry=${groupMemberSearchQuery}&is_admin=False`,
       "GET",

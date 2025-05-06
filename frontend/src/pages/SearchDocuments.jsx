@@ -43,7 +43,7 @@ const SearchDocument = ({ userStatus }) => {
     },
   };
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredDocuments, setDocuments] = useState([]);
+  const [filteredDocuments, setFilteredDocuments] = useState([]);
   const [viewingDocument, setViewDocument] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -102,10 +102,10 @@ const SearchDocument = ({ userStatus }) => {
 
     if (response.ok) {
       const data = await response.json();
-      setDocuments(data.documents);
+      setFilteredDocuments(data.documents);
     } else if (response.status === 404) {
       const responseJson = await response.json();
-      setDocuments([]);
+      setFilteredDocuments([]);
       alert(responseJson.message);
     }
   };
@@ -188,6 +188,7 @@ const SearchDocument = ({ userStatus }) => {
       alert("error deleting document");
     }
   };
+  
 
   const Modal = ({ onClose, children }) => (
     <div style={styles.modalOverlay}>
@@ -233,15 +234,15 @@ const SearchDocument = ({ userStatus }) => {
       <div className="flex justify-between items-center">
         <button
           onClick={searchDocument}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded left-20 absolute"
         >
           Search
         </button>
 
-        <div className="relative" ref={filterRef}>
+        <div className="flex flex-col m-10" ref={filterRef}>
           <button
             onClick={toggleFilter}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded"
+            className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded absolute right-20"
           >
             Filter
           </button>
@@ -314,7 +315,7 @@ const SearchDocument = ({ userStatus }) => {
         Total results: {filteredDocuments.length}
       </p>
 
-      <div className="rounded-lg overflow-hidden mt-4">
+      <div className="rounded-lg overflow-hidden mt-4 justify-between w-full">
         {filteredDocuments.length > 0 ? (
           filteredDocuments.map((doc) => (
             <div
@@ -332,7 +333,7 @@ const SearchDocument = ({ userStatus }) => {
                     File type: {doc.docType}
                   </p>
                 </div>
-                <div className="flex space-x-4">
+                <div className="flex space-x-4 right-10 absolute">
                   <button
                     className="text-blue-500 hover:text-blue-700"
                     onClick={() => openDoc(doc.id)}

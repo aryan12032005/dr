@@ -30,8 +30,11 @@ urlpatterns=[
     
     path('get_department/',views.deprtment_view.as_view()),
     path('add_department/',views.deprtment_view.as_view()),
+    path('delete_department/',views.deprtment_view.as_view()),
+    path('update_department/',views.deprtment_view.as_view()),
 
     path('get_groups/',views.GroupView.as_view()),
+    path('search_group_documents/',views.GroupDocumentView.as_view()),
     path('get_member_group/',views.MemberGroupView.as_view()),
     path('create_group/',views.GroupView.as_view()),
     path('delete_group/',views.GroupView.as_view()),

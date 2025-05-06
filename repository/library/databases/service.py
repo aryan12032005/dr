@@ -4,6 +4,7 @@ from bson import ObjectId
 import zipfile
 import base64
 import uuid
+from ..tasks import delete_zip
 
 class mongo_DB:
     def __init__(self, username=None, password=None, host="localhost", port=27017, db_name="Library", table_name="documents"):
@@ -101,6 +102,19 @@ class mongo_DB:
             return session_id
         else:
             return False
+        
+    def search_doc_in_group(self, id:str, query:str):
+        documents = self.doc.find({
+            "_id":ObjectId(id),
+            "$text": { "$search": query }
+        }, {
+            "score": { "$meta" : "textScore" },
+            "documents.title": 1 
+        })
+        if documents:
+            return documents.to_list()
+        else:
+            return None
        
         
 class fsHandler:
@@ -171,6 +185,7 @@ class fsHandler:
                         arcname = os.path.relpath(file_path, folder_dir) 
                         zip_file.write(file_path, arcname)
             zip_file=open(zip_path,"rb")
+            delete_zip(zip_path)
             return zip_file, True
         except:
             return None, False

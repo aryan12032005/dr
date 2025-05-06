@@ -10,6 +10,7 @@ const Signup = () => {
   const [csvFile, setCSVFile] = useState("");
   const [uploadAsFaculty, toggleUploadFaculty] = useState(false);
   const [allDepartments, setAllDepartments] = useState([]);
+  const [csvDepCode, setCsvDepCode] = useState("");
   const [newUser, setNewUser] = useState({
     email: "",
     dep_code: "",
@@ -34,7 +35,7 @@ const Signup = () => {
       setAllDepartments(resultJson.departments);
     }
   };
-  
+
   const resetNewUserState = () => {
     setNewUser({
       email: "",
@@ -76,6 +77,7 @@ const Signup = () => {
     const body = new FormData();
     body.append("csvFile", csvFile[0]);
     body.append("is_faculty", uploadAsFaculty);
+    body.append('dep_code', csvDepCode);
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -118,7 +120,6 @@ const Signup = () => {
 
       if (result.ok) {
         alert("User added successfully!");
-        fetchUsers();
       } else {
         alert("Error creating user.");
       }
@@ -156,10 +157,25 @@ const Signup = () => {
             value={uploadAsFaculty}
             onChange={(e) => toggleUploadFaculty(e.target.checked)}
           />
-          <label htmlFor="upload_aculty" className="ml-2 text-gray-700">
+          <label htmlFor="upload_aculty" className="ml-2 text-gray-700 mr-2">
             Upload as Faculty?
           </label>
         </div>
+        <select
+          className="border rounded px-3 py-2 mr-2 mb-2 w-full"
+          value={csvDepCode}
+          onFocus={() => getAllDepartments()}
+          onChange={(e) => setCsvDepCode(e.target.value)}
+        >
+          <option value="" default disabled>
+            Select a department
+          </option>
+          {allDepartments.map((item) => (
+            <option value={item.dep_code} key={item.dep_code}>
+              {item.dep_name}
+            </option>
+          ))}
+        </select>
         <button
           onClick={uploadCSV}
           className="bg-blue-600 text-white px-6 py-2 rounded-lg  hover:scale-105 bg-blue-700 transition-all duration-300 ease-in-out"
@@ -167,7 +183,6 @@ const Signup = () => {
           Upload CSV file
         </button>
       </div>
-
       <button
         onClick={toggleAddUser}
         className="bg-blue-600 text-white px-6 py-2 mb-5 rounded-lg  hover:scale-105 :bg-blue-700 transition"
@@ -210,6 +225,7 @@ const Signup = () => {
           <select
             className="border rounded px-3 py-2 mr-2 mb-2 w-full"
             value={newUser.dep_code}
+            onFocus={() => getAllDepartments()}
             onChange={(e) =>
               setNewUser({ ...newUser, dep_code: e.target.value })
             }

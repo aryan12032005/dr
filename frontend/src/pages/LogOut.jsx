@@ -14,7 +14,10 @@ const LogOut = () => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${req_client.accessToken}`,
     }
-    const result=await req_client.fetchReq('logout/', "GET", headers);
+    const data = {
+      refresh_token: req_client.refreshToken
+    }
+    const result=await req_client.fetchReq('logout/', "POST", headers, JSON.stringify(data));
     if(result.ok){
       sessionStorage.clear();
       navigate('/');

@@ -11,8 +11,8 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.decorators import action
 from .serializers import LoginSerializer,LibraryUserSerializer
-from .forms import DepartmentsForm, UserQueryForm
-from .models import LibraryUser, Departments
+from .forms import DepartmentsForm, UserQueryForm, RequestedDocForm
+from .models import LibraryUser, Departments, FacultyDocumentRequests
 import os
 from rest_framework.permissions import IsAuthenticated
 from .databases.service import mongo_DB,fsHandler
@@ -22,6 +22,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import pandas as pd
 from io import StringIO
+import json
 
 
 load_dotenv()
@@ -39,8 +40,14 @@ class logout_user(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
-    def get(self,request):
-        logout(request)
+    def post(self,request):
+        try:
+            refresh_token = request.data['refresh_token']
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            logout(request)
+        except:
+            return Response({"message":"invalid request"}, status= status.HTTP_400_BAD_REQUEST)
         return Response({'message':'logout successfull'},status=status.HTTP_200_OK)
 
 
@@ -53,6 +60,7 @@ class refresh_token(APIView):
             try:
                 old_refresh=RefreshToken(refreshToken)
                 refresh=RefreshToken.for_user(LibraryUser.objects.filter(id=old_refresh.payload.get('user_id')).first())
+                old_refresh.blacklist()
                 return Response({
                     'refresh_token':str(refresh),
                     'access_token': str(refresh.access_token),
@@ -176,9 +184,11 @@ class SignupView(APIView):
     permission_classes = [IsAuthenticated,IsAdmin]
     
     def post(self, request):
+        print(request.data)
         serializer = LibraryUserSerializer(data=request.data)
         
         if serializer.is_valid():
+            print(serializer.validated_data)
             existing_user=LibraryUser.objects.filter(username=serializer.validated_data['username'],email=serializer.validated_data['email']).first()
             if not existing_user:
                 user = serializer.save()
@@ -213,6 +223,9 @@ class uploadCsv(APIView):
                 df['is_faculty']=True
             else:
                 df["is_faculty"]=False
+            dep_code = request.data.get('dep_code')
+            if dep_code:
+                df['dep_code'] = dep_code
             df["is_allowed"]=True
             df["is_admin"]=False
             new_user={}
@@ -236,26 +249,7 @@ class uploadCsv(APIView):
             return Response({"message":"Users created Successfully"},status=status.HTTP_200_OK)
         
         except Exception as e:
-            print(e)
             return Response({"message":"failed to add users"},status=status.HTTP_400_BAD_REQUEST)
-
-# class SearchView(APIView):
-#     def get(self,request):
-#         querry=request.query_params.get('querry')
-#         mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
-#         result=mongo_client.search_document(str(querry))
-#         if len(result) > 0:
-#             documents = [
-#                 {
-#                     'id': str(doc['_id']),
-#                     'title': doc.get('title', ''),
-#                     'docType': doc.get('docType', ''),
-#                     'date': datetime.strptime(doc.get('createDate', 0),'%Y-%m-%d %H:%M:%S.%f').date()
-#                 }
-#                 for doc in result
-#             ]
-#             return Response({"documents":documents},status=status.HTTP_200_OK)
-#         return Response({"message":"no document found"},status=status.HTTP_404_NOT_FOUND)
 
 class SearchView(APIView):
     def get(self,request):
@@ -372,7 +366,7 @@ class GetFacultyDoc(APIView):
 
     def get(self,request):
         fac_id=request.query_params.get('fac_id')
-        if not fac_id == request.user.id:
+        if not (fac_id == request.user.id or request.user.is_admin == True):
             return Response({"message":"faculty id not match"}, status = status.HTTP_400_BAD_REQUEST)
         mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
         result= mongo_client.get_faculty_doc(fac_id)
@@ -446,8 +440,11 @@ class downloadDoc(APIView):
             if document['owner']== user.id or user.is_admin == True:
                 session_id = mongo_client.delete_doc(str(doc_id))
                 if session_id:
-                    fs_handler  = fsHandler(FS_DIR)
-                    delete_status = fs_handler.detele_files(document['category'],str(doc_id),None)
+                    if not document['docType'] == 'link' or not document['coverType'] == 'link':
+                        fs_handler  = fsHandler(FS_DIR)
+                        delete_status = fs_handler.detele_files(document['category'],str(doc_id),None)
+                    else:
+                        delete_status=True
                     if delete_status:
                         mongo_client.commit_transaction(session_id)
                     else:
@@ -498,16 +495,22 @@ class adminuserView(APIView):
         if request.user.is_faculty==True and request.user.is_admin==False:
             extra_params['is_allowed']= True
             fetch_fields = ['dep_code','id','first_name','username']
-
         if querry:
             querry=querry.strip()
-            users=LibraryUser.objects.filter(
-                Q(first_name__icontains=querry) |
-                Q(username__icontains=querry) |
-                Q(email__icontains=querry) |
-                Q(id__icontains=querry) |
-                Q(phone_number__icontains=querry),**extra_params
-            ).values(*fetch_fields)[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
+            if request.user.is_admin == True:
+                users=LibraryUser.objects.filter(
+                    Q(first_name__icontains=querry) |
+                    Q(username__icontains=querry) |
+                    Q(email__icontains=querry) |
+                    Q(id__icontains=querry) |
+                    Q(phone_number__icontains=querry),**extra_params
+                ).values(*fetch_fields)[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
+            else:
+                users=LibraryUser.objects.filter(
+                    Q(first_name__icontains=querry) |
+                    Q(username__icontains=querry) |
+                    Q(email__icontains=querry),**extra_params
+                ).values(*fetch_fields)[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
             user_count=LibraryUser.objects.filter(is_admin=False).aggregate(Count("id"))
             return Response({"users":list(users),"user_count":user_count['id__count']},status=status.HTTP_200_OK)
         users=LibraryUser.objects.filter(**extra_params).values(*fetch_fields)[int(request.query_params.get('start_c')):int(request.query_params.get('end_c'))]
@@ -541,7 +544,7 @@ class deprtment_view(APIView):
     authentication_classes=[JWTAuthentication]
     
     def get_permissions(self):
-        if self.request.method=='POST':
+        if self.request.method=='POST' or self.request.method=='PUT' or self.request.method == "DELETE":
             return [IsAdmin(),IsActive(),IsAuthenticated()]
         
         if self.request.method=='GET':
@@ -554,7 +557,7 @@ class deprtment_view(APIView):
         if dep_code:
             dep_details=Departments.objects.filter(dep_code=dep_code).first()
             if dep_details:
-                responseObj= {"managers":dep_details.managers,"subjects":dep_details.subjects}
+                responseObj= {"dep_code":dep_details.dep_code,"dep_name":dep_details.dep_name,"managers":dep_details.managers,"subjects":dep_details.subjects}
         else:
             dep_details=Departments.objects.all().values("dep_name","dep_code")
             if dep_details:
@@ -578,7 +581,33 @@ class deprtment_view(APIView):
             return Response({"message":"Error creating department"},status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self,request):
-        pass
+        dep_code = request.query_params.get('dep_code')
+        existing_dep= Departments.objects.filter(dep_code=dep_code).first()
+        if not existing_dep:
+            return Response({'message':'no department to delete'}, status = status.HTTP_400_BAD_REQUEST)
+        existing_dep.delete()
+        return Response({'message':'department deleted'},status=status.HTTP_200_OK)
+
+    def put(self,request):
+        dep_code = request.query_params.get('dep_code')
+        if dep_code:
+            data = request.POST
+            existing_dep = Departments.objects.filter(dep_code = dep_code).first()
+            if existing_dep:
+                print(type(data.get('subjects')))
+                try:
+                    existing_dep.dep_name = data.get('dep_name', existing_dep.dep_name)
+                    existing_dep.managers = json.loads(data.get('managers', '[]'))
+                    existing_dep.subjects = json.loads(data.get('subjects', '[]'))
+                    existing_dep.save()
+                except json.JSONDecodeError:
+                    return Response({'message':'invalid input formats'},status= status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({'message':'Invalid dep_code'},status= status.HTTP_400_BAD_REQUEST)
+            return Response({'message':'department edit successfull'}, status = status.HTTP_200_OK)
+        else:
+            return Response({'message':'please provide dep_code'},status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class upload_document(APIView):
@@ -693,6 +722,13 @@ class GroupView(APIView):
         if existing_group:
             delete_id = mongo_client.delete_doc(str(group_id))
             delete_status=False
+            for member in existing_group['members']:
+                try:
+                    member_details = LibraryUser.objects.filter(username = member['username']).first()
+                    member_details.groups.remove(str(group_id))
+                    member_details.save()
+                except:
+                    continue
             if delete_id:
                 delete_status= mongo_client.commit_transaction(delete_id)
             else:
@@ -704,6 +740,8 @@ class GroupView(APIView):
             
 
 class GroupDocumentView(APIView):
+    authentication_classes=[JWTAuthentication]
+
     def get_permissions(self):
         if self.request.method =='GET':
             return [IsActive(), IsAuthenticated()]
@@ -711,23 +749,39 @@ class GroupDocumentView(APIView):
             return [IsActive(), IsAdmin_or_Faculty(), IsAuthenticated()]
         return super().get_permissions()
 
+    def get(self,request):
+        group_id = request.query_params.get('group_id')
+        query = request.query_params.get('query')
+        if not group_id or not query:
+            return Response({"message":"invalid request"},status=status.HTTP_400_BAD_REQUEST)
+        mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, table_name="groups")
+        documents = mongo_client.search_doc_in_group(str(group_id), str(query))
+        if documents:
+            return Response({"documents":documents},status=status.HTTP_200_OK)
+        else:
+            return Response({'message':"no documents found"},status= status.HTTP_400_BAD_REQUEST)
+
     def post(self,request):
         group_id = request.query_params.get('group_id', None)
         documents = request.data
         user = request.user
-        print(documents, request.POST)
         if not group_id:
             return Response({'message':'please provide group id'},status=status.HTTP_400_BAD_REQUEST)
         mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
         existing_group = mongo_client.get_doc_by_id(str(group_id))
-        if not user.is_admin == True and not existing_group['owner'] == user.id:
+
+        if not user.is_admin == True and not existing_group['owner'] == user.id: # if user is not a admin or not owner of group return error
             return Response({'message': "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
         
-        existing_docs = [doc['id'] for doc in existing_group['documents']]
-        for doc in documents:
+        existing_docs = [doc['id'] for doc in existing_group['documents']] # get the ids of documents in exsting group
+        new_docs = [doc['id'] for doc in documents] # get ids of new documents
+        existing_group['documents'] = [doc for doc in existing_group['documents'] if doc['id'] in new_docs]  # remove the documents from existing documents
+
+        for doc in documents: # add new documents to group documents
             if not doc['id'] in existing_docs:
                 existing_group['documents'].append(doc)
-        update_id=mongo_client.update_doc(str(group_id), {'documents': existing_group['documents']})
+                
+        update_id=mongo_client.update_doc(str(group_id), {'documents': existing_group['documents']}) # update the documents in mongodb
         if update_id:
             mongo_client.commit_transaction(update_id)
         else:
@@ -735,14 +789,61 @@ class GroupDocumentView(APIView):
         return Response({'message': 'documents added'}, status=status.HTTP_200_OK)
     
 class MemberGroupView(APIView):
+    authentication_classes=[JWTAuthentication]
+
     def get_permissions(self):
+        if self.request.method == "GET":
+            return[IsActive(),IsAuthenticated()]
         return super().get_permissions()
     
     def get(self,request):
         user = request.user
         member_id = user.id
-        my_groups = LibraryUser.objects.filter(id= member_id).values("groups")[:20]
+        my_groups = LibraryUser.objects.filter(id=member_id).values("groups")[:20]
         if my_groups:
             return Response({"groups":list(my_groups)[0]['groups']},status=status.HTTP_200_OK)
         else:
             return Response({'message':"No groups found"},status=status.HTTP_400_BAD_REQUEST)
+        
+class PrivateDocRequests(APIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes=[IsActive,IsAuthenticated]
+
+    def get(self,request):
+        requester_id = request.query_params.get('requester_id',None)
+        faculty_id = request.query_params.get('fac_id',None)
+        if requester_id:
+            if request.user.id == requester_id:
+                user_requests = FacultyDocumentRequests.objects.filter(requester_id=int(requester_id))
+                responseOBJ = [req['doc_id'] for req in user_requests]
+                return Response({'requests':responseOBJ},status=status.HTTP_200_OK)
+            else:
+                    return Response({'message':'invalid request'},status=status.HTTP_400_BAD_REQUEST)
+        elif faculty_id:
+            if request.user.id == faculty_id or request.user.is_admin == True:
+                user_requests = FacultyDocumentRequests.objects.filter(fac_id=int(faculty_id))
+                responseOBJ = [req['doc_id'] for req in user_requests]
+                return Response({'requests':responseOBJ},status=status.HTTP_200_OK)
+            else:
+                return Response({'message':'invalid request'},status=status.HTTP_400_BAD_REQUEST)
+    
+    def post(self,request):
+        data = request.POST
+        new_req = {
+            'doc_id':data.get('doc_id',None),
+            'fac_id':data.get('fac_id',None),
+            'requester_id':data.get('requester_id', None),
+        }
+        for key,value in new_req:
+            if value is None:
+                return Response({'message':'invalid request'},status = status.HTTP_400_BAD_REQUEST)
+        new_req = RequestedDocForm(new_req)
+        existing_request = FacultyDocumentRequests.objects.filter(requester_id=new_req['requester_id'], doc_id= new_req['doc_id']).first()
+        if existing_request:
+            return Response({'message':'Request already created'},status=status.HTTP_409_CONFLICT)
+        if new_req.is_valid():
+            new_req.save()
+            return Response({'message':'request submited'},status=status.HTTP_200_OK)
+        
+    def delete(self,request):
+        pass

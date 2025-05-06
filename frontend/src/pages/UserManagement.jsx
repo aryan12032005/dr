@@ -61,7 +61,7 @@ const UserManagement = () => {
         "Content-Type": "application/json",
       };
       const result = await req_client.fetchReq(
-        `search_user/?start_c=0&end_c=50&querry=${query}&is_admin=False`,
+        `search_user/?start_c=0&end_c=50&querry=${query}`,
         "GET",
         headers
       );

@@ -58,6 +58,7 @@ CORS_EXPOSE_HEADERS = ["Content-Disposition"]
 
 INSTALLED_APPS = [
     'library',
+    'background_task',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -66,7 +67,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'rest_framework_simplejwt'
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist'
 ]
 
 # REST Framework settings
@@ -78,16 +80,18 @@ REST_FRAMEWORK = {
 
 # User authentications and accesstoken based settings
 SIMPLE_JWT={
-    'ACCESS_TOKEN_LIFETIME':timedelta(minutes=10),
-    'REFRESH_TOKEN_LIFETIME':timedelta(hours=1),
-    'BLACKLIST_AFTER_ROTATION': False,
+    'ACCESS_TOKEN_LIFETIME':timedelta(minutes=20),
+    'REFRESH_TOKEN_LIFETIME':timedelta(hours=2),
+    'BLACKLIST_AFTER_ROTATION': True,
     'ROTATE_REFRESH_TOKEN':True,
     'BLACKLIST_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.RefreshToken'),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
 AUTHENTICATION_BACKENDS=[
     'django.contrib.auth.backends.ModelBackend'
 ]
+
 AUTH_USER_MODEL="library.LibraryUser"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -257,14 +257,14 @@ const FacultyManage = () => {
                             >
                               Show documents
                             </button>
-                            <button
+                            {/* <button
                               className="text-green-500 hover:text-green-700 transition-colors"
                               onClick={() =>
                                 alert(`Editing ${fac.username}'s profile`)
                               }
                             >
                               Edit
-                            </button>
+                            </button> */}
                           </div>
                         </div>
                       </div>

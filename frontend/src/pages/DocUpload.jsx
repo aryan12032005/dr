@@ -133,6 +133,16 @@ const DocUpload = () => {
     );
     if (response.ok) {
       alert("document uploaded successfully");
+      setTitle("");
+      setCover("");
+      setCoverLink("");
+      setDocument("");
+      setDocumentLink("");
+      setDepartment("");
+      setSubject("");
+      setCoverType("");
+      setDocumentType("");
+      setShowUploadOptions(false);
     }
   };
 

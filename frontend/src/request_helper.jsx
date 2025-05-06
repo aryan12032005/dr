@@ -53,37 +53,42 @@ class networkRequests {
 
   async fetchReq(endPoint, method, headers, body = null, count = 0) {
     let result = null;
-    if (body) {
-      headers["X-CSRFToken"] = await this.getCSRFToken();
-      result = await fetch(`${this.baseUrl}${endPoint}`, {
-        method: method,
-        headers: headers,
-        body: body,
-      });
-    } else {
-      result = await fetch(`${this.baseUrl}${endPoint}`, {
-        method: method,
-        headers: headers,
-      });
-    }
-    if (count > 1) {
-      sessionStorage.clear();
+    try{
+      if (body) {
+        headers["X-CSRFToken"] = await this.getCSRFToken();
+        result = await fetch(`${this.baseUrl}${endPoint}`, {
+          method: method,
+          headers: headers,
+          body: body,
+        });
+      } else {
+        result = await fetch(`${this.baseUrl}${endPoint}`, {
+          method: method,
+          headers: headers,
+        });
+      }
+      if (count > 1) {
+        sessionStorage.clear();
+        return result;
+      }
+      if (result.status === 401) {
+        const isTokenRefreshed = await this.refresh_token();
+        if (isTokenRefreshed == 1) {
+          headers["Authorization"] = `Bearer ${this.accessToken}`;
+          result = await this.fetchReq(
+            endPoint,
+            method,
+            headers,
+            body,
+            count + 1
+          );
+        }
+      }
       return result;
     }
-    if (result.status === 401) {
-      const isTokenRefreshed = await this.refresh_token();
-      if (isTokenRefreshed == 1) {
-        headers["Authorization"] = `Bearer ${this.accessToken}`;
-        result = await this.fetchReq(
-          endPoint,
-          method,
-          headers,
-          body,
-          count + 1
-        );
-      }
+    catch{
+      return -1;
     }
-    return result;
   }
 }
 

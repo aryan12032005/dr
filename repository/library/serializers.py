@@ -7,7 +7,7 @@ class LibraryUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LibraryUser
-        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'phone_number', 'is_faculty', 'is_admin', 'is_allowed', 'password']
+        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'phone_number', 'is_faculty', 'is_admin', 'is_allowed', 'password', 'dep_code']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
@@ -20,7 +20,8 @@ class LibraryUserSerializer(serializers.ModelSerializer):
             phone_number=validated_data['phone_number'],
             is_faculty=validated_data['is_faculty'],
             is_admin=validated_data['is_admin'],
-            is_allowed=validated_data['is_allowed']
+            is_allowed=validated_data['is_allowed'],
+            dep_code= validated_data['dep_code']
         )
         return user
 

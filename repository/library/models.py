@@ -22,7 +22,6 @@ class LibraryUser(AbstractBaseUser):
     is_faculty = models.BooleanField(default=False)
     is_admin= models.BooleanField(default=False)
     is_allowed=models.BooleanField(default=True)
-
     objects = LibraryUserManager()
 
     USERNAME_FIELD = 'username'
@@ -42,3 +41,7 @@ class UserQuery(models.Model):
     email = models.EmailField()
     query = models.CharField(max_length=500)
 
+class FacultyDocumentRequests(models.Model):
+    doc_id = models.CharField(max_length=150)
+    fac_id = models.IntegerField()
+    requester_id = models.IntegerField()

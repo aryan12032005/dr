@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaGripLines } from "react-icons/fa";
 import networkRequests from "../../request_helper";
@@ -33,13 +33,18 @@ const Navbar = ({ setUserStatus }) => {
   const [loginSignup, setloginSignup] = useState([
     { tittle: "Log in", link: "/LogIn" },
   ]);
-  const [user_status, set_user_status] = useState(1);
+  const [user_status, set_user_status] = useState("");
   const [links, setLinks] = useState([
     { title: "Home", link: "/home" },
     { title: "About Us", link: "/about-us" },
     { tittle: "Search documents", link: "/search-doc" },
   ]);
   const [MobileNav, setMobileNav] = useState("hidden");
+
+  const userStatusRef = useRef(user_status);
+  useEffect(() => {
+    userStatusRef.current = user_status;
+  }, [user_status]);
 
   useEffect(() => {
     get_status().then((result) => {
@@ -49,19 +54,19 @@ const Navbar = ({ setUserStatus }) => {
     });
     const interval = setInterval(() => {
       get_status().then((result) => {
-        sessionStorage.setItem("user_status", result);
-        setUserStatus(result);
-        set_user_status(result);
+        if (JSON.stringify(userStatusRef.current) !== JSON.stringify(result)) {
+          sessionStorage.setItem("user_status", result);
+          setUserStatus(result);
+          set_user_status(result);
+        }
       });
     }, 10000);
     return () => clearInterval(interval);
-  }, [location, navigate]);
+  }, [navigate, location]);
 
   useEffect(() => {
     if (user_status === -1) {
-      setloginSignup([
-        { tittle: "Log in", link: "/LogIn" },
-      ]);
+      setloginSignup([{ tittle: "Log in", link: "/LogIn" }]);
       setLinks([
         { title: "Home", link: "/home" },
         { title: "About Us", link: "/about-us" },
@@ -77,16 +82,15 @@ const Navbar = ({ setUserStatus }) => {
       if (user_status.is_admin) {
         updatedLinks.push(
           { title: "Document Upload", link: "/doc-upload" },
-          { title: "Admin Panel", link: "/adminpanel" },
-          { title: "Logout", link: "/logout" }
+          { title: "Admin Panel", link: "/adminpanel" }
         );
       } else if (user_status.is_faculty) {
         updatedLinks.push(
           { title: "Document Upload", link: "/doc-upload" },
-          { title: "Faculty Panel", link: "/facultypanel" },
-          { title: "Logout", link: "/logout" }
+          { title: "Faculty Panel", link: "/facultypanel" }
         );
       }
+      updatedLinks.push({ title: "Logout", link: "/logout" });
       setloginSignup([]);
       setLinks(updatedLinks);
     }

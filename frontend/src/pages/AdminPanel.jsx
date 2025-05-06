@@ -119,7 +119,7 @@ const AdminPanel = ({ userStatus }) => {
                 {
                   icon: <FaChartLine />,
                   title: "Recent Activity",
-                  value: "10",
+                  value: "",
                   color: "text-purple-500",
                   shadow: "hover:shadow-purple-400",
                 },

@@ -108,7 +108,7 @@ const Signup = () => {
     try {
       req_client.reload_tokens();
       const headers = {
-        Authorization: `Bearer ${req_client.accessToken}`,
+        // Authorization: `Bearer ${req_client.accessToken}`,
         "Content-Type": "application/json",
       };
       const result = await req_client.fetchReq(

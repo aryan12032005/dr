@@ -25,19 +25,21 @@ SECRET_KEY = 'django-insecure-8#+r4cpo52ils31m6h8=kjxj=jpvq5_uh0n0%bm$!=il*0_hnl
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+frontend_server = "172,16.65.25"
+
+ALLOWED_HOSTS = [frontend_server]
 
 # Set CORS request only for frontend acc to the deployed frontend origin
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
+    f'http://{frontend_server}',
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000", 
+    f"http://{frontend_server}", 
 ]
 
 CORS_ORIGIN_WHITELIST = (
-    'http://localhost:3000'
+    f'http://{frontend_server}'
 )
 
 CORS_ALLOW_CREDENTIALS = True

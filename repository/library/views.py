@@ -846,4 +846,16 @@ class PrivateDocRequests(APIView):
             return Response({'message':'request submited'},status=status.HTTP_200_OK)
         
     def delete(self,request):
-        pass
+        doc_id = request.query_params.get('doc_id',None)
+        requester_id = request.query_params.get('requester_id',None)
+        if doc_id and requester_id:
+            existing_req = FacultyDocumentRequests.objects.filter(doc_id=doc_id, requester_id=requester_id).first()
+            if not existing_req:
+                return Response({'message':'please provide valid request details'},status= status.HTTP_400_BAD_REQUEST)
+            if existing_req['requester_id']==requester_id or existing_req['fac_id']== request.user.id:
+                existing_req.delete()
+                return Response({'message':'request deleted'},status=status.HTTP_200_OK)
+            else:
+                return Response({'message':'request does not belong to you'},status= status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'message':'please provide valid request details'},status= status.HTTP_400_BAD_REQUEST)

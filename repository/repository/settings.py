@@ -11,36 +11,31 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+from dotenv import load_dotenv
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
+load_dotenv()
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-8#+r4cpo52ils31m6h8=kjxj=jpvq5_uh0n0%bm$!=il*0_hnl'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-frontend_server = "172,16.65.25"
-
-ALLOWED_HOSTS = [frontend_server]
-
-# Set CORS request only for frontend acc to the deployed frontend origin
-CSRF_TRUSTED_ORIGINS = [
-    f'http://{frontend_server}',
-]
+frontend_server = os.getenv("FRONTEND_SERVER_IP")
+ALLOWED_HOSTS = [frontend_server,'127.0.0.1','localhost']
 
 CORS_ALLOWED_ORIGINS = [
-    f"http://{frontend_server}", 
+    f"http://{frontend_server}",'http://localhost','http://127.0.0.1'
 ]
 
-CORS_ORIGIN_WHITELIST = (
-    f'http://{frontend_server}'
-)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 209715200
+FILE_UPLOAD_MAX_MEMORY_SIZE = 209715200
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -163,7 +158,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 

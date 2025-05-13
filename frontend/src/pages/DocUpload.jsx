@@ -283,7 +283,7 @@ const DocUpload = () => {
             onBlur={(e) => searchSubjects(e.target.value)}
             required
           >
-            <option value="other" default>
+            <option value="other" default selected>
               Other
             </option>
             {allDepartments.map((item) => (
@@ -302,7 +302,7 @@ const DocUpload = () => {
             onChange={(e) => setSubject(e.target.value)}
             required
           >
-            <option value="other" default>
+            <option value="other" default selected>
               Other
             </option>
             {subjects.length > 0 &&

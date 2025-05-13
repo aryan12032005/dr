@@ -11,19 +11,22 @@ const DocUpload = () => {
   const [documentAcceptType, setDocumentAcceptType] = useState("");
   const [documentType, setDocumentType] = useState("");
   const [coverType, setCoverType] = useState("");
-  const [coverLink,setCoverLink]= useState("");
-  const [documentLink,setDocumentLink]= useState("");
+  const [coverLink, setCoverLink] = useState("");
+  const [documentLink, setDocumentLink] = useState("");
   const [Cover, setCover] = useState("");
   const [documentFile, setDocument] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [category, setCategory] = useState("");
-  const [department, setDepartment] = useState("");
-  const [subject, setSubject] = useState("");
+  const [department, setDepartment] = useState("other");
+  const [subject, setSubject] = useState("other");
   const [title, setTitle] = useState("");
+  const [newAuthor, setNewAuthor] = useState("");
+  const [authorsList, setAuthorList] = useState([]);
+  const[hsnNumber,setHsnNumber] = useState("");
 
   // form fields
   const [allDepartments, setAllDepartments] = useState([]);
-  const [subjects,setSubjects]= useState([]);
+  const [subjects, setSubjects] = useState([]);
   const navigate = useNavigate();
 
   const getAllDepartments = async () => {
@@ -84,11 +87,23 @@ const DocUpload = () => {
       "GET",
       headers
     );
-    const resultJson=await result.json();
-    if(result.ok){
+    const resultJson = await result.json();
+    if (result.ok) {
       setSubjects(resultJson.subjects);
     }
   };
+
+  const removeAuther = (author) => {
+    setAuthorList(authorsList.filter((a) => a !== author));
+  };
+
+  const addAuthor = () => {
+    if (newAuthor.trim() !== "" && !authorsList.includes(newAuthor.trim())) {
+      setAuthorList([...authorsList, newAuthor.trim()]);
+      setNewAuthor("");
+    }
+  };
+
 
   const handleUpload = async () => {
     const data = new FormData();
@@ -96,14 +111,14 @@ const DocUpload = () => {
     data.append("coverType", coverType);
     data.append("documentType", documentType);
     data.append("isPublic", isPublic);
-    if (Cover && Cover.length > 0 && coverType != 'link') {
+    if (Cover && Cover.length > 0 && coverType != "link") {
       data.append("cover", Cover[0]);
     } else {
       data.append("coverLink", coverLink);
     }
 
     // Append documents (multiple files)
-    if (documentFile && documentFile.length > 0 && documentType != 'link') {
+    if (documentFile && documentFile.length > 0 && documentType != "link") {
       Array.from(documentFile).forEach((doc) => {
         data.append("documents", doc); // 'documents' will be an array in the backend
       });
@@ -111,8 +126,10 @@ const DocUpload = () => {
       data.append("documentLink", documentLink);
     }
     data.append("category", category);
-    data.append("department",department);
-    data.append("subject",subject);
+    data.append("department", department);
+    data.append("subject", subject);
+    data.append('authors',authorsList);
+    data.append('hsnNumber',hsnNumber);
 
     for (let [key, value] of data.entries()) {
       if (!value) {
@@ -144,6 +161,10 @@ const DocUpload = () => {
       setDocumentType("");
       setShowUploadOptions(false);
     }
+    else{
+      const resultJson = await result.json();
+      alert(resultJson.message);
+    }
   };
 
   return (
@@ -159,7 +180,7 @@ const DocUpload = () => {
       {/* Upload Options (Visible only when button is clicked) */}
       {showUploadOptions && (
         <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-md w-full max-w-md">
-          <h2 className="text-lg font-semibold text-gray-800">
+          <h2 className="text-lg font-semibold text-gray-800 mt-5">
             Select Cover Type
           </h2>
 
@@ -178,23 +199,27 @@ const DocUpload = () => {
           </select>
 
           {/* Cover Input */}
-            <input
-              type="text"
-              className={`mt-4 border p-2 rounded w-full ${coverType === "link" ? "" : "hidden"}`}
-              placeholder="Enter the link"
-              value={coverLink || ""}
-              onChange={(e) => setCoverLink(e.target.value)}
-              required
-            />
-            <input
-              type="file"
-              className={`mt-4 border p-2 rounded w-full ${coverType === "link" ? "hidden" : ""}`}
-              multiple
-              accept={coverAcceptType}
-              onChange={handleCoverChange}
-              required
-            />
-          <h2 className="text-lg font-semibold text-gray-800">
+          <input
+            type="text"
+            className={`mt-4 border p-2 rounded w-full ${
+              coverType === "link" ? "" : "hidden"
+            }`}
+            placeholder="Enter the link"
+            value={coverLink || ""}
+            onChange={(e) => setCoverLink(e.target.value)}
+            required
+          />
+          <input
+            type="file"
+            className={`mt-4 border p-2 rounded w-full ${
+              coverType === "link" ? "hidden" : ""
+            }`}
+            multiple
+            accept={coverAcceptType}
+            onChange={handleCoverChange}
+            required
+          />
+          <h2 className="text-lg font-semibold text-gray-800 mt-5">
             Select Document Type
           </h2>
 
@@ -216,24 +241,28 @@ const DocUpload = () => {
           </select>
 
           {/* Document Input */}
-            <input
-              type="text"
-              className={`mt-4 border p-2 rounded w-full ${documentType === "link" ? "" : "hidden"}`}
-              placeholder="Enter the link"
-              value={documentLink || ""}
-              onChange={(e) => setDocumentLink(e.target.value)}
-              required
-            />
-            <input
-              type="file"
-              className={`mt-4 border p-2 rounded w-full ${documentType === "link" ? "hidden" : ""}`}
-              multiple
-              accept={documentAcceptType}
-              onChange={handleDocumentChange}
-              required
-            />
+          <input
+            type="text"
+            className={`mt-4 border p-2 rounded w-full ${
+              documentType === "link" ? "" : "hidden"
+            }`}
+            placeholder="Enter the link"
+            value={documentLink || ""}
+            onChange={(e) => setDocumentLink(e.target.value)}
+            required
+          />
+          <input
+            type="file"
+            className={`mt-4 border p-2 rounded w-full ${
+              documentType === "link" ? "hidden" : ""
+            }`}
+            multiple
+            accept={documentAcceptType}
+            onChange={handleDocumentChange}
+            required
+          />
 
-          <h2 className="text-lg font-semibold text-gray-800">Title</h2>
+          <h2 className="text-lg font-semibold text-gray-800 mt-5">Title</h2>
           <input
             type="text"
             className="mt-4 border p-2 rounded w-full"
@@ -243,7 +272,7 @@ const DocUpload = () => {
             required
           />
 
-          <h2 className="text-lg font-semibold text-gray-800">
+          <h2 className="text-lg font-semibold text-gray-800 mt-5">
             Select a Department
           </h2>
           <select
@@ -258,11 +287,13 @@ const DocUpload = () => {
               Other
             </option>
             {allDepartments.map((item) => (
-              <option value={item.dep_code} key={item.dep_code}>{item.dep_name}</option>
+              <option value={item.dep_code} key={item.dep_code}>
+                {item.dep_name}
+              </option>
             ))}
           </select>
 
-          <h2 className="text-lg font-semibold text-gray-800">
+          <h2 className="text-lg font-semibold text-gray-800 mt-5">
             Select a Subject
           </h2>
           <select
@@ -274,14 +305,15 @@ const DocUpload = () => {
             <option value="other" default>
               Other
             </option>
-            {subjects.length >0 &&
+            {subjects.length > 0 &&
               subjects.map((item) => (
-              <option value={item.code} key={item.code}>{item.name}</option>
-            ))
-            }
+                <option value={item.code} key={item.code}>
+                  {item.name}
+                </option>
+              ))}
           </select>
 
-          <h2 className="text-lg font-semibold text-gray-800">
+          <h2 className="text-lg font-semibold text-gray-800 mt-5">
             Select Document Category
           </h2>
           <select
@@ -290,7 +322,9 @@ const DocUpload = () => {
             onChange={(e) => setCategory(e.target.value)}
             required
           >
-            <option value="" disabled default>Select</option>
+            <option value="" disabled default>
+              Select
+            </option>
             <option value="research_paper">Research Paper</option>
             <option value="book">Book</option>
             <option value="article">Article</option>
@@ -298,6 +332,48 @@ const DocUpload = () => {
             <option value="mock">Mock Test</option>
             <option value="other">Other</option>
           </select>
+          <h2 className="text-lg font-semibold text-gray-800 mt-5">
+            Authors
+          </h2>
+          <div className="flex flex-col gap-2 top-10">
+            {authorsList &&
+              authorsList.length > 0 &&
+              authorsList.map((author) => (
+                <div
+                  className="flex items-center justify-between text-blue-600 cursor-pointer"
+                  onClick={() => removeAuther(author)}
+                  key={author}
+                >
+                  <span>{author}</span>
+                  <span className="text-gray-700">X</span>
+                </div>
+              ))}
+          </div>
+
+          <input
+            type="text"
+            className="mt-4 border p-2 rounded w-full"
+            placeholder="Add author"
+            value={newAuthor}
+            onChange={(e) => setNewAuthor(e.target.value)}
+            required
+          />
+          <button
+            className="bg-blue-500 text-white px-4 py-2 mt-4 rounded-lg hover:bg-blue-700 transition"
+            onClick={addAuthor}
+          >
+            Add Author
+          </button>
+
+          <h2 className="text-lg font-semibold text-gray-800 mt-5">HSN number</h2>
+          <input
+            type="text"
+            className="mt-4 border p-2 rounded w-full"
+            placeholder="Enter Title"
+            value={hsnNumber}
+            onChange={(e) => setHsnNumber(e.target.value)}
+            required
+          />
 
           {/* Toggle for Public/Private */}
           <div className="mt-4">
@@ -315,7 +391,7 @@ const DocUpload = () => {
           {/* Confirm Upload Button */}
           <button
             onClick={handleUpload}
-            className="bg-green-600 text-white px-4 py-2 mt-4 rounded-lg hover:bg-green-700 transition"
+            className="bg-green-500 text-white px-4 py-2 mt-4 rounded-lg hover:bg-green-700 transition"
           >
             Upload
           </button>

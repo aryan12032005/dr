@@ -65,7 +65,14 @@ class mongo_DB:
             return item.to_list()
         else:
             return None
-        
+    
+    def find_doc(self,key:str,value:str):
+        item = self.doc.find({key:value})
+        if item:
+            return item.to_list()
+        else:
+            return None
+
     def get_faculty_doc(self,fac_id:str):
         items=self.doc.find(
             {"owner":int(fac_id)}
@@ -88,7 +95,7 @@ class mongo_DB:
         query = {"_id": ObjectId(id)}
         new_values = {"$set": new_value}
         session_id = self.__start_session()
-        result=self.doc.update_one(query,new_values, session=self.__sessions[session_id])
+        result=self.doc.update_one(query,new_values, session=self.__sessions[session_id], upsert=True)
         if result.modified_count > 0:
             return session_id
         else:

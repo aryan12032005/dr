@@ -7,8 +7,7 @@ import { useNavigate } from "react-router-dom";
 const req_client = new networkRequests();
 
 const SearchDocument = ({ userStatus }) => {
-
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const styles = {
     modalOverlay: {
       position: "fixed",
@@ -111,14 +110,11 @@ const SearchDocument = ({ userStatus }) => {
   };
 
   const openDoc = async (doc_id) => {
-    const token_status = req_client.reload_tokens();
-    if (token_status == false) {
-      alert("Please Login to open documents!");
-      return;
-    }
+    req_client.reload_tokens();
 
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
     };
 
     const result = await req_client.fetchReq(
@@ -164,8 +160,14 @@ const SearchDocument = ({ userStatus }) => {
         }
         saveAs(await result.blob(), filename);
       }
-    } else {
-      alert("Please login to download");
+    } else if(result.status == 400) {
+      const resultJson = await result.json();
+      if (!resultJson?.isPublic){
+        const confirmation = window.confirm("Document is private, request access?");
+        if (confirmation){
+          reqAccess(id);
+        }
+      }
     }
   };
 
@@ -188,7 +190,28 @@ const SearchDocument = ({ userStatus }) => {
       alert("error deleting document");
     }
   };
-  
+
+  const reqAccess = async (id) => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
+    };
+    console.log({doc_id:id});
+    const result = await req_client.fetchReq(
+      `request_access/`,
+      "POST",
+      headers,
+      JSON.stringify({doc_id:id})
+    );
+    if (result.ok) {
+      alert("Document requested");
+    } else if (result.status == 409) {
+      alert("Document already requested");
+    } else {
+      alert("something went wrong");
+    }
+  };
 
   const Modal = ({ onClose, children }) => (
     <div style={styles.modalOverlay}>
@@ -201,24 +224,22 @@ const SearchDocument = ({ userStatus }) => {
     </div>
   );
 
-  
-
   return (
     <div className="bg-white shadow-lg rounded-lg p-6 mb-4 relative flex flex-col items-center">
-    <div className="bg-gray-200 p-1 rounded-full w-fit flex">
-      <button
-        onClick={() => navigate('/search-doc')}
-        className={`px-4 py-2 rounded-full text-sm font-medium transition-all bg-blue-500 text-white shadow`}
-      >
-        Search Docs
-      </button>
-      <button
-        onClick={() => navigate('/my-groups')}
-        className={`px-4 py-2 rounded-full text-sm font-medium transition-all text-gray-700`}
-      >
-        View Groups
-      </button>
-    </div>
+      <div className="bg-gray-200 p-1 rounded-full w-fit flex">
+        <button
+          onClick={() => navigate("/search-doc")}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-all bg-blue-500 text-white shadow`}
+        >
+          Search Docs
+        </button>
+        <button
+          onClick={() => navigate("/my-groups")}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-all text-gray-700`}
+        >
+          View Groups
+        </button>
+      </div>
       <h2 className="text-xl font-semibold mb-2 text-gray-700 mt-5">
         Search Documents
       </h2>
@@ -340,12 +361,14 @@ const SearchDocument = ({ userStatus }) => {
                   >
                     View
                   </button>
-                  <button
-                    className="text-green-500 hover:text-green-700"
-                    onClick={() => downloadDoc(doc.id)}
-                  >
-                    Download
-                  </button>
+                  {userStatus !== -1 && (
+                    <button
+                      className="text-green-500 hover:text-green-700"
+                      onClick={() => downloadDoc(doc.id)}
+                    >
+                      Download
+                    </button>
+                  )}
                   {((userStatus.is_admin && userStatus.is_admin == true) ||
                     (userStatus.user_id &&
                       userStatus.user_id == doc.owner)) && (
@@ -375,24 +398,30 @@ const SearchDocument = ({ userStatus }) => {
         <Modal onClose={closeModal}>
           <div className="flex flex-col items-center p-6">
             <h2 className="text-2xl font-bold text-blue-800">
-              {viewingDocument.title}
+              {viewingDocument?.title}
             </h2>
             <p className="text-gray-600">
-              <strong>Category:</strong> {viewingDocument.category}
+              <strong>Category: </strong> {viewingDocument?.category}
             </p>
             <p className="text-gray-600">
-              <strong>Document Type:</strong> {viewingDocument.docType}
+              <strong>Document Type: </strong> {viewingDocument?.docType}
             </p>
             <p className="text-gray-600">
-              <strong>Department:</strong> {viewingDocument.department}
+              <strong>Department: </strong> {viewingDocument?.department}
             </p>
             <p className="text-gray-600">
-              <strong>Subject:</strong> {viewingDocument.subject}
+              <strong>Subject: </strong> {viewingDocument?.subject}
+            </p>
+            <p className="text-gray-600">
+              <strong>Authors: </strong> {viewingDocument?.authors}
+            </p>
+            <p className="text-gray-600">
+              <strong>HSN number: </strong> {viewingDocument?.hsnNumber}
             </p>
             <p className="text-gray-500 text-sm">
-              <strong>Uploaded On:</strong> {viewingDocument.createDate}
+              <strong>Uploaded On: </strong> {viewingDocument?.createDate}
             </p>
-            {viewingDocument.isPublic === "true" ? (
+            {viewingDocument?.isPublic === "true" ? (
               <p className="text-green-800">
                 <strong>Public</strong>
               </p>
@@ -403,22 +432,22 @@ const SearchDocument = ({ userStatus }) => {
             )}
 
             {viewingDocument.cover &&
-            viewingDocument.coverType.includes("pdf") ? (
+            viewingDocument?.coverType?.includes("pdf") ? (
               <iframe
-                src={`data:application/pdf;base64,${viewingDocument.cover}`}
+                src={`data:application/pdf;base64,${viewingDocument?.cover}`}
                 className="max-w-[80vw] min-w-[50vw] min-h-[80vh] rounded-lg shadow-lg mt-5"
               ></iframe>
-            ) : viewingDocument.coverType.includes("link") ? (
+            ) : viewingDocument?.coverType?.includes("link") ? (
               <img
-                src={viewingDocument.coverLink}
+                src={viewingDocument?.coverLink}
                 style={{ width: "700px", height: "100%" }}
                 alt="error loading image"
               />
             ) : (
               <img
-                src={`data:${viewingDocument.coverType};base64,${viewingDocument.cover}`}
+                src={`data:${viewingDocument?.coverType};base64,${viewingDocument?.cover}`}
                 style={{ width: "700px", height: "100%" }}
-                alt={viewingDocument.title}
+                alt={viewingDocument?.title}
               />
             )}
           </div>

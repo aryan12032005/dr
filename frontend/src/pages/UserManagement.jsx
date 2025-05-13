@@ -12,7 +12,6 @@ const UserManagement = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const navigate = useNavigate();
 
-
   useEffect(() => {
     // on loading page refresh users in db
     fetchUsers();
@@ -143,12 +142,39 @@ const UserManagement = () => {
     }
   };
 
+  const handleChangePass = async (user) => {
+    const newPassword = window.prompt("Enter new password");
+    const data = {
+      id: user.id,
+      password: newPassword,
+    };
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
+    };
+    if (newPassword) {
+      const result = await req_client.fetchReq(
+        "change_password/",
+        "PUT",
+        headers,
+        JSON.stringify(data)
+      );
+      if (result.ok) {
+        const resultJson = await result.json();
+        alert(resultJson.message);
+      } else {
+        alert("Error updating password");
+      }
+    }
+  };
+
   return (
     <div className="bg-white shadow-lg rounded-lg flex flex-col items-center p-6 mb-4 ">
       <h1 className="text-3xl font-semibold mb-2 text-gray-1200 underline">
         User Management
       </h1>
-      <Signup/>
+      <Signup />
       <input
         type="text"
         placeholder="Search Users..."
@@ -190,7 +216,8 @@ const UserManagement = () => {
               <td className="border px-4 py-2">
                 {editUser?.id === user.id ? (
                   <input
-                    type="text"No
+                    type="text"
+                    No
                     value={editUser.first_name}
                     onChange={(e) =>
                       setEditUser({
@@ -272,7 +299,7 @@ const UserManagement = () => {
                 )}
               </td>
 
-              <td className="border px-4 py-2 text-center">
+              <td className="border py-2 text-center">
                 {editUser?.id === user.id ? (
                   <>
                     <button
@@ -289,19 +316,27 @@ const UserManagement = () => {
                     </button>
                   </>
                 ) : (
-                  <button
-                    onClick={() => handleEdit(user)}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
-                  >
-                    Edit
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleEdit(user)}
+                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 mx-1 rounded mr-1 transition-all duration-300 hover:scale-105"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user)}
+                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 mx-1 rounded transition-all duration-300 hover:scale-110"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => handleChangePass(user)}
+                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 mx-1 rounded transition-all duration-300 hover:scale-110"
+                    >
+                      Change Pass
+                    </button>
+                  </>
                 )}
-                <button
-                  onClick={() => handleDelete(user)}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded transition-all duration-300 hover:scale-110"
-                >
-                  Delete
-                </button>
               </td>
             </tr>
           ))}
@@ -309,6 +344,6 @@ const UserManagement = () => {
       </table>
     </div>
   );
-};  
+};
 
 export default UserManagement;

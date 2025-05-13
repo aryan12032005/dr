@@ -36,7 +36,7 @@ const App = () => {
           <Route path="/logout" element={<LogOut />} />
           <Route path="/search-doc" element={<SearchDocument userStatus={userStatus} />} />
           <Route path="/my-groups" element={<ViewGroups />} />
-          <Route path="/facultypanel" element={<Faculty />} />
+          <Route path="/facultypanel/*" element={<Faculty />} />
         </Routes>
         <Footer />
       </Router>

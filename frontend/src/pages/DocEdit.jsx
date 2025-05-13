@@ -71,12 +71,9 @@ const DocEdit = (doc) => {
       data.append("cover", Cover[0]);
     } else if (coverLink !== "") {
       data.append("coverLink", coverLink);
-    } else {
-      alert(`Please select cover field.`);
-      return false;
     }
     for (let [key, value] of data.entries()) {
-      if (!value) {
+      if (!value && !key==='cover') {
         alert(`Please fill in the ${key} field.`);
         return false;
       }

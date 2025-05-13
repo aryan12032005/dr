@@ -15,6 +15,7 @@ urlpatterns=[
     path('search_user/',views.adminuserView.as_view()),
     path('delete_user/',views.adminuserView.as_view()),
     path('edit_user/',views.adminuserView.as_view()),
+    path('change_password/',views.adminuserView.as_view()),
 
     path('total_details/',views.total_details.as_view()),
     path('get_user_type/',views.user_type.as_view()),
@@ -39,4 +40,9 @@ urlpatterns=[
     path('create_group/',views.GroupView.as_view()),
     path('delete_group/',views.GroupView.as_view()),
     path('add_group_documents/',views.GroupDocumentView.as_view()),
+
+    path('get_requests/',views.PrivateDocRequests.as_view()),
+    path('request_access/',views.PrivateDocRequests.as_view()),
+    path('approve_document/',views.PrivateDocRequests.as_view()),
+    path('delete_request/',views.PrivateDocRequests.as_view()),
 ]

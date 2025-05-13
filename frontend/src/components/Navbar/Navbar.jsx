@@ -48,14 +48,14 @@ const Navbar = ({ setUserStatus }) => {
 
   useEffect(() => {
     get_status().then((result) => {
-      sessionStorage.setItem("user_status", result);
+      sessionStorage.setItem("user_status", JSON.stringify(result));
       setUserStatus(result);
       set_user_status(result);
     });
     const interval = setInterval(() => {
       get_status().then((result) => {
         if (JSON.stringify(userStatusRef.current) !== JSON.stringify(result)) {
-          sessionStorage.setItem("user_status", result);
+          sessionStorage.setItem("user_status", JSON.stringify(result));
           setUserStatus(result);
           set_user_status(result);
         }

@@ -106,7 +106,6 @@ class QueryView(APIView):
             return Response({'message':'Querry submitted'}, status = status.HTTP_200_OK)
         else:
             return Response({'message': 'error submit Querry'},status=status.HTTP_400_BAD_REQUEST)
-
         
 class user_type(APIView):
     authentication_classes = [JWTAuthentication]
@@ -282,7 +281,13 @@ class SearchView(APIView):
 
 class getDocDetails(APIView):
     authentication_classes=[JWTAuthentication]
-    permission_classes=[IsAuthenticated,IsActive]
+
+    def get_permissions(self):
+        if self.request.method == 'get':
+            return []
+        if self.request.method =='post':
+            return [IsAdmin_or_Faculty(),IsAuthenticated(), IsActive()]
+        return super().get_permissions()
     
     def get(self, request):
         doc_id = request.query_params.get('doc_id')
@@ -295,6 +300,8 @@ class getDocDetails(APIView):
                 'comments':result.get('comments',[]),
                 'category':result.get('category',''),
                 'department':result.get('department',''),
+                'authors':result.get('authors'),
+                'hsnNumber':result.get('hsnNumber'),
                 'subject':result.get('subject',''),
                 'createDate': datetime.strptime(result.get('createDate', 0),'%Y-%m-%d %H:%M:%S.%f').date(),
                 'coverType':result.get('coverType',''),
@@ -324,11 +331,13 @@ class getDocDetails(APIView):
                 }
                 mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD)
                 existing_doc = mongo_client.get_doc_by_id(str(doc_id))
+                if(not existing_doc.get('isPublic') == data.get('isPublic')):
+                    new_data['allowed_users']= []
+                print(new_data)
                 owner = existing_doc.get('owner')
                 category = existing_doc.get('category')
                 if not owner == user.id and not user.is_admin == True:
                     return Response({'message':'Document does not belong to user'}, status = status.HTTP_400_BAD_REQUEST)
-                print(data)
                 if data.get('coverType') == 'link':
                     new_data['coverLink'] = data.get('coverLink')
                     update_id = mongo_client.update_doc(str(doc_id), data)
@@ -343,9 +352,13 @@ class getDocDetails(APIView):
                 else:
                     update_id = mongo_client.update_doc(str(doc_id), data)
                     if update_id:
-                        fs_handler = fsHandler(FS_DIR)
-                        cover_file_names= [i.name for i in files.getlist('cover')]
-                        update_status= fs_handler.update_file(category, str(doc_id),'cover', cover_file_names, files.getlist('cover'))
+                        update_status = False
+                        if files.getlist('cover') == []:
+                            update_status = True
+                        else:
+                            fs_handler = fsHandler(FS_DIR)
+                            cover_file_names= [i.name for i in files.getlist('cover')]
+                            update_status= fs_handler.update_file(category, str(doc_id),'cover', cover_file_names, files.getlist('cover'))
                         if update_status:
                             mongo_client.commit_transaction(update_id)
                         else:
@@ -403,12 +416,12 @@ class downloadDoc(APIView):
         doc_id=request.query_params.get('doc_id',None)
         try:
             if doc_id:
-                mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
+                mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD) 
                 document=mongo_client.get_doc_by_id(doc_id)
                 if not document:
                     raise "no document"
                 
-                if document['isPublic']=="true" or user.is_admin==True or document['owner']==request.user.id:
+                if document['isPublic']=="true" or user.is_admin==True or document['owner']==request.user.id or (user.id in document['allowed_users']):
                     if document['docType'] == "link":
                         doc_link= document['documentLink']
                         return Response({"message":f"Doc link : {doc_link}","link":True},status=status.HTTP_200_OK)
@@ -465,7 +478,7 @@ class adminuserView(APIView):
     def get_permissions(self):
         if self.request.method == "GET":
             return [IsAuthenticated(), IsAdmin_or_Faculty(), IsActive()]
-        if self.request.method == "POST":
+        if self.request.method == "POST" or self.request.method == "PUT":
             return [IsAuthenticated(), IsAdmin(), IsActive()]
         if self.request.method == "DELETE":
             return [IsAuthenticated(), IsAdmin(), IsActive()]
@@ -529,8 +542,17 @@ class adminuserView(APIView):
                 return Response({},status=status.HTTP_200_OK)
             except Exception as e:
                 return Response({'message':'Error updating user'},status=status.HTTP_400_BAD_REQUEST)
-            
-
+    
+    def put(self,request):
+        data = request.data
+        try:
+            edit_user = LibraryUser.objects.filter(id = data['id']).first()
+            edit_user.set_password(data['password'])
+            edit_user.save()
+            return Response({'message':'Passwrod  update successfull'},status=status.HTTP_200_OK)
+        except:
+            return Response({'message':'Error creating user'},status = status.HTTP_400_BAD_REQUEST)
+        
     def delete(self,request):
         data=request.data
         user=LibraryUser.objects.filter(username=data.get('username')).first()
@@ -608,8 +630,6 @@ class deprtment_view(APIView):
         else:
             return Response({'message':'please provide dep_code'},status=status.HTTP_400_BAD_REQUEST)
 
-
-
 class upload_document(APIView):
     authentication_classes=[JWTAuthentication]
     permission_classes=[IsAuthenticated,IsAdmin_or_Faculty,IsActive]
@@ -627,27 +647,40 @@ class upload_document(APIView):
             'isPublic':data.get('isPublic'),
             'owner':user.id,
             'comments':[],
+            'allowed_user':[],
             'createDate':str(datetime.now()),
             'category':data.get('category'),
             'department':data.get("department"),
-            "subject":data.get("subject")
+            "subject":data.get("subject"),
+            'authors':data.get('authors'),
+            'hsnNumber':data.get('hsnNumber')
         }
         
         if(data.get('coverType')=='link'):
             userData['coverLink']=data.get('coverLink')
         if(data.get('documentType')=='link'):
             userData['documentLink']=data.get('documentLink')
+        try:
+            existing_doc = mongo_client.find_doc('hsnNumber',userData['hsnNumber'])
+            if existing_doc:
+                return Response({'message':'Document with HSN Number already exist'},status=status.HTTP_409_CONFLICT)
+            
+            existing_doc = mongo_client.find_doc('title',userData['title'])
+            if existing_doc and existing_doc['authors']==userData['authors']:
+                return Response({'message':'Document already exist'},status= status.HTTP_409_CONFLICT)
 
-        insert_id=mongo_client.insert(userData)
-        fshandler=fsHandler(FS_DIR)
+            insert_id=mongo_client.insert(userData) 
+            fshandler=fsHandler(FS_DIR)
 
-        if(data.get('coverType')!='link'):
-            cover_file_names= [i.name for i in files.getlist('cover')]
-            fshandler.create_file(data.get('category'), insert_id, 'cover', cover_file_names, files.getlist('cover'))
+            if(data.get('coverType')!='link'):
+                cover_file_names= [i.name for i in files.getlist('cover')]
+                fshandler.create_file(data.get('category'), insert_id, 'cover', cover_file_names, files.getlist('cover'))
 
-        if(data.get('documentType')!='link'):
-            document_file_names= [i.name for i in files.getlist('documents')]
-            fshandler.create_file(data.get('category'), insert_id, 'document', document_file_names, files.getlist('documents'))
+            if(data.get('documentType')!='link'):
+                document_file_names= [i.name for i in files.getlist('documents')]
+                fshandler.create_file(data.get('category'), insert_id, 'document', document_file_names, files.getlist('documents'))
+        except:
+            return Response({'message':'Error uploading doc'},status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'message':'docs uploaded'},status=status.HTTP_200_OK)
     
@@ -812,38 +845,71 @@ class PrivateDocRequests(APIView):
     def get(self,request):
         requester_id = request.query_params.get('requester_id',None)
         faculty_id = request.query_params.get('fac_id',None)
+        user = request.user
         if requester_id:
-            if request.user.id == requester_id:
+            if user.id == int(requester_id):
                 user_requests = FacultyDocumentRequests.objects.filter(requester_id=int(requester_id))
                 responseOBJ = [req['doc_id'] for req in user_requests]
                 return Response({'requests':responseOBJ},status=status.HTTP_200_OK)
             else:
-                    return Response({'message':'invalid request'},status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message':'invalid request'},status=status.HTTP_400_BAD_REQUEST)
         elif faculty_id:
-            if request.user.id == faculty_id or request.user.is_admin == True:
-                user_requests = FacultyDocumentRequests.objects.filter(fac_id=int(faculty_id))
-                responseOBJ = [req['doc_id'] for req in user_requests]
-                return Response({'requests':responseOBJ},status=status.HTTP_200_OK)
+            if user.id == int(faculty_id) or request.user.is_admin == True:
+                user_requests = FacultyDocumentRequests.objects.filter(fac_id=int(faculty_id)).values('doc_id','fac_id','requester_id')
+                return Response({'requests':user_requests},status=status.HTTP_200_OK)
             else:
                 return Response({'message':'invalid request'},status=status.HTTP_400_BAD_REQUEST)
     
     def post(self,request):
-        data = request.POST
-        new_req = {
-            'doc_id':data.get('doc_id',None),
-            'fac_id':data.get('fac_id',None),
-            'requester_id':data.get('requester_id', None),
-        }
-        for key,value in new_req:
+        data = request.data
+        user = request.user
+        new_req={'doc_id':None}
+        if data.get('doc_id',None):
+            existing_doc = mongo_client_usual.get_doc_by_id(str(data.get('doc_id')))
+            if existing_doc:
+                new_req = {
+                    'doc_id':data.get('doc_id',None),
+                    'fac_id':existing_doc['owner'],
+                    'requester_id': user.id,
+                }
+                print(new_req)
+        for key,value in new_req.items():
             if value is None:
                 return Response({'message':'invalid request'},status = status.HTTP_400_BAD_REQUEST)
-        new_req = RequestedDocForm(new_req)
         existing_request = FacultyDocumentRequests.objects.filter(requester_id=new_req['requester_id'], doc_id= new_req['doc_id']).first()
         if existing_request:
             return Response({'message':'Request already created'},status=status.HTTP_409_CONFLICT)
+        
+        new_req = RequestedDocForm(new_req)
         if new_req.is_valid():
             new_req.save()
             return Response({'message':'request submited'},status=status.HTTP_200_OK)
+        
+    def put(self,request):
+        data = request.data
+        user =request.user
+        mongo_client = mongo_DB(MONGO_USERNAME,MONGO_PASSWORD)
+        requested_doc = mongo_client.get_doc_by_id(str(data['doc_id']))
+        if requested_doc:
+            if requested_doc['owner']==user.id or user.is_admin==True:
+                if 'allowed_user' in requested_doc.keys():
+                    allowed_user = requested_doc['allowed_users']
+                else:
+                    allowed_user=[]
+                allowed_user= list(allowed_user)
+                allowed_user.append(data['requester_id'])
+                update_id = mongo_client.update_doc(str(data['doc_id']),{'allowed_users':allowed_user})
+                if update_id:
+                    mongo_client.commit_transaction(update_id)
+                else:
+                    mongo_client.abort_transaction(update_id)
+                doc_request=FacultyDocumentRequests.objects.filter(doc_id = data['doc_id'], requester_id = data['requester_id']).first()
+                doc_request.delete()
+                return Response({'message':'access provided'},status=status.HTTP_200_OK)
+            else:
+                return Response({'message':'invalid request'},status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'message':'invalid request'},status=status.HTTP_400_BAD_REQUEST)
         
     def delete(self,request):
         doc_id = request.query_params.get('doc_id',None)
@@ -852,7 +918,7 @@ class PrivateDocRequests(APIView):
             existing_req = FacultyDocumentRequests.objects.filter(doc_id=doc_id, requester_id=requester_id).first()
             if not existing_req:
                 return Response({'message':'please provide valid request details'},status= status.HTTP_400_BAD_REQUEST)
-            if existing_req['requester_id']==requester_id or existing_req['fac_id']== request.user.id:
+            if existing_req.requester_id==requester_id or existing_req.fac_id== request.user.id:
                 existing_req.delete()
                 return Response({'message':'request deleted'},status=status.HTTP_200_OK)
             else:

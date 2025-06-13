@@ -122,9 +122,12 @@ const SearchDocument = ({ userStatus }) => {
       "GET",
       headers
     );
-
+    await getAllDepartments();
     if (result.ok) {
       const resultJson = await result.json();
+      const department = allDepartments.find(obj => obj.dep_code === resultJson.document.department);
+      resultJson.document.department = department?.dep_name;
+      resultJson.document.subject = department?.subjects?.find(obj => obj.code === resultJson.document.subject)?.name;
       setViewDocument(resultJson.document);
       openModal();
     } else {
@@ -160,11 +163,13 @@ const SearchDocument = ({ userStatus }) => {
         }
         saveAs(await result.blob(), filename);
       }
-    } else if(result.status == 400) {
+    } else if (result.status == 400) {
       const resultJson = await result.json();
-      if (!resultJson?.isPublic){
-        const confirmation = window.confirm("Document is private, request access?");
-        if (confirmation){
+      if (!resultJson?.isPublic) {
+        const confirmation = window.confirm(
+          "Document is private, request access?"
+        );
+        if (confirmation) {
           reqAccess(id);
         }
       }
@@ -197,12 +202,11 @@ const SearchDocument = ({ userStatus }) => {
       Authorization: `Bearer ${req_client.accessToken}`,
       "Content-Type": "application/json",
     };
-    console.log({doc_id:id});
     const result = await req_client.fetchReq(
       `request_access/`,
       "POST",
       headers,
-      JSON.stringify({doc_id:id})
+      JSON.stringify({ doc_id: id })
     );
     if (result.ok) {
       alert("Document requested");
@@ -407,10 +411,10 @@ const SearchDocument = ({ userStatus }) => {
               <strong>Document Type: </strong> {viewingDocument?.docType}
             </p>
             <p className="text-gray-600">
-              <strong>Department: </strong> {viewingDocument?.department}
+              <strong>Department: </strong> { viewingDocument?.department }
             </p>
             <p className="text-gray-600">
-              <strong>Subject: </strong> {viewingDocument?.subject}
+              <strong>Subject: </strong> { viewingDocument?.subject }
             </p>
             <p className="text-gray-600">
               <strong>Authors: </strong> {viewingDocument?.authors}
@@ -432,17 +436,15 @@ const SearchDocument = ({ userStatus }) => {
             )}
 
             {viewingDocument.cover &&
-            viewingDocument?.coverType?.includes("pdf") ? (
+            viewingDocument?.coverType.includes("pdf") ? (
               <iframe
                 src={`data:application/pdf;base64,${viewingDocument?.cover}`}
                 className="max-w-[80vw] min-w-[50vw] min-h-[80vh] rounded-lg shadow-lg mt-5"
               ></iframe>
-            ) : viewingDocument?.coverType?.includes("link") ? (
-              <img
-                src={viewingDocument?.coverLink}
-                style={{ width: "700px", height: "100%" }}
-                alt="error loading image"
-              />
+            ) : viewingDocument?.coverType.includes("link") ? (
+              <>
+              <h1>Document Link : </h1> <a href={viewingDocument?.coverLink} target="_blank" className="text-blue-500 hover:scale-110 transition-transform duration-300">{viewingDocument?.coverLink}</a>
+              </>
             ) : (
               <img
                 src={`data:${viewingDocument?.coverType};base64,${viewingDocument?.cover}`}

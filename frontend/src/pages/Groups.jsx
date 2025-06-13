@@ -56,8 +56,8 @@ const Groups = () => {
     );
   };
 
-  const saveNewGroupDocuments = async() => {
-    setNewGroup((newGroup) => ({ ...newGroup, documents: editingDocuments}));
+  const saveNewGroupDocuments = async () => {
+    setNewGroup((newGroup) => ({ ...newGroup, documents: editingDocuments }));
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -69,16 +69,15 @@ const Groups = () => {
       headers,
       JSON.stringify(editingDocuments)
     );
-    if (result.ok){
-      alert('documents added.');
+    if (result.ok) {
+      alert("documents added.");
       setEditingDocuments([]);
       setSearchedDocuments([]);
       setDocumentSearchQuery("");
       setShowAddDocumentModal(false);
       searchGroups();
-    }
-    else{
-      alert('error adding documents');
+    } else {
+      alert("error adding documents");
     }
   };
 
@@ -107,7 +106,7 @@ const Groups = () => {
   };
 
   const handleAddDocument = (group) => {
-    if (group.documents.length > 0){
+    if (group.documents.length > 0) {
       setSearchedDocuments(group.documents);
       setEditingDocuments(group.documents);
     }
@@ -142,10 +141,6 @@ const Groups = () => {
   }, [groupMemberSearchQuery]);
 
   const handleSaveGroup = async () => {
-    const data = new FormData();
-    Object.entries(newGroup).forEach(([key, value]) => {
-      data.append(key, value);
-    });
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -169,7 +164,38 @@ const Groups = () => {
     searchGroups();
   };
 
-  const searchDocuments = async() => {
+  const handleUpdateGroup = async () => {
+    const data = {
+      comments: newGroup["comments"],
+      members: newGroup["members"],
+      group_name: newGroup["group_name"],
+      owner_managed: newGroup["owner_managed"],
+      document: newGroup["documents"],
+    };
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
+    };
+    console.log(data);
+    const result = await req_client.fetchReq(
+      `edit_group/?group_id=${newGroup.id}`,
+      "PUT",
+      headers,
+      JSON.stringify(data)
+    );
+    if(result.ok){
+      alert("Group upadted successfull");
+      setEditingGroup(false);
+      setEditingDocuments([]);
+      resetNewGroupData();
+    }
+    else{
+      alert(result.json().message);
+    }
+  };
+
+  const searchDocuments = async () => {
     const headers = {
       "Content-Type": "application/json",
     };
@@ -178,15 +204,13 @@ const Groups = () => {
       "GET",
       headers
     );
-    if (response.ok){
+    if (response.ok) {
       const resultJson = await response.json();
       setSearchedDocuments(resultJson.documents);
-    }
-    else{
+    } else {
       setSearchedDocuments(null);
     }
   };
-  
 
   const searchGroups = async () => {
     req_client.reload_tokens();
@@ -348,13 +372,19 @@ const Groups = () => {
               {/* Documents Section */}
               <div className="mt-3">
                 <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-medium text-gray-700">Documents:</h4>
+                  <h4 className="text-sm font-medium text-gray-700">
+                    Documents:
+                  </h4>
                   <button
                     onClick={() => handleAddDocument(group)}
                     className="text-green-500 hover:text-green-600 text-sm flex items-center"
                     title="Add Document"
                   >
-                  {group.documents.length > 0 ? (<span className="mr-1">Edit Documents</span>) : (<span className="mr-1">+ Add Document</span> )}
+                    {group.documents.length > 0 ? (
+                      <span className="mr-1">Edit Documents</span>
+                    ) : (
+                      <span className="mr-1">+ Add Document</span>
+                    )}
                   </button>
                 </div>
                 <div className="mt-1 border-t pt-2">
@@ -375,7 +405,9 @@ const Groups = () => {
                       )}
                     </div>
                   ) : (
-                    <p className="text-gray-400 text-xs">No documents added yet</p>
+                    <p className="text-gray-400 text-xs">
+                      No documents added yet
+                    </p>
                   )}
                 </div>
               </div>
@@ -458,12 +490,21 @@ const Groups = () => {
               </div>
             </div>
             <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-              <button
-                onClick={handleSaveGroup}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
-              >
-                Save
-              </button>
+              {editingGroup ? (
+                <button
+                  onClick={handleUpdateGroup}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Update
+                </button>
+              ) : (
+                <button
+                  onClick={handleSaveGroup}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Save
+                </button>
+              )}
               <button
                 onClick={handleCancelGroup}
                 className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"

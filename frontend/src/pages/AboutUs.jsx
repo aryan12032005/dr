@@ -1,4 +1,4 @@
-import { React, useState} from "react";
+import { React, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faInstagram, faLinkedin } from "@fortawesome/free-brands-svg-icons";
 import networkRequests from "../request_helper";
@@ -42,28 +42,35 @@ const AboutUs = () => {
             <p className="text-lg text-gray-700 leading-relaxed mb-5">
               Welcome to{" "}
               <span className="font-semibold text-indigo-600">
-                Manav Rachna University (MRU)
+                Institutional Digital Repository, Manav Rachna University
               </span>{" "}
-              — a hub of innovation, academic excellence, and holistic
-              development. Rooted in a legacy of values and vision, MRU is a
-              multidisciplinary institute nurturing future leaders and
-              changemakers.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed mb-5">
               At the heart of our academic ecosystem is the{" "}
               <span className="font-semibold text-indigo-600">
                 Swami Vivekananda Library and Resource Center
               </span>
-              , a dynamic knowledge resource center that supports learning,
-              research, and personal growth. Equipped with modern facilities,
-              digital resources, and a vast collection of physical books,
-              journals, and e-content, the library is a space where curiosity
-              meets opportunity.
+              , a dynamic knowledge resource center established under the
+              ecosystem on{" "}
+              <span className="font-semibold text-indigo-600">
+                Manav Rachna University
+              </span>{" "}
+              that supports learning, research, and personal growth. Equipped
+              with modern facilities, digital resources, and a vast collection
+              of physical books, journals, and e-content, the library is a space
+              where curiosity meets opportunity.
             </p>
-            <p className="text-lg text-gray-700 leading-relaxed">
+            <p className="text-lg text-gray-700 leading-relaxed mb-5">
               Whether you're diving into research, collaborating on projects, or
               simply exploring new ideas, MRU and its library provide the
               perfect environment to thrive.
+            </p>
+            <p className="text-lg text-gray-700 leading-relaxed">
+              The only thing that you absolutely have to know is the location of
+              the library -{" "}
+              <span className="font-semibold text-indigo-600">
+                Albert Einstein
+              </span>
             </p>
           </div>
 
@@ -92,33 +99,46 @@ const AboutUs = () => {
       <div className="mt-12 w-full max-w-7xl flex flex-col md:flex-row gap-8 justify-center">
         {/*  Location Card */}
         <div className="md:w-1/2 h-full bg-white shadow-xl rounded-xl overflow-hidden transition-transform duration-500 hover:scale-105 flex flex-col">
-          <a
-            href="https://maps.app.goo.gl/qYaoGggQhQ3QX9ZH9"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img
-              src="MRIIRS.png"
-              alt="Our Location - Satellite View"
-              className="w-full h-64 object-cover"
-            />
-          </a>
           <div className="p-6 flex flex-col justify-between flex-grow">
             <h3 className="text-2xl font-bold text-gray-800 mb-2">
-              Our Location
+              Developed By
             </h3>
-            <p className="text-gray-600 mb-4 flex-grow">
-              Visit us at our vibrant campus nestled in a beautiful location.
-              Click the image to view in Google Maps with satellite view.
-            </p>
             <a
-              href="https://maps.app.goo.gl/VNes1p1Ca43xrohx7"
+              href="https://www.linkedin.com/in/dr-mrinal-pand ey-0b35352a2/"
               target="_blank"
-              rel="noopener noreferrer"
-              className="text-indigo-600 font-semibold hover:underline"
             >
-              Open in Google Maps →
+              <p className="text-gray-600 mb-4 flex-grow transition-transform duration-500 hover:scale-105 hover:text-blue-500">
+                Project Mentor - Dr. Mrinal Pandey (Professor, MRU)
+              </p>
             </a>
+            <a
+              href="https://www.linkedin.com/in/mamta-kaushik-ab2a84266/"
+              target="_blank"
+            >
+              <p className="text-gray-600 mb-4 flex-grow transition-transform duration-500 hover:scale-105 hover:text-blue-500">
+                Project Guide - Dr. Mamta Kaushik (Deputy Librarian, MRU)
+              </p>
+            </a>
+            <a
+              href="https://www.linkedin.com/in/harsh-yadav-1761ab228/"
+              target="_blank"
+            >
+              <p className="text-gray-600 mb-4 flex-grow transition-transform duration-500 hover:scale-105 hover:text-blue-500">
+                Team Lead - Harsh Yadav (FullStack Developer)
+              </p>
+            </a>
+            <a
+              href="https://www.linkedin.com/in/mridul-milan-4677a7253/"
+              target="_blank"
+            >
+              <p className="text-gray-600 mb-4 flex-grow transition-transform duration-500 hover:scale-105 hover:text-blue-500">
+                Senior devloper - Mridul Milan (Frontend Developer)
+              </p>
+            </a>
+            <p className="text-gray-600 mb-4 flex-grow">
+              Junior Developers - Vaibhav Gusain, Riya Verma, Priyal Yadav,
+              Shivam Khundari
+            </p>
           </div>
         </div>
 
@@ -132,48 +152,48 @@ const AboutUs = () => {
               Fill in your details and let us know what's on your mind. We'll
               get back to you shortly.
             </p>
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">
-                  Your email
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your email id"
-                  value={queryEmail}
-                  onChange={(e) => setQueryEmail(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your Name"
-                  value={queryName}
-                  onChange={(e) => setQueryName(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 font-medium mb-1">
-                  Your Query
-                </label>
-                <textarea
-                  rows="4"
-                  placeholder="Type your query here..."
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                ></textarea>
-              </div>
-              <button
-                onClick={sendQuery}
-                className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-xl shadow-lg hover:shadow-indigo-400 hover:-translate-y-0.5 transition-all"
-              >
-                Submit Query
-              </button>
+            <div>
+              <label className="block text-gray-700 font-medium mb-1">
+                Your email
+              </label>
+              <input
+                type="text"
+                placeholder="Enter your email id"
+                value={queryEmail}
+                onChange={(e) => setQueryEmail(e.target.value)}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-1">
+                Name
+              </label>
+              <input
+                type="text"
+                placeholder="Enter your Name"
+                value={queryName}
+                onChange={(e) => setQueryName(e.target.value)}
+                className="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 font-medium mb-1">
+                Your Query
+              </label>
+              <textarea
+                rows="4"
+                placeholder="Type your query here..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full border border-gray-300 rounded px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300"
+              ></textarea>
+            </div>
+            <button
+              onClick={sendQuery}
+              className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-xl shadow-lg hover:shadow-indigo-400 hover:-translate-y-0.5 transition-all"
+            >
+              Submit Query
+            </button>
           </div>
         </div>
       </div>

@@ -104,6 +104,15 @@ const Signup = () => {
       alert("Password should be at least 6 characters long!");
       return;
     }
+    if(user.phone_number.length !=10){
+      alert('enter a 10 digit phone number');
+      return;
+    }
+    const hasEmptyValue = Object.values(newUser).some(value => value === '' || value === null || value === undefined);
+    if(hasEmptyValue){
+      alert("Please fill all fields");
+      return;
+    }
 
     try {
       req_client.reload_tokens();
@@ -120,14 +129,14 @@ const Signup = () => {
 
       if (result.ok) {
         alert("User added successfully!");
+        resetNewUserState();
       } else {
         alert("Error creating user.");
       }
     } catch (error) {
       console.error("Error adding user:", error);
     }
-
-    resetNewUserState();
+    setNewUser({ ...newUser, dep_code: "" });
   };
 
   return (

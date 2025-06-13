@@ -248,7 +248,7 @@ const ViewGroups = () => {
                           key={index}
                           className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full"
                         >
-                          {doc.title || `Document ${index + 1}`}
+                          {doc.title.split(" ").slice(0, 3).join(' ') || `Document ${index + 1}`}
                         </span>
                       ))}
                       {group.documents.length > 3 && (
@@ -257,7 +257,7 @@ const ViewGroups = () => {
                         </span>
                       )}
                       <button
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded-full mr-1 transition-all duration-300 hover:scale-105 right-2 absolute"
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded-full mr-1 transition-all duration-300 hover:scale-105 right-2"
                         onClick={() => handleOpenDocumentModal(group)}
                       >
                         View Documents
@@ -295,7 +295,7 @@ const ViewGroups = () => {
               </div>
               <input
                 type="text"
-                placeholder="Search groups..."
+                placeholder="Search document..."
                 value={documentSearchQuery}
                 onChange={(e) => setDocumentSearchQuery(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mr-5"

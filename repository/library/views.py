@@ -333,7 +333,6 @@ class getDocDetails(APIView):
                 existing_doc = mongo_client.get_doc_by_id(str(doc_id))
                 if(not existing_doc.get('isPublic') == data.get('isPublic')):
                     new_data['allowed_users']= []
-                print(new_data)
                 owner = existing_doc.get('owner')
                 category = existing_doc.get('category')
                 if not owner == user.id and not user.is_admin == True:
@@ -581,7 +580,7 @@ class deprtment_view(APIView):
             if dep_details:
                 responseObj= {"dep_code":dep_details.dep_code,"dep_name":dep_details.dep_name,"managers":dep_details.managers,"subjects":dep_details.subjects}
         else:
-            dep_details=Departments.objects.all().values("dep_name","dep_code")
+            dep_details=Departments.objects.all().values("dep_name","dep_code","subjects")
             if dep_details:
                 responseObj= {"departments":dep_details}
         if dep_details:
@@ -770,7 +769,28 @@ class GroupView(APIView):
                 return Response({'message':'group deleted successfull'},status=status.HTTP_200_OK)
             else:
                 return Response({'message':'error deleting group'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def put(self,request):
+        group_id = request.query_params.get('group_id')
+        if not group_id:
+            return Response({'message':'Please provide group Id'},status=status.HTTP_400_BAD_REQUEST)
+        data = request.data
+        print(data)
+        mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
+        existing_group = mongo_client.get_doc_by_id(str(group_id))
+        if existing_group:
+            update_id = mongo_client.update_doc(str(group_id),data)
+            if update_id:
+                mongo_client.commit_transaction(update_id)
+                return Response({'message':'Group edited successfully'},status=status.HTTP_200_OK)
+            else:
+                mongo_client.abort_transaction(update_id)
+                return Response({'message':'error updating group'},status=status.HTTP_400_BAD_REQUEST)
             
+
+            
+
+
 
 class GroupDocumentView(APIView):
     authentication_classes=[JWTAuthentication]

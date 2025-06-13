@@ -3,7 +3,12 @@ import { Link } from "react-router-dom";
 import { ReactTyped } from "react-typed";
 
 const Hero = () => {
-  const backgroundImages = ["./lib1.jpg", "./lib2.jpg", "./lib3.jpg", "./lib4.jpg"];
+  const backgroundImages = [
+    "./lib1.jpg",
+    "./lib2.jpg",
+    "./lib3.jpg",
+    "./lib4.jpg",
+  ];
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [nextImageIndex, setNextImageIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -13,7 +18,9 @@ const Hero = () => {
       setIsTransitioning(true);
       setNextImageIndex((currentImageIndex + 1) % backgroundImages.length);
       setTimeout(() => {
-        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % backgroundImages.length);
+        setCurrentImageIndex(
+          (prevIndex) => (prevIndex + 1) % backgroundImages.length
+        );
         setIsTransitioning(false);
       }, 1000);
     }, 5000);
@@ -30,7 +37,7 @@ const Hero = () => {
         style={{
           backgroundImage: `url(${backgroundImages[currentImageIndex]})`,
           zIndex: 1,
-          filter: "brightness(0.6) blur(0.5px)",
+          filter: "brightness(0.7) blur(0.5px)",
         }}
       />
       <div
@@ -38,18 +45,44 @@ const Hero = () => {
         style={{
           backgroundImage: `url(${backgroundImages[nextImageIndex]})`,
           zIndex: 0,
-          filter: "brightness(0.4)",
+          filter: "brightness(0.2)",
         }}
       />
       <div className="absolute inset-0 bg-black bg-opacity-60 z-2"></div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center w-full min-h-screen justify-center">
+      <div className="relative z-10 flex flex-col items-center w-full min-h-screen justify-between">
+        <div
+          className="text-yellow-100 text-4xl w-full min-w-full mt-20"
+          style={{
+            height: "50px",
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-block",
+              position: "relative",
+              animation: "marquee 15s linear infinite",
+            }}
+          >
+            Welcome to, Swami Vivekananda Library and Resource Center
+          </div>
+
+          <style>
+            {`
+          @keyframes marquee {
+            0%   { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+          }
+        `}
+          </style>
+        </div>
         <div className="w-full max-w-3xl px-6 text-center pt-12">
           {/* Removed the blurred box */}
           <h1 className="text-4xl lg:text-6xl font-extrabold text-yellow-100 leading-tight mb-6 drop-shadow-md">
             <ReactTyped
-              strings={["Welcome to", "Institutional Digital Resource Library"]}
+              strings={["Welcome to", "Institutional Digital Repository"]}
               typeSpeed={40}
               backSpeed={60}
               loop={true}
@@ -58,12 +91,14 @@ const Hero = () => {
           <p className="mt-4 text-lg lg:text-xl text-zinc-200 leading-relaxed tracking-wide">
             An open-source repository software package for digital content.
           </p>
+          {/* <h2 className="text-2xl text-bold">Manav Rachna University</h2> */}
+
           <div className="mt-8">
             <Link
               to="/Login"
               className="text-lg lg:text-xl font-semibold text-yellow-100 border border-yellow-100 px-8 py-3 rounded-full transition-all duration-300 hover:bg-yellow-100 hover:text-black shadow-md hover:shadow-yellow-400"
             >
-               Login to Discover
+              Login to Discover
             </Link>
           </div>
 
@@ -84,7 +119,7 @@ const Hero = () => {
         </div>
 
         {/* Indicators */}
-        <div className="absolute bottom-8 flex space-x-2 z-10">
+        <div className="bottom-8 flex space-x-2 z-10">
           {backgroundImages.map((_, index) => (
             <button
               key={index}

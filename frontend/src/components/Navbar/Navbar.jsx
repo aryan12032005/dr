@@ -99,17 +99,33 @@ const Navbar = ({ setUserStatus }) => {
   return (
     <>
       <nav className="z-50 relative flex bg-[#0f1320] text-white px-4 py-4 items-center justify-between shadow-md">
-        <Link to="/" className="flex items-center">
-          <img className="h-10 me-1" src="new_logo.png" alt="logo" />
-          <h1 className="text-2xl font-semibold">Digital Repository</h1>
-        </Link>
+        <div className="flex flex-col items-center">
+          {/* <Link to="/" className="flex">
+            <img className="h-10 me-1" src="new_logo.png" alt="logo" />
+            <h1 className="text-2xl font-semibold text-yellow-400">
+              Digital Repository{" "}
+            </h1>
+          </Link> */}
+          <Link to="https://manavrachna.edu.in/" className="flex">
+            <img className="h-10 me-1" src="mru_logo.png" alt="logo" />
+            <h1 className="text-2xl font-semibold text-yellow-400">
+              {" "}
+              Manav Rachna University
+            </h1>
+          </Link>
+          <Link to="/" className="flex">
+            <h1 className="text-xl font-semibold text-white-400">
+            Institutional Digital Repository
+            </h1>
+          </Link>
+        </div>
         <div className="nav-links-repo block md:flex items-center gap-4">
           <div className="hidden md:flex gap-4">
             {links.map((item, i) => (
               <Link
                 to={item.link}
                 key={i}
-                className={`transition-all duration-300 ${
+                className={`transition-all duration-300 text-yellow-400 ${
                   currentPath.includes(item.link)
                     ? "border-b-2 border-yellow-300 pb-1 text-yellow-300"
                     : "hover:text-gray-300"
@@ -124,7 +140,7 @@ const Navbar = ({ setUserStatus }) => {
               <Link
                 to={link}
                 key={i}
-                className="px-4 py-1 border border-gray-400 rounded hover:bg-white hover:text-black transition-all duration-300"
+                className="px-4 py-1 border border-gray-400 text-yellow-400 rounded hover:bg-white hover:text-black transition-all duration-300"
               >
                 {tittle}
               </Link>
@@ -152,7 +168,7 @@ const Navbar = ({ setUserStatus }) => {
             onClick={() => setMobileNav("hidden")}
             className={`text-4xl font-semibold mb-8 transition-all duration-300 ${
               currentPath === item.link
-                ? "text-yellow-300 underline"
+                ? "text-yellow-400 underline"
                 : "text-white hover:text-gray-300"
             }`}
           >

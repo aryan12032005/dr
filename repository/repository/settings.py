@@ -22,17 +22,18 @@ from dotenv import load_dotenv
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 load_dotenv()
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8#+r4cpo52ils31m6h8=kjxj=jpvq5_uh0n0%bm$!=il*0_hnl'
+SECRET_KEY = 'django-insecure-8#+r4cpo52ils31m6h8=kjxj=jpvq5_uh0n0%bm$' 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 frontend_server = os.getenv("FRONTEND_SERVER_IP")
-ALLOWED_HOSTS = [frontend_server,'127.0.0.1','localhost']
+ALLOWED_HOSTS = [frontend_server]
 
 CORS_ALLOWED_ORIGINS = [
-    f"http://{frontend_server}",'http://localhost','http://127.0.0.1'
+    f"http://{frontend_server}:3000"
 ]
+
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 209715200
 FILE_UPLOAD_MAX_MEMORY_SIZE = 209715200
@@ -73,6 +74,17 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+}
+
+# Middle ware config
+MIDDLEWARE = [
+    'library.middleware.SecurityMiddleware',
+]
+
+SECURITY_MIDDLEWARE_CONFIG = {
+    'RATE_LIMIT': 200,  # requests per minute
+    'BRUTE_FORCE_LIMIT': 10,  # login attempts per minute
+    'BLOCK_DURATION': 7200,  # 2 hours in seconds
 }
 
 # User authentications and accesstoken based settings

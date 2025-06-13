@@ -130,7 +130,7 @@ const RequestedDocument = () => {
         <div className="mb-4 flex flex-row">
           <input
             type="text"
-            placeholder="Search groups..."
+            placeholder="Search requests..."
             value={requestSearchId}
             onChange={(e) => setRequestSearchId(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mr-5"

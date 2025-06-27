@@ -156,6 +156,7 @@ const Groups = () => {
     setShowGroupModal(false);
     if (result.ok) {
       const resultJson = await result.json();
+      searchGroups();
       alert(resultJson.message);
     } else if (result.status == 400) {
       const resultJson = await result.json();
@@ -189,6 +190,9 @@ const Groups = () => {
       setEditingGroup(false);
       setEditingDocuments([]);
       resetNewGroupData();
+      setGroupMemberSearchQuery("");
+      setShowGroupModal(false);
+      searchGroups();
     }
     else{
       alert(result.json().message);

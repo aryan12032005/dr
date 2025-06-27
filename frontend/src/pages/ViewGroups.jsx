@@ -49,7 +49,18 @@ const ViewGroups = () => {
   const [viewingDocument, setViewDocument] = useState(null);
 
   useEffect(() => {
-    searchGroups();
+    const get_groups = async () => {
+      const reload_status = await req_client.reload_tokens();
+      if(reload_status === null){
+        alert("Please login first");
+        navigate('/LogIn');
+        return;
+      }
+      else{
+        searchGroups();
+      }
+    }
+    get_groups();
   }, [navigate]);
 
   useEffect(() => {
@@ -102,8 +113,12 @@ const ViewGroups = () => {
       Authorization: `Bearer ${req_client.accessToken}`,
       "Content-Type": "application/json",
     };
+    let endpoint = `get_member_group/`
+    if(groupSearchQuery!=""){
+      endpoint = `get_member_group/?query=${groupSearchQuery}`
+    }
     const result = await req_client.fetchReq(
-      `get_member_group/`,
+      endpoint, 
       "GET",
       headers
     );
@@ -115,6 +130,29 @@ const ViewGroups = () => {
     }
   };
 
+  const handleLeaveGroup = async (group) => {
+    await req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
+    };
+    console.log(group);
+    const result = await req_client.fetchReq(
+      `leave-group/?group_id=${group.id}`, 
+      "DELETE",
+      headers
+    );
+    if(result.ok){
+      const resultJson = await result.json();
+      searchGroups();
+      alert(resultJson.message);
+    }
+    else{
+      const resultJson = await result.json();
+      alert(resultJson.message);
+    }
+  }
+
   useEffect(() => {
     const fetchGroupDetails = async () => {
       const headers = {
@@ -123,9 +161,13 @@ const ViewGroups = () => {
       };
       let details = await Promise.all(
         searchedGroups.map(async (group_id) => {
+          let endpoint = `get_groups/?group_id=${encodeURIComponent(group_id)}`;
+          if(groupSearchQuery != ""){
+            endpoint = `get_groups/?group_id=${encodeURIComponent(group_id)}&query=${groupSearchQuery}`;
+          }
           try {
             const response = await req_client.fetchReq(
-              `get_groups/?group_id=${encodeURIComponent(group_id)}`,
+              endpoint,
               "GET",
               headers
             );
@@ -215,6 +257,12 @@ const ViewGroups = () => {
                       {group.members.length} members
                     </p>
                   </div>
+                  <button
+                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded-full mr-1 transition-all duration-300 hover:scale-105 right-2"
+                        onClick={() => handleLeaveGroup(group)}
+                      >
+                        Leave group
+                      </button>
                 </div>
 
                 <div className="mt-2">

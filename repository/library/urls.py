@@ -39,6 +39,7 @@ urlpatterns=[
     path('get_member_group/',views.MemberGroupView.as_view()),
     path('create_group/',views.GroupView.as_view()),
     path('edit_group/',views.GroupView.as_view()),
+    path('leave-group/',views.MemberGroupView.as_view()),
     path('delete_group/',views.GroupView.as_view()),
     path('add_group_documents/',views.GroupDocumentView.as_view()),
 

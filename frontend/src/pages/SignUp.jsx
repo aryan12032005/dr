@@ -104,7 +104,7 @@ const Signup = () => {
       alert("Password should be at least 6 characters long!");
       return;
     }
-    if(user.phone_number.length !=10){
+    if(newUser.phone_number.length !=10){
       alert('enter a 10 digit phone number');
       return;
     }

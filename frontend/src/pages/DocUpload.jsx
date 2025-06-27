@@ -78,6 +78,7 @@ const DocUpload = () => {
   };
 
   const searchSubjects = async (department) => {
+    setSubject("other");
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
@@ -353,7 +354,7 @@ const DocUpload = () => {
           <input
             type="text"
             className="mt-4 border p-2 rounded w-full"
-            placeholder="Add author"
+            placeholder="Enter author name"
             value={newAuthor}
             onChange={(e) => setNewAuthor(e.target.value)}
             required
@@ -369,7 +370,7 @@ const DocUpload = () => {
           <input
             type="text"
             className="mt-4 border p-2 rounded w-full"
-            placeholder="Enter Title"
+            placeholder="Enter HSN number"
             value={hsnNumber}
             onChange={(e) => setHsnNumber(e.target.value)}
             required

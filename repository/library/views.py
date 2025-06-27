@@ -23,7 +23,7 @@ from dotenv import load_dotenv
 import pandas as pd
 from io import StringIO
 import json
-
+import difflib
 
 load_dotenv()
 MONGO_USERNAME=os.getenv("MONGO_USERNAME")
@@ -34,25 +34,48 @@ mongo_client_usual=mongo_DB(MONGO_USERNAME,MONGO_PASSWORD)
 
 # Create your views here.
 def index(request):
-    return Response("this is an api view")
+    return Response("Umm, well you know me:) feed me...")
 
 class logout_user(APIView):
+    """ Log out a user using refresh token """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
     def post(self,request):
+        """
+        Post request to logout a user 
+
+        Args:
+            request['refresh_token'] (str): Refresh token of user to be loged out.
+
+        Returns:
+            message (str): Respone of logout.
+        """
         try:
             refresh_token = request.data['refresh_token']
             token = RefreshToken(refresh_token)
-            token.blacklist()
             logout(request)
-        except:
+            token.blacklist()
+        except Exception as e:
+            print(e)
             return Response({"message":"invalid request"}, status= status.HTTP_400_BAD_REQUEST)
         return Response({'message':'logout successfull'},status=status.HTTP_200_OK)
 
 
 class refresh_token(APIView):
+    """ Refresh an access token provided by user """
     def post(self,request):
+        """
+        Refresh a token for users.
+
+        Args:
+            request.data['refresh_token'] (str): Refresh Token of user.
+
+        Returns:
+            refresh_token (str): New Refresh Token for user.
+            access_token (str): New Access token for user.
+            message (str); Error message in case of something wrong.
+        """
         refreshToken=request.data.get('refresh_token')
         if not refreshToken:
             return Response({'message':'no refresh token found'},status=status.HTTP_400_BAD_REQUEST)
@@ -69,20 +92,40 @@ class refresh_token(APIView):
                 return Response({'message':str(e)},status=status.HTTP_400_BAD_REQUEST)
             
 def get_csrf_token(request):
+    """
+    Provide a csrf_token for POST requests
+
+    Args:
+        request (obj): User request.
+    
+    Returns:
+        csrf_token (str): csrf_token for POST requests.
+    """
     csrf_token = get_token(request)
     response = JsonResponse({'csrf_token': csrf_token})
     return response
 
 class total_details(APIView):
+    """ Top level key details about the data """
     authentication_classes=[JWTAuthentication]
 
     def get_permissions(self):
+        """ Permissions """
         if self.request.method=='GET':
-            return [IsAdmin(),IsActive()]
+            return [IsAdmin(),IsActive(),IsAuthenticated()]
         
         return super().get_permissions()
     
     def get(self,request):
+        """
+        Returns count of users and total documents
+
+        Args:
+
+        Returns:
+            total_users (int): Total users in the system.
+            total_docs (int): Total number of documents in system.
+        """
         total_users=LibraryUser.objects.count()
         total_docs=mongo_client_usual.get_count()
         return Response({'total_users':total_users,'total_docs':total_docs},status=status.HTTP_200_OK)
@@ -183,11 +226,9 @@ class SignupView(APIView):
     permission_classes = [IsAuthenticated,IsAdmin]
     
     def post(self, request):
-        print(request.data)
         serializer = LibraryUserSerializer(data=request.data)
         
         if serializer.is_valid():
-            print(serializer.validated_data)
             existing_user=LibraryUser.objects.filter(username=serializer.validated_data['username'],email=serializer.validated_data['email']).first()
             if not existing_user:
                 user = serializer.save()
@@ -237,7 +278,6 @@ class uploadCsv(APIView):
                     existing_user=LibraryUser.objects.filter(username=new_user.validated_data['username'],email=new_user.validated_data['email']).first()
                     if not existing_user:
                         user = new_user.save()
-                        print(f"added user {user.username}")
                     else:
                         existing_users.append(str(new_user.validated_data['username'].value))
                 else:
@@ -351,22 +391,22 @@ class getDocDetails(APIView):
                 else:
                     update_id = mongo_client.update_doc(str(doc_id), data)
                     if update_id:
-                        update_status = False
+                        update_path = False
                         if files.getlist('cover') == []:
-                            update_status = True
+                            update_path = True
                         else:
                             fs_handler = fsHandler(FS_DIR)
                             cover_file_names= [i.name for i in files.getlist('cover')]
-                            update_status= fs_handler.update_file(category, str(doc_id),'cover', cover_file_names, files.getlist('cover'))
-                        if update_status:
+                            update_path = fs_handler.update_file(category, str(doc_id),'cover', cover_file_names, files.getlist('cover'))
+                        if update_path:
                             mongo_client.commit_transaction(update_id)
+                            mongo_client.commit_transaction(mongo_client.update_doc(str(update_id),{"cover_path",update_path}))
                         else:
                             mongo_client.abort_transaction(update_id)
                             return Response({'message':'cannot update document'}, status= status.HTTP_400_BAD_REQUEST)
 
                 return Response({'message':'updated document'}, status= status.HTTP_200_OK)
             except Exception as e:
-                print(e)
                 if update_id:
                     mongo_client.abort_transaction(update_id)
                 return Response({'message':'cannot update document'}, status= status.HTTP_400_BAD_REQUEST)
@@ -438,7 +478,6 @@ class downloadDoc(APIView):
                     return Response({"message":"Document is private"},status= status.HTTP_400_BAD_REQUEST)
                     
         except Exception as e:
-            print(e)
             return Response({'message':"error downloading document"},status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self,request):
@@ -615,7 +654,6 @@ class deprtment_view(APIView):
             data = request.POST
             existing_dep = Departments.objects.filter(dep_code = dep_code).first()
             if existing_dep:
-                print(type(data.get('subjects')))
                 try:
                     existing_dep.dep_name = data.get('dep_name', existing_dep.dep_name)
                     existing_dep.managers = json.loads(data.get('managers', '[]'))
@@ -670,14 +708,17 @@ class upload_document(APIView):
 
             insert_id=mongo_client.insert(userData) 
             fshandler=fsHandler(FS_DIR)
-
+            cover_path = None
+            document_path = None
             if(data.get('coverType')!='link'):
                 cover_file_names= [i.name for i in files.getlist('cover')]
-                fshandler.create_file(data.get('category'), insert_id, 'cover', cover_file_names, files.getlist('cover'))
+                cover_path = fshandler.create_file(data.get('category'), insert_id, 'cover', cover_file_names, files.getlist('cover'))
 
             if(data.get('documentType')!='link'):
                 document_file_names= [i.name for i in files.getlist('documents')]
-                fshandler.create_file(data.get('category'), insert_id, 'document', document_file_names, files.getlist('documents'))
+                document_path = fshandler.create_file(data.get('category'), insert_id, 'document', document_file_names, files.getlist('documents'))
+            
+            mongo_client.update_doc(str(insert_id),{"cover_path":cover_path,"document_path":document_path})
         except:
             return Response({'message':'Error uploading doc'},status=status.HTTP_400_BAD_REQUEST)
 
@@ -699,9 +740,7 @@ class GroupView(APIView):
         group_id = request.query_params.get('group_id')
         if group_id:
             mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
-            print(group_id)
             group_details= mongo_client.get_doc_by_id(str(group_id))
-            print(group_details)
             if group_details:
                 group_details['id'] = str(group_details['_id'])
                 group_details.pop('_id',None)
@@ -775,11 +814,31 @@ class GroupView(APIView):
         if not group_id:
             return Response({'message':'Please provide group Id'},status=status.HTTP_400_BAD_REQUEST)
         data = request.data
-        print(data)
         mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
         existing_group = mongo_client.get_doc_by_id(str(group_id))
         if existing_group:
+            existing_members = existing_group['members']
+            new_members = data['members']
+            new_members_set = {frozenset(member.items()) for member in new_members}
+            existing_members_set = {frozenset(member.items()) for member in existing_members}
+            deleted_memebrs = [dict(s) for s in existing_members_set - new_members_set]
+            new_members = [dict(s) for s in new_members_set - existing_members_set]
             update_id = mongo_client.update_doc(str(group_id),data)
+            for member in new_members:
+                try:
+                    existing_member = LibraryUser.objects.filter(id= str(member['id'])).first()
+                    existing_member.groups.append(str(group_id))
+                    existing_member.save()
+                except:
+                    continue                
+            for member in deleted_memebrs:
+                try:
+                    existing_member = LibraryUser.objects.filter(id= str(member['id'])).first()
+                    if(group_id in existing_member.groups):
+                        existing_member.groups.remove(str(group_id))
+                    existing_member.save()
+                except:
+                    continue
             if update_id:
                 mongo_client.commit_transaction(update_id)
                 return Response({'message':'Group edited successfully'},status=status.HTTP_200_OK)
@@ -842,21 +901,61 @@ class GroupDocumentView(APIView):
         return Response({'message': 'documents added'}, status=status.HTTP_200_OK)
     
 class MemberGroupView(APIView):
+    """This class provides endpoints for group members"""
     authentication_classes=[JWTAuthentication]
 
     def get_permissions(self):
         if self.request.method == "GET":
-            return[IsActive(),IsAuthenticated()]
+            return [IsActive(),IsAuthenticated()]
+        if self.request.method == "delete":
+            return [IsActive(), IsAuthenticated()]
         return super().get_permissions()
     
     def get(self,request):
+        """ Provides a list of ids of groups that user is joined in """ 
         user = request.user
         member_id = user.id
+        query = request.query_params.get('query')
+        print(query)
         my_groups = LibraryUser.objects.filter(id=member_id).values("groups")[:20]
-        if my_groups:
+        if query != None:
+            mongo_db = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
+            documents = [mongo_db.get_doc_by_id(str(doc_id)) for doc_id in list(my_groups)[0]['groups']]
+            print(documents)
+            matches = None
+            if documents:
+                matches = [(str(doc['_id']), difflib.SequenceMatcher(None, query, doc['group_name']).ratio()) for doc in documents]
+                matches.sort(key=lambda x: x[1], reverse=True)
+                matches = [match[0] for match in matches if match[1]>0.5]
+            if matches!=None:
+                return Response({"groups":matches},status=status.HTTP_200_OK)
+        elif my_groups:
             return Response({"groups":list(my_groups)[0]['groups']},status=status.HTTP_200_OK)
         else:
             return Response({'message':"No groups found"},status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self, request):
+        user = request.user
+        group_id = request.query_params.get('group_id')
+        mongo_db = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="groups")
+        existing_group = mongo_db.get_doc_by_id(str(group_id))
+        if existing_group:
+            for member in existing_group['members']:
+                if user.id == member['id']:
+                    if(member in existing_group['members']):
+                        existing_group['members'].remove(member)
+                    print(existing_group)
+                    update_id = mongo_db.update_doc(group_id,{"members":existing_group['members']})
+                    if update_id:
+                        current_user = LibraryUser.objects.filter(id=user.id).first()
+                        print(current_user)
+                        if group_id in current_user.groups:
+                            current_user.groups.remove(str(group_id))
+                        current_user.save()
+                        mongo_db.commit_transaction(update_id)
+                        return Response({'message':'Group left successfull.'},status=status.HTTP_200_OK)
+        return Response({'message':'Error leaving group'},status=status.HTTP_400_BAD_REQUEST)
+
         
 class PrivateDocRequests(APIView):
     authentication_classes=[JWTAuthentication]
@@ -892,7 +991,6 @@ class PrivateDocRequests(APIView):
                     'fac_id':existing_doc['owner'],
                     'requester_id': user.id,
                 }
-                print(new_req)
         for key,value in new_req.items():
             if value is None:
                 return Response({'message':'invalid request'},status = status.HTTP_400_BAD_REQUEST)

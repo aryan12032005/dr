@@ -1,17 +1,13 @@
-import config from "./config";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
 class networkRequests {
   constructor() {
-    this.baseUrl = config.backendUrl;
-    this.accessToken = sessionStorage.getItem("access_token");
-    this.refreshToken = sessionStorage.getItem("refresh_token");
+    this.baseUrl = import.meta.env.VITE_backendUrl;
+    this.accessToken = sessionStorage.getItem("access_token") || null;
+    this.refreshToken = sessionStorage.getItem("refresh_token") || null;
   }
 
   async reload_tokens() {
     this.accessToken = sessionStorage.getItem("access_token");
-    this.refreshToken = sessionStorage.getItem("refresh_token");
+    this.refreshToken = sessionStorage.getItem("refresh_token");  
     return this.accessToken === null ? false : true;
   }
 
@@ -26,6 +22,7 @@ class networkRequests {
   async refresh_token() {
     const csrf_token = await this.getCSRFToken();
     this.refreshToken = sessionStorage.getItem("refresh_token");
+    console.log(this.refreshToken);
     if (!this.refreshToken) {
       localStorage.clear();
       return 0;

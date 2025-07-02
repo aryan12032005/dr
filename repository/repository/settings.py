@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 load_dotenv()
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8#+r4cpo52ils31m6h8=kjxj=jpvq5_uh0n0%bm$' 
+SECRET_KEY = 'django-insecure-8#+r4cpo52ils31m6h8=kjxj=jpvq5_uh0n0%bm$!=il*0_hnl' 
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -31,7 +31,7 @@ frontend_server = os.getenv("FRONTEND_SERVER_IP")
 ALLOWED_HOSTS = [frontend_server]
 
 CORS_ALLOWED_ORIGINS = [
-    f"http://{frontend_server}:3000"
+    f"http://{frontend_server}"
 ]
 
 

@@ -6,12 +6,17 @@ import base64
 import uuid
 from ..tasks import delete_zip
 import shutil
+import dotenv
+
 
 class mongo_DB:
     def __init__(self, username=None, password=None, host="localhost", port=27017, db_name="Library", table_name="documents"):
         """ takes mongodb credentials and db_name, table_name to initialize a connection to database """
-        auth_database="admin"
-        db_string=f"mongodb://{username}:{password}@localhost:{port}/{auth_database}?authSource={auth_database}"
+
+        dotenv.load_dotenv()
+        # auth_database="admin"
+        # db_string=f"mongodb://{username}:{password}@localhost:{port}/{auth_database}?authSource={auth_database}"
+        db_string = os.getenv("DATABASE_STRING")
         self.client=MongoClient(db_string)
         self.db=self.client[db_name]
         self.doc=self.db[table_name]

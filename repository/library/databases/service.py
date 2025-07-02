@@ -230,17 +230,17 @@ class fsHandler:
             return False
         return True
     
-    def getCover(self, category:str, idd:str):
-        folder_dir=self.work_dir+"/"+category+"/"+id+'/cover'
+    def getCover(self, category:str, id:str):
+        folder_dir=self.work_dir+"/"+category+"/"+str(id)+'/cover'
         file_name= os.listdir(folder_dir)[0]
         cover = open(folder_dir+"/"+file_name, "rb")
         if cover:
             return base64.b64encode(cover.read()).decode('utf-8')
-        else:
+        else:   
             return None
     
     def getZip(self, category:str, id:str):
-        folder_dir=self.work_dir+"/"+category+"/"+id+'/document'
+        folder_dir=self.work_dir+"/"+category+"/"+str(id)+'/document'
         file_name=id+".zip"
         os.makedirs(self.work_dir+"/ZIP",exist_ok=True)
         zip_path= self.work_dir+"/ZIP/"+file_name

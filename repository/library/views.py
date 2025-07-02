@@ -14,7 +14,7 @@ from .serializers import LoginSerializer,LibraryUserSerializer
 from .forms import DepartmentsForm, UserQueryForm, RequestedDocForm
 from .models import LibraryUser, Departments, FacultyDocumentRequests
 import os
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .databases.service import mongo_DB,fsHandler
 from django.db.models import Q
 from .permissions import *
@@ -320,12 +320,12 @@ class SearchView(APIView):
 
 
 class getDocDetails(APIView):
-    authentication_classes=[JWTAuthentication]
+    authentication_classes=[JWTAuthentication]  
 
     def get_permissions(self):
-        if self.request.method == 'get':
-            return []
-        if self.request.method =='post':
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        if self.request.method =='POST':
             return [IsAdmin_or_Faculty(),IsAuthenticated(), IsActive()]
         return super().get_permissions()
     
@@ -608,7 +608,7 @@ class deprtment_view(APIView):
             return [IsAdmin(),IsActive(),IsAuthenticated()]
         
         if self.request.method=='GET':
-            return [IsActive(),IsAdmin_or_Faculty(), IsAuthenticated()]
+            return [AllowAny()]
         
         return super().get_permissions()
 

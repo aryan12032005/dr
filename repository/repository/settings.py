@@ -31,7 +31,7 @@ frontend_server = os.getenv("FRONTEND_SERVER_IP")
 ALLOWED_HOSTS = [frontend_server]
 
 CORS_ALLOWED_ORIGINS = [
-    f"http://{frontend_server}"
+    f"http://{frontend_server}:3000"
 ]
 
 

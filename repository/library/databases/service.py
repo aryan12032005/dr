@@ -166,9 +166,11 @@ def file_checker(method):
         category = bound.arguments.get('category')
         doc_id = bound.arguments.get('id')
         doc_type = bound.arguments.get('doc_type')
+        if doc_type== None:
+            doc_type=""
 
-        if not category or not doc_id or not doc_type:
-            print(f"Missing category, id, or doc_type")
+        if not category or not doc_id:
+            print(f"Missing category, id")
             return False
 
         temp_dir = os.path.join(self.work_dir, str(category), str(doc_id), str(doc_type))

@@ -350,7 +350,7 @@ class getDocDetails(APIView):
             if result['coverType']=='link':
                 document['coverLink']= result.get('coverLink','')
             else:
-                coverFile= fs_handler_usual.getCover(result['category'],id=str(result['_id']))   
+                coverFile= fs_handler_usual.getCover(category=result['category'],id=str(result['_id']))   
                 document['cover']= coverFile
             return Response({"document": document},status=status.HTTP_200_OK)
         else:
@@ -383,7 +383,7 @@ class getDocDetails(APIView):
                     if update_id:
                         if not existing_doc.get('coverType') == 'link':
                             fs_handler = fsHandler(FS_DIR)
-                            fs_handler.detele_files(category, str(doc_id),'cover')
+                            fs_handler.detele_files(category=category, id=str(doc_id),doc_type='cover')
                         mongo_client.commit_transaction(update_id)
                     else:
                         mongo_client.abort_transaction(update_id)
@@ -397,7 +397,7 @@ class getDocDetails(APIView):
                         else:
                             fs_handler = fsHandler(FS_DIR)
                             cover_file_names= [i.name for i in files.getlist('cover')]
-                            update_path = fs_handler.update_file(category, str(doc_id),'cover', cover_file_names, files.getlist('cover'))
+                            update_path = fs_handler.update_file(category=category, id=str(doc_id),doc_type='cover', filenames=cover_file_names, files=files.getlist('cover'))
                         if update_path:
                             mongo_client.commit_transaction(update_id)
                             mongo_client.commit_transaction(mongo_client.update_doc(str(update_id),{"cover_path",update_path}))
@@ -465,7 +465,7 @@ class downloadDoc(APIView):
                         doc_link= document['documentLink']
                         return Response({"message":f"Doc link : {doc_link}","link":True},status=status.HTTP_200_OK)
                     fshandler=fsHandler(FS_DIR)
-                    zip_file, zip_status = fshandler.getZip(document['category'],str(doc_id))
+                    zip_file, zip_status = fshandler.getZip(category=document['category'],id=str(doc_id))
                     if zip_status:
                         title = document['title']
                         response = FileResponse(zip_file, content_type='application/zip')
@@ -493,7 +493,7 @@ class downloadDoc(APIView):
                 if session_id:
                     if not document['docType'] == 'link' or not document['coverType'] == 'link':
                         fs_handler  = fsHandler(FS_DIR)
-                        delete_status = fs_handler.detele_files(document['category'],str(doc_id),None)
+                        delete_status = fs_handler.detele_files(category=document['category'],id=str(doc_id),doc_type=None)
                     else:
                         delete_status=True
                     if delete_status:

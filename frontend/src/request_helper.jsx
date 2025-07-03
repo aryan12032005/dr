@@ -22,7 +22,6 @@ class networkRequests {
   async refresh_token() {
     const csrf_token = await this.getCSRFToken();
     this.refreshToken = sessionStorage.getItem("refresh_token");
-    console.log(this.refreshToken);
     if (!this.refreshToken) {
       localStorage.clear();
       return 0;

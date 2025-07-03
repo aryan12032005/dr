@@ -350,7 +350,7 @@ class getDocDetails(APIView):
             if result['coverType']=='link':
                 document['coverLink']= result.get('coverLink','')
             else:
-                coverFile= fs_handler_usual.getCover(result['category'],str(result['_id']))
+                coverFile= fs_handler_usual.getCover(result['category'],id=str(result['_id']))   
                 document['cover']= coverFile
             return Response({"document": document},status=status.HTTP_200_OK)
         else:
@@ -693,19 +693,18 @@ class upload_document(APIView):
             'hsnNumber':data.get('hsnNumber')
         }
         
-        if(data.get('coverType')=='link'):
-            userData['coverLink']=data.get('coverLink')
-        if(data.get('documentType')=='link'):
-            userData['documentLink']=data.get('documentLink')
         try:
+            if(data.get('coverType')=='link'):
+                userData['coverLink']=data.get('coverLink')
+            if(data.get('documentType')=='link'):
+                userData['documentLink']=data.get('documentLink')
             existing_doc = mongo_client.find_doc('hsnNumber',userData['hsnNumber'])
             if existing_doc:
                 return Response({'message':'Document with HSN Number already exist'},status=status.HTTP_409_CONFLICT)
-            
-            existing_doc = mongo_client.find_doc('title',userData['title'])
-            if existing_doc and existing_doc['authors']==userData['authors']:
-                return Response({'message':'Document already exist'},status= status.HTTP_409_CONFLICT)
 
+            existing_doc = mongo_client.find_doc('title',userData['title'])
+            if existing_doc and existing_doc[0]['authors']==userData['authors']:
+                return Response({'message':'Document already exist'},status= status.HTTP_409_CONFLICT)
             insert_id=mongo_client.insert(userData) 
             fshandler=fsHandler(FS_DIR)
             cover_path = None
@@ -713,13 +712,14 @@ class upload_document(APIView):
             if(data.get('coverType')!='link'):
                 cover_file_names= [i.name for i in files.getlist('cover')]
                 cover_path = fshandler.create_file(data.get('category'), insert_id, 'cover', cover_file_names, files.getlist('cover'))
-
             if(data.get('documentType')!='link'):
                 document_file_names= [i.name for i in files.getlist('documents')]
                 document_path = fshandler.create_file(data.get('category'), insert_id, 'document', document_file_names, files.getlist('documents'))
+            if not cover_path or not document_path:
+                return Response({'message':'cannot upload documents'},status=status.HTTP_400_BAD_REQUEST)
             
-            mongo_client.update_doc(str(insert_id),{"cover_path":cover_path,"document_path":document_path})
-        except:
+            mongo_client.commit_transaction(mongo_client.update_doc(str(insert_id),{"cover_path":cover_path,"document_path":document_path}))
+        except Exception as e:
             return Response({'message':'Error uploading doc'},status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'message':'docs uploaded'},status=status.HTTP_200_OK)

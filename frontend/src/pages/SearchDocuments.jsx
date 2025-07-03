@@ -103,6 +103,7 @@ const SearchDocument = ({ userStatus }) => {
     if (response.ok) {
       const data = await response.json();
       setFilteredDocuments(data.documents);
+      getAllDepartments();
     } else if (response.status === 404) {
       const responseJson = await response.json();
       setFilteredDocuments([]);
@@ -451,12 +452,12 @@ const SearchDocument = ({ userStatus }) => {
               ></iframe>
             ) : viewingDocument?.coverType.includes("link") ? (
               <>
-              <h1>Document Link : </h1> <a href={viewingDocument?.coverLink} target="_blank" className="text-blue-500 hover:scale-110 transition-transform duration-300">{viewingDocument?.coverLink}</a>
+              <h1>Cover Link : </h1> <a href={viewingDocument?.coverLink} target="_blank" className="text-blue-500 hover:scale-110 transition-transform duration-300">{viewingDocument?.coverLink}</a>
               </>
             ) : (
               <img
                 src={`data:${viewingDocument?.coverType};base64,${viewingDocument?.cover}`}
-                style={{ width: "700px", height: "100%" }}
+                style={{ width: "800px", height: "100%" }}
                 alt={viewingDocument?.title}
               />
             )}

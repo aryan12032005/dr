@@ -178,7 +178,6 @@ const Groups = () => {
       Authorization: `Bearer ${req_client.accessToken}`,
       "Content-Type": "application/json",
     };
-    console.log(data);
     const result = await req_client.fetchReq(
       `edit_group/?group_id=${newGroup.id}`,
       "PUT",

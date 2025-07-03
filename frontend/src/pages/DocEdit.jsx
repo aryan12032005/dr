@@ -78,7 +78,6 @@ const DocEdit = (doc) => {
         return false;
       }
     }
-    console.log(data);
 
     req_client.reload_tokens();
     const headers = {

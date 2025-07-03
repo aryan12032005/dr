@@ -142,39 +142,65 @@ class mongo_DB:
             return None
        
 
+import os
+import inspect
+from functools import wraps
+
 def file_checker(method):
+    @wraps(method)
     def wrapper(self, *args, **kwargs):
         original_dir = self.work_dir
         if not self.work_dir:
             return False
-        temp_dir=self.work_dir+'/'+kwargs['category']+'/'+str(kwargs["id"])+'/'+kwargs["doc_type"]  
-        path_exists = os.path.isdir(temp_dir)
-        if path_exists:
-            return method(self, *args, **kwargs)
-        else:
-            for dir in self.alternate_dirs:
-                temp_dir=dir+'/'+kwargs['category']+'/'+str(kwargs["id"])+'/'+kwargs["doc_type"]
-                if os.path.isdir(temp_dir):
-                    self.work_dir = dir
-                    result = method(self, *args, **kwargs)
-                    self.work_dir = original_dir
-                    return result
-                else:
-                    continue
+
+        # Bind arguments to the method's signature
+        sig = inspect.signature(method)
+        try:
+            bound = sig.bind(self, *args, **kwargs)
+            bound.apply_defaults()
+        except TypeError as e:
+            print(f"Argument binding failed: {e}")
             return False
+
+        # Get expected params
+        category = bound.arguments.get('category')
+        doc_id = bound.arguments.get('id')
+        doc_type = bound.arguments.get('doc_type')
+
+        if not category or not doc_id or not doc_type:
+            print(f"Missing category, id, or doc_type")
+            return False
+
+        temp_dir = os.path.join(self.work_dir, str(category), str(doc_id), str(doc_type))
+        if os.path.isdir(temp_dir):
+            return method(self, *args, **kwargs)
+
+        for alt_dir in self.alternate_dirs:
+            temp_dir = os.path.join(alt_dir, str(category), str(doc_id), str(doc_type))
+            if os.path.isdir(temp_dir):
+                self.work_dir = alt_dir
+                result = method(self, *args, **kwargs)
+                self.work_dir = original_dir
+                return result
+
+        return False
+
     return wrapper
+
 
 class fsHandler:
     def __init__(self,working_dir):
         os.makedirs(working_dir,exist_ok=True)
         self.work_dir=working_dir
+        print(self.work_dir)
         self.alternate_dirs = os.getenv("alternate_dirs")
     
     def create_file(self,category,id,doc_type,filenames,files):
         empty_threshold = 1024**3  # 1 GB of space threshold
+        print(self.work_dir)
         usage = shutil.disk_usage(self.work_dir)
-        original_dir = None
-        if not usage.free > empty_threshold:
+        original_dir = self.work_dir
+        if usage.free < empty_threshold:
             original_dir = self.work_dir
             self.work_dir = None
             for dir in self.alternate_dirs:
@@ -183,7 +209,7 @@ class fsHandler:
                     break
                 else:
                     continue
-        if not self.work_dir:
+        if self.work_dir == None:
             self.work_dir = original_dir
             return False
         
@@ -196,9 +222,11 @@ class fsHandler:
                         new_file.write(chunks)
         except:
             return False
-        self.work_dir = original_dir
+        if not original_dir == None:
+            self.work_dir = original_dir
         return temp_dir
-
+    
+    @file_checker
     def update_file(self,category,id,doc_type,filenames,files):
         temp_dir=self.work_dir+'/'+category+'/'+str(id)+'/'+doc_type
         if os.path.exists(temp_dir):
@@ -215,6 +243,7 @@ class fsHandler:
             return False
         return temp_dir
     
+    @file_checker
     def detele_files(self,category,id,doc_type,filenames = None):
         try:
             if doc_type:
@@ -230,7 +259,8 @@ class fsHandler:
             return False
         return True
     
-    def getCover(self, category:str, id:str):
+    @file_checker
+    def getCover(self, category:str, id:str, doc_type:str="cover"):
         folder_dir=self.work_dir+"/"+category+"/"+str(id)+'/cover'
         file_name= os.listdir(folder_dir)[0]
         cover = open(folder_dir+"/"+file_name, "rb")
@@ -239,7 +269,8 @@ class fsHandler:
         else:   
             return None
     
-    def getZip(self, category:str, id:str):
+    @file_checker
+    def getZip(self, category:str, id:str, doc_type:str="document"):
         folder_dir=self.work_dir+"/"+category+"/"+str(id)+'/document'
         file_name=id+".zip"
         os.makedirs(self.work_dir+"/ZIP",exist_ok=True)

@@ -136,7 +136,6 @@ const ViewGroups = () => {
       Authorization: `Bearer ${req_client.accessToken}`,
       "Content-Type": "application/json",
     };
-    console.log(group);
     const result = await req_client.fetchReq(
       `leave-group/?group_id=${group.id}`, 
       "DELETE",

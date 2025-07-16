@@ -45,3 +45,8 @@ class FacultyDocumentRequests(models.Model):
     doc_id = models.CharField(max_length=150)
     fac_id = models.IntegerField()
     requester_id = models.IntegerField()
+
+class DocumentDeleteRequests(models.Model):
+    doc_id = models.CharField(max_length=150)
+    fac_id = models.IntegerField()
+    reason = models.CharField(max_length=500)

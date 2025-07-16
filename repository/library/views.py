@@ -11,8 +11,8 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.decorators import action
 from .serializers import LoginSerializer,LibraryUserSerializer
-from .forms import DepartmentsForm, UserQueryForm, RequestedDocForm
-from .models import LibraryUser, Departments, FacultyDocumentRequests
+from .forms import DepartmentsForm, UserQueryForm, RequestedDocForm, DeleteDocumentForm
+from .models import LibraryUser, Departments, FacultyDocumentRequests, DocumentDeleteRequests
 import os
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .databases.service import mongo_DB,fsHandler
@@ -488,7 +488,7 @@ class downloadDoc(APIView):
             document = mongo_client.get_doc_by_id(str(doc_id))
             if not document:
                 return Response({'message':"no doument to delete"},status=status.HTTP_400_BAD_REQUEST)
-            if document['owner']== user.id or user.is_admin == True:
+            if user.is_admin == True:
                 session_id = mongo_client.delete_doc(str(doc_id))
                 if session_id:
                     if not document['docType'] == 'link' or not document['coverType'] == 'link':
@@ -504,8 +504,22 @@ class downloadDoc(APIView):
                     return Response({"message":"Document deleted Successfull"}, status= status.HTTP_200_OK)
                 else:
                     return Response({"message":"Error deleteing document"},status=status.HTTP_400_BAD_REQUEST)
+            elif int(document['owner'])== user.id:
+                data = request.data
+                new_req = {
+                    "doc_id" : doc_id,
+                    "fac_id" : document['owner'],
+                    "reason" : data['reason']
+                }
+                Request_form = DeleteDocumentForm(new_req)
+                if Request_form.is_valid():
+                    Request_form.save()
+                    return Response({'message':"Delete document requested"}, status = status.HTTP_200_OK)
+                else:
+                    return Response({'message':"Invalid request"},status=status.HTTP_400_BAD_REQUEST)
             else:
                 return Response({"message":"Unauthorized access"},status=status.HTTP_401_UNAUTHORIZED)
+            
         else:
             return Response({'message':"no doument to delete"},status=status.HTTP_400_BAD_REQUEST)
 
@@ -692,7 +706,7 @@ class upload_document(APIView):
             'authors':data.get('authors'),
             'hsnNumber':data.get('hsnNumber')
         }
-        
+        insert_id = ""
         try:
             if(data.get('coverType')=='link'):
                 userData['coverLink']=data.get('coverLink')
@@ -707,19 +721,24 @@ class upload_document(APIView):
                 return Response({'message':'Document already exist'},status= status.HTTP_409_CONFLICT)
             insert_id=mongo_client.insert(userData) 
             fshandler=fsHandler(FS_DIR)
-            cover_path = None
-            document_path = None
+            cover_path = ""
+            document_path = ""
             if(data.get('coverType')!='link'):
                 cover_file_names= [i.name for i in files.getlist('cover')]
                 cover_path = fshandler.create_file(data.get('category'), insert_id, 'cover', cover_file_names, files.getlist('cover'))
             if(data.get('documentType')!='link'):
                 document_file_names= [i.name for i in files.getlist('documents')]
                 document_path = fshandler.create_file(data.get('category'), insert_id, 'document', document_file_names, files.getlist('documents'))
-            if not cover_path or not document_path:
-                return Response({'message':'cannot upload documents'},status=status.HTTP_400_BAD_REQUEST)
-            
-            mongo_client.commit_transaction(mongo_client.update_doc(str(insert_id),{"cover_path":cover_path,"document_path":document_path}))
+            if cover_path == "" and data.get("coverType") != "link":
+                return Response({'message':'Cannot upload Cover file'},status=status.HTTP_400_BAD_REQUEST)
+            if document_path == "" and data.get("documentType") != "link":
+                return Response({'message':'Cannot upload Document file'},status=status.HTTP_400_BAD_REQUEST)
+            if cover_path or document_path:
+                mongo_client.commit_transaction(mongo_client.update_doc(str(insert_id),{"cover_path":cover_path,"document_path":document_path}))
         except Exception as e:
+            if insert_id != "":
+                mongo_client_usual.commit_transaction(mongo_client_usual.delete_doc(str(insert_id)))
+            print(e)
             return Response({'message':'Error uploading doc'},status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'message':'docs uploaded'},status=status.HTTP_200_OK)

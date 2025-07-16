@@ -1,5 +1,5 @@
 from django import forms
-from .models import Departments, UserQuery , FacultyDocumentRequests
+from .models import Departments, UserQuery , FacultyDocumentRequests, DocumentDeleteRequests
 
 class DepartmentsForm(forms.ModelForm):
     class Meta:
@@ -15,3 +15,8 @@ class RequestedDocForm(forms.ModelForm):
     class Meta:
         model = FacultyDocumentRequests
         fields = ['doc_id', 'fac_id', 'requester_id']
+
+class DeleteDocumentForm(forms.ModelForm):
+    class Meta:
+        model = DocumentDeleteRequests
+        fields = ['doc_id', 'fac_id', 'reason']

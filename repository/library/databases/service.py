@@ -159,7 +159,6 @@ def file_checker(method):
             bound = sig.bind(self, *args, **kwargs)
             bound.apply_defaults()
         except TypeError as e:
-            print(f"Argument binding failed: {e}")
             return False
 
         # Get expected params
@@ -170,7 +169,6 @@ def file_checker(method):
             doc_type=""
 
         if not category or not doc_id:
-            print(f"Missing category, id")
             return False
 
         temp_dir = os.path.join(self.work_dir, str(category), str(doc_id), str(doc_type))

@@ -44,6 +44,8 @@ const SearchDocument = ({ userStatus }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredDocuments, setFilteredDocuments] = useState([]);
   const [viewingDocument, setViewDocument] = useState(null);
+  const [deleteDocId, setDeleteDocId] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [allDepartments, setAllDepartments] = useState([]);
@@ -113,14 +115,13 @@ const SearchDocument = ({ userStatus }) => {
 
   const openDoc = async (doc_id) => {
     req_client.reload_tokens();
-    let headers={}
-    if (req_client.accessToken){
+    let headers = {};
+    if (req_client.accessToken) {
       headers = {
         Authorization: `Bearer ${req_client.accessToken}`,
         "Content-Type": "application/json",
       };
-    }
-    else{
+    } else {
       headers = {
         "Content-Type": "application/json",
       };
@@ -134,9 +135,13 @@ const SearchDocument = ({ userStatus }) => {
     await getAllDepartments();
     if (result.ok) {
       const resultJson = await result.json();
-      const department = allDepartments.find(obj => obj.dep_code === resultJson.document.department);
+      const department = allDepartments.find(
+        (obj) => obj.dep_code === resultJson.document.department
+      );
       resultJson.document.department = department?.dep_name;
-      resultJson.document.subject = department?.subjects?.find(obj => obj.code === resultJson.document.subject)?.name;
+      resultJson.document.subject = department?.subjects?.find(
+        (obj) => obj.code === resultJson.document.subject
+      )?.name;
       setViewDocument(resultJson.document);
       openModal();
     } else {
@@ -148,6 +153,7 @@ const SearchDocument = ({ userStatus }) => {
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
     };
 
     const result = await req_client.fetchReq(
@@ -189,16 +195,18 @@ const SearchDocument = ({ userStatus }) => {
     req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
+      "Content-Type": "application/json",
     };
 
     const result = await req_client.fetchReq(
       `delete_document/?doc_id=${doc_id}`,
       "DELETE",
-      headers
+      headers,
+      JSON.stringify({ reason: deleteReason })
     );
     if (result.ok) {
       const resultJson = await result.json();
-      alert("document deleted");
+      alert(resultJson.message);
       searchDocument();
     } else {
       alert("error deleting document");
@@ -386,14 +394,40 @@ const SearchDocument = ({ userStatus }) => {
                     (userStatus.user_id &&
                       userStatus.user_id == doc.owner)) && (
                     <button
-                      className="text-green-500 hover:text-green-700"
-                      onClick={() => deleteDoc(doc.id)}
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => setDeleteDocId(doc.id)}
                     >
                       Delete
                     </button>
                   )}
                 </div>
               </div>
+              {
+                ((deleteDocId == doc.id )&& (
+                  
+                  <div className="flex flex-col justify-center items-center p-5 gap-5">
+                  <div className="w-full h-px bg-gray-400"></div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      Delete Reason
+                    </h2>
+                    <input
+                      type="textarea"
+                      className="mt-4 border p-2 rounded w-full"
+                      placeholder="Enter Reason"
+                      value={deleteReason}
+                      onChange={(e) => setDeleteReason(e.target.value)}
+                      required
+                    />
+                    <button
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => deleteDoc(doc.id)}
+                    >
+                      Delete
+                    </button>
+                    <div className="w-full h-px bg-gray-400"></div>
+                  </div>
+                ))
+              }
               {((userStatus.is_admin && userStatus.is_admin == true) ||
                 (userStatus.user_id && userStatus.user_id == doc.owner)) && (
                 <DocEdit doc_id={doc.id} />
@@ -420,10 +454,10 @@ const SearchDocument = ({ userStatus }) => {
               <strong>Document Type: </strong> {viewingDocument?.docType}
             </p>
             <p className="text-gray-600">
-              <strong>Department: </strong> { viewingDocument?.department }
+              <strong>Department: </strong> {viewingDocument?.department}
             </p>
             <p className="text-gray-600">
-              <strong>Subject: </strong> { viewingDocument?.subject }
+              <strong>Subject: </strong> {viewingDocument?.subject}
             </p>
             <p className="text-gray-600">
               <strong>Authors: </strong> {viewingDocument?.authors}
@@ -452,7 +486,14 @@ const SearchDocument = ({ userStatus }) => {
               ></iframe>
             ) : viewingDocument?.coverType.includes("link") ? (
               <>
-              <h1>Cover Link : </h1> <a href={viewingDocument?.coverLink} target="_blank" className="text-blue-500 hover:scale-110 transition-transform duration-300">{viewingDocument?.coverLink}</a>
+                <h1>Cover Link : </h1>{" "}
+                <a
+                  href={viewingDocument?.coverLink}
+                  target="_blank"
+                  className="text-blue-500 hover:scale-110 transition-transform duration-300"
+                >
+                  {viewingDocument?.coverLink}
+                </a>
               </>
             ) : (
               <img

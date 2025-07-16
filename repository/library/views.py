@@ -206,13 +206,22 @@ class LoginView(APIView):
             return Response({'error': 'Username and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Authenticate the user using Django's authenticate method
-        user = authenticate(request, username=username, password=password)
+        user = None
+        try:
+            user = LibraryUser.objects.get(Q(username=username) | Q(email=username))
+        except LibraryUser.DoesNotExist:
+            return Response({"message": "Invalid email or username"}, status=status.HTTP_401_UNAUTHORIZED)
         
+        print(username, password)
+                
         if user is not None:
-            # Authentication successful, you can log the user in
             if not user.is_allowed:
                 return Response({'message':'user is not allowed'},status=status.HTTP_401_UNAUTHORIZED)
-            login(request, user)  # This is optional if you want to keep the session active
+            if not user.check_password(password):
+                return Response({"message": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # Authentication successful, you can log the user in
+            login(request, user)  
             refresh = RefreshToken.for_user(user)
             return Response({
                 'refresh_token':str(refresh),

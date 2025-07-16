@@ -331,6 +331,9 @@ const DocUpload = () => {
             <option value="article">Article</option>
             <option value="question_bank">Question Bank</option>
             <option value="mock">Mock Test</option>
+            <option value="proj_report">Project Report</option>
+            <option value="repetition">Repetition</option>
+            <option value="dissertation">Dissertation </option>
             <option value="other">Other</option>
           </select>
           <h2 className="text-lg font-semibold text-gray-800 mt-5">

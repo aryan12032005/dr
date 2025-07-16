@@ -268,7 +268,7 @@ class uploadCsv(APIView):
             file_content = csv_file.read().decode("utf-8")
             file_content=StringIO(file_content)
             df=pd.read_csv(file_content,header=0)
-            if request.data.get('is_faculty')==True:
+            if request.data.get('is_faculty')=="true":
                 df['is_faculty']=True
             else:
                 df["is_faculty"]=False

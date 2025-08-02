@@ -28,7 +28,11 @@ const get_status = async () => {
 const Navbar = ({ setUserStatus }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const currentPath = window.location.href;
+  const [currentPath,setCurrentPath] = useState(window.location.href);
+
+  useEffect(() => {
+    setCurrentPath(window.location.href);
+  });
 
   const [loginSignup, setloginSignup] = useState([
     { tittle: "Log in", link: "/LogIn" },
@@ -146,8 +150,8 @@ const Navbar = ({ setUserStatus }) => {
               </Link>
             ))}
           </div>
-          <button
-            className="block md:hidden text-white text-2xl hover:text-gray-300"
+          <button 
+            className="block md:hidden text-white text-3xl hover:text-gray-300"
             onClick={() =>
               setMobileNav(MobileNav === "hidden" ? "block" : "hidden")
             }
@@ -166,8 +170,8 @@ const Navbar = ({ setUserStatus }) => {
             to={item.link}
             key={i}
             onClick={() => setMobileNav("hidden")}
-            className={`text-4xl font-semibold mb-8 transition-all duration-300 ${
-              currentPath === item.link
+            className={`text-2xl font-semibold mb-8 transition-all duration-300 ${
+              currentPath.includes(item.link)
                 ? "text-yellow-400 underline"
                 : "text-white hover:text-gray-300"
             }`}
@@ -179,7 +183,8 @@ const Navbar = ({ setUserStatus }) => {
           <Link
             to={item.link}
             key={i}
-            className="px-6 mb-8 text-3xl font-semibold py-2 bg-gray-800 text-white rounded hover:bg-white hover:text-black transition-all duration-300"
+            onClick={() => setMobileNav("hidden")}
+            className="px-6 mb-8 text-2xl font-semibold py-2 bg-gray-800 text-white rounded hover:bg-white hover:text-black transition-all duration-300"
           >
             {item.tittle}
           </Link>

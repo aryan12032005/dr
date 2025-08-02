@@ -195,7 +195,7 @@ const UserManagement = () => {
 
       <table className="min-w-full border border-collapse shadow-md">
         <thead>
-          <tr className="bg-gray-300 text-gray-800 font-medium">
+          <tr className="bg-gray-300 text-gray-800">
             <th className="border px-4 py-2">ID</th>
             <th className="border px-4 py-2">Name</th>
             <th className="border px-4 py-2">Email</th>

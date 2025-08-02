@@ -50,3 +50,7 @@ class DocumentDeleteRequests(models.Model):
     doc_id = models.CharField(max_length=150)
     fac_id = models.IntegerField()
     reason = models.CharField(max_length=500)
+
+class DocumentCategories(models.Model):
+    name = models.CharField(max_length=150)
+    code = models.CharField(max_length=150)

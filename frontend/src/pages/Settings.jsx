@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import networkRequests from "../request_helper";
 import DepartmentList from "./DepartmentsList";
+import CategoryManagement from "./CategoryManagement";
 
 const req_client = new networkRequests();
 
@@ -75,7 +76,7 @@ const Settings = () => {
 
   const searchManagers = async () => {
     req_client.reload_tokens();
-    const headers = { Authorization: `Bearer ${req_client.accessToken}` };
+    const headers = { Authorization: `Bearer ${req_client.accessToken}`, };
     const result = await req_client.fetchReq(
       `search_user/?start_c=0&end_c=50&querry=${managerSearchTerm}&is_admin=True`,
       "GET",
@@ -223,6 +224,7 @@ const Settings = () => {
   };
 
   return (
+    <>  
     <div className="bg-gradient-to-r from-blue-50 to-white shadow-2xl rounded-3xl p-10 max-w-5xl mx-auto mt-10">
       <h2 className="text-3xl font-bold text-blue-800 mb-8 drop-shadow-md">
         Settings ⚙️
@@ -455,6 +457,8 @@ const Settings = () => {
       </div>
       <DepartmentList setEditDepartmentId={setEditDepartmentId} />
     </div>
+    <CategoryManagement/>
+    </>
   );
 };
 

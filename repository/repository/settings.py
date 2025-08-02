@@ -25,14 +25,19 @@ load_dotenv()
 SECRET_KEY = 'django-insecure-8#+r4cpo52ils31m6h8=kjxj=jpvq5_uh0n0%bm$!=il*0_hnl' 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+
+# DEBUG = False
+
+DEBUG = True   # testing only
+CORS_ALLOW_ALL_ORIGINS = True  # testing only
+
 
 frontend_server = os.getenv("FRONTEND_SERVER_IP")
-ALLOWED_HOSTS = [frontend_server]
+ALLOWED_HOSTS = ["*"]
 
-CORS_ALLOWED_ORIGINS = [
-    f"http://{frontend_server}:3000"
-]
+# CORS_ALLOWED_ORIGINS = [
+#     f"http://{frontend_server}:3000", "http://192.168.1.103:3000"
+# ]
 
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 209715200

@@ -49,12 +49,14 @@ const SearchDocument = ({ userStatus }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [allDepartments, setAllDepartments] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const filterRef = useRef(null);
 
   const [filters, setFilters] = useState({
     docType: "",
     department: "",
     sortOrder: 0,
+    category: "",
   });
 
   const openModal = () => setIsModalOpen(true);
@@ -92,12 +94,34 @@ const SearchDocument = ({ userStatus }) => {
     }
   };
 
+  const getAllCategories = async () => {
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq("get_categories/", "GET", headers);
+    const resultJson = await result.json();
+    if (result.ok) {
+      setAllCategories(resultJson.categories);
+    }
+  };
+
+  const clearFilter = () => {
+    setFilters({
+      docType: "",
+      department: "",
+      sortOrder: 0,
+      category: "",
+    });
+    setSearchTerm("");
+  };
+
   const searchDocument = async () => {
     const headers = {
       "Content-Type": "application/json",
     };
     const response = await req_client.fetchReq(
-      `search_document/?querry=${searchTerm}&docType=${filters.docType}&department=${filters.department}&order=${filters.sortOrder}`,
+      `search_document/?querry=${searchTerm}&docType=${filters.docType}&department=${filters.department}&order=${filters.sortOrder}&category=${filters.category}`,
       "GET",
       headers
     );
@@ -281,7 +305,13 @@ const SearchDocument = ({ userStatus }) => {
           Search
         </button>
 
-        <div className="flex flex-col m-10" ref={filterRef}>
+        <div className="flex flex-row m-10" ref={filterRef}>
+          <button
+            onClick={clearFilter}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded right-20"
+          >
+            Clear Filters
+          </button>
           <button
             onClick={toggleFilter}
             className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded absolute right-20"
@@ -323,7 +353,6 @@ const SearchDocument = ({ userStatus }) => {
                       department: e.target.value,
                     }))
                   }
-                  required
                 >
                   <option value="" disabled default>
                     Department
@@ -332,6 +361,29 @@ const SearchDocument = ({ userStatus }) => {
                     allDepartments.map((dept) => (
                       <option value={dept.dep_code} key={dept.dep_code}>
                         {dept.dep_name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div>
+                <select
+                  className="border border-gray-300 rounded-lg p-2 w-full mt-2"
+                  value={filters.category}
+                  onFocus={getAllCategories}
+                  onChange={(e) =>
+                    setFilters((filters) => ({
+                      ...filters,
+                      category: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="" disabled default>
+                    Category
+                  </option>
+                  {allCategories.length > 0 &&
+                    allCategories.map((dept) => (
+                      <option value={dept.code} key={dept.code}>
+                        {dept.name}
                       </option>
                     ))}
                 </select>
@@ -402,32 +454,29 @@ const SearchDocument = ({ userStatus }) => {
                   )}
                 </div>
               </div>
-              {
-                ((deleteDocId == doc.id )&& (
-                  
-                  <div className="flex flex-col justify-center items-center p-5 gap-5">
+              {deleteDocId == doc.id && (
+                <div className="flex flex-col justify-center items-center p-5 gap-5">
                   <div className="w-full h-px bg-gray-400"></div>
-                    <h2 className="text-lg font-semibold text-gray-800">
-                      Delete Reason
-                    </h2>
-                    <input
-                      type="textarea"
-                      className="mt-4 border p-2 rounded w-full"
-                      placeholder="Enter Reason"
-                      value={deleteReason}
-                      onChange={(e) => setDeleteReason(e.target.value)}
-                      required
-                    />
-                    <button
-                      className="text-red-500 hover:text-red-700"
-                      onClick={() => deleteDoc(doc.id)}
-                    >
-                      Delete
-                    </button>
-                    <div className="w-full h-px bg-gray-400"></div>
-                  </div>
-                ))
-              }
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    Delete Reason
+                  </h2>
+                  <input
+                    type="textarea"
+                    className="mt-4 border p-2 rounded w-full"
+                    placeholder="Enter Reason"
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    required
+                  />
+                  <button
+                    className="text-red-500 hover:text-red-700"
+                    onClick={() => deleteDoc(doc.id)}
+                  >
+                    Delete
+                  </button>
+                  <div className="w-full h-px bg-gray-400"></div>
+                </div>
+              )}
               {((userStatus.is_admin && userStatus.is_admin == true) ||
                 (userStatus.user_id && userStatus.user_id == doc.owner)) && (
                 <DocEdit doc_id={doc.id} />

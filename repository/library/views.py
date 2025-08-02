@@ -7,12 +7,13 @@ from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from rest_framework.response import Response
 from django.http import FileResponse
+from django.forms.models import model_to_dict
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.decorators import action
 from .serializers import LoginSerializer,LibraryUserSerializer
-from .forms import DepartmentsForm, UserQueryForm, RequestedDocForm, DeleteDocumentForm
-from .models import LibraryUser, Departments, FacultyDocumentRequests, DocumentDeleteRequests
+from .forms import DepartmentsForm, UserQueryForm, RequestedDocForm, DeleteDocumentForm, CategoryForm
+from .models import LibraryUser, Departments, FacultyDocumentRequests, DocumentDeleteRequests, DocumentCategories
 import os
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .databases.service import mongo_DB,fsHandler
@@ -211,8 +212,6 @@ class LoginView(APIView):
             user = LibraryUser.objects.get(Q(username=username) | Q(email=username))
         except LibraryUser.DoesNotExist:
             return Response({"message": "Invalid email or username"}, status=status.HTTP_401_UNAUTHORIZED)
-        
-        print(username, password)
                 
         if user is not None:
             if not user.is_allowed:
@@ -299,6 +298,61 @@ class uploadCsv(APIView):
         except Exception as e:
             return Response({"message":"failed to add users"},status=status.HTTP_400_BAD_REQUEST)
 
+class CategoryView(APIView):
+    authentication_classes = [JWTAuthentication]
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        if self.request.method =='POST' or self.request.method == "DELETE":
+            return [IsActive(),IsAuthenticated(), IsAdmin()]
+        return super().get_permissions()
+    
+    def get(self,request):
+        all_category = DocumentCategories.objects.all()
+        category_list = [model_to_dict(obj) for obj in all_category]
+        if category_list:
+            return Response({'categories':category_list},status=status.HTTP_200_OK)
+        else:
+            return Response({"categories":[]},status=status.HTTP_200_OK)
+        
+    def post(delf,request):
+        data = request.POST
+        new_category = {
+            'name':data.get('name'),
+            'code':data.get('code')
+        }
+        new_category_form = CategoryForm(new_category)
+        if new_category_form.is_valid():
+            new_category_form.save()
+            return Response({'message':'New category created successful'},status=status.HTTP_200_OK)
+        else:
+            return Response({'message':'Category creation failed'},status = status.HTTP_400_BAD_REQUEST)
+        
+
+    def put(self,request):
+        data = request.data
+        if not data.get('name') or not data.get('code'):
+            return Response({'message':'Please provide a new name'},status = status.HTTP_400_BAD_REQUEST)
+        existing_category = DocumentCategories.objects.filter(code = str(data.get('code'))).first()
+        if not existing_category:
+            return Response({'message':"No category to update"},status = status.HTTP_400_BAD_REQUEST)
+        else:
+            existing_category.name = data['name']
+            existing_category.save()
+            return Response({'message':'Catgeory Updated successfull'},status = status.HTTP_200_OK)
+        
+    def delete(self,request):
+        category_code = request.query_params.get("code","")
+        if not category_code:
+            return Response({'message':'No category Code'},status = status.HTTP_400_BAD_REQUEST)
+        category = DocumentCategories.objects.filter(code = category_code)
+        if category:
+            category.delete()
+            return Response({'message':"Category Deleted Successfull"},status = status.HTTP_200_OK)
+        else:
+            return Response({'message':'No category found to be deleted'},status = status.HTTP_400_BAD_REQUEST)
+
 class SearchView(APIView):
     def get(self,request):
         querry=request.query_params.get('querry')
@@ -309,10 +363,13 @@ class SearchView(APIView):
         dep_code = request.query_params.get('department',None)
         if dep_code:
             extra_params['department']=dep_code
+        category = request.query_params.get('category',None)
+        if category:
+            extra_params['category']=category
         order = request.query_params.get('order',0)
 
         mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
-
+        print(querry, extra_params)
         result=mongo_client.search_document(str(querry), extra_params=extra_params, dateOrder= int(order))
         if len(result) > 0:
             documents = []
@@ -421,6 +478,55 @@ class getDocDetails(APIView):
                 return Response({'message':'cannot update document'}, status= status.HTTP_400_BAD_REQUEST)
 
     
+class AdminDeleteDocView(APIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes=[IsAdmin]
+
+    def get(self,request):
+        user = request.user
+        delete_requests = DocumentDeleteRequests.objects.all()
+        request_list = [model_to_dict(obj) for obj in delete_requests]
+        return Response({'requests':request_list},status=status.HTTP_200_OK)
+    
+    def put(self, request):
+        doc_id = request.data.get('doc_id',"")
+        print(request.data)
+        if not doc_id:
+            return Response({'message':'bad arguments'},status = status.HTTP_400_BAD_REQUEST)
+        mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD, db_name="Library", table_name="documents")
+        document = mongo_client.get_doc_by_id(str(doc_id))
+        if not document:
+            return Response({'message':"no doument to delete"},status=status.HTTP_400_BAD_REQUEST)
+        session_id = mongo_client.delete_doc(str(doc_id))
+        if session_id:
+            if not document['docType'] == 'link' or not document['coverType'] == 'link':
+                fs_handler  = fsHandler(FS_DIR)
+                delete_status = fs_handler.detele_files(category=document['category'],id=str(doc_id),doc_type=None)
+            else:
+                delete_status=True
+            if delete_status:
+                mongo_client.commit_transaction(session_id)
+            else:
+                mongo_client.abort_transaction(session_id)
+        if delete_status:
+            delete_request = DocumentDeleteRequests.objects.filter(doc_id = doc_id).first()
+            delete_request.delete()
+            return Response({"message":"Document deleted Successfull"}, status= status.HTTP_200_OK)
+        else:
+            return Response({"message":"Error deleteing document"},status=status.HTTP_400_BAD_REQUEST)
+        
+    def delete(self,request):
+        doc_id = request.query_params.get("doc_id")
+        delete_request = DocumentDeleteRequests.objects.filter(doc_id = doc_id).first()
+        if delete_request:
+            delete_status = delete_request.delete()
+            if delete_status:
+                return Response({'message':"Request Delete successfull"},status= status.HTTP_200_OK)
+            else:
+                return Response({'message':'Error deleteing request'},status = status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'message':'no document to delete'},status = status.HTTP_400_BAD_REQUEST)
+
 class GetFacultyDoc(APIView):
     authentication_classes=[JWTAuthentication]
     permission_classes=[IsAdmin_or_Faculty]

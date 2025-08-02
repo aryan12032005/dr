@@ -64,20 +64,33 @@ class mongo_DB:
         inserted_id=self.doc.insert_one(item).inserted_id
         return inserted_id
     
-    def search_document(self, querry, extra_params:dict={}, dateOrder:int = 0):
+    
+    def search_document(self, query: str, extra_params: dict, dateOrder: int = 0):
         """ search a item in document based on string search querry and other key value pairs if known also provide search order """
-        projections= [("score", { "$meta": "textScore" })]
-        if dateOrder!=0:
-            projections.append(("date", dateOrder))
-            
-        item=self.doc.find(
-            {"$text": {"$search": querry},**extra_params},
-            {"score": {"$meta": "textScore"}}
-        ).sort(projections).limit(10)
-        if item:
-            return item.to_list()
+        projections = {}
+        sort_criteria = []
+
+        # If there's a text query, include textScore in projection and sorting
+        if query.strip():
+            projections["score"] = {"$meta": "textScore"}
+            sort_criteria.append(("score", {"$meta": "textScore"}))
+            search_filter = {"$text": {"$search": query}, **extra_params}
         else:
-            return None
+            search_filter = extra_params
+
+        # Handle date sorting if specified
+        if dateOrder != 0:
+            sort_criteria.append(("date", dateOrder))
+
+        # Apply default sort if nothing else specified (optional)
+        if not sort_criteria:
+            sort_criteria.append(("_id", -1))  # default: most recent
+
+        # Build the find query
+        cursor = self.doc.find(search_filter, projections).sort(sort_criteria).limit(10)
+        result = cursor.to_list(length=50) 
+        return result if result else []
+
     
     def find_doc(self,key:str,value:str):
         """ finds all documents with a provided key value pair """

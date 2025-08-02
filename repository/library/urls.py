@@ -21,6 +21,12 @@ urlpatterns=[
     path('get_user_type/',views.user_type.as_view()),
     path('change_user_type/',views.user_type.as_view()),
 
+    path('get_categories/',views.CategoryView.as_view()),
+    path('add_category/',views.CategoryView.as_view()),
+    path('update_category/',views.CategoryView.as_view()),
+    path('delete_category/',views.CategoryView.as_view()),
+
+
     path('search_document/',views.SearchView.as_view()),
     path('upload_document/',views.upload_document.as_view()),
     path('get_document/',views.getDocDetails.as_view()),
@@ -28,7 +34,9 @@ urlpatterns=[
     path('update_document/',views.getDocDetails.as_view()),
     path('get_faculty_doc/',views.GetFacultyDoc.as_view(),name="get_faculty_doc"),
     path('delete_document/',views.downloadDoc.as_view(),name="delete_document"),
-    
+    path('get_delete_requests/',views.AdminDeleteDocView.as_view()),
+    path('approve_document_delete/',views.AdminDeleteDocView.as_view()),
+    path('reject_document_detele/',views.AdminDeleteDocView.as_view()),
     path('get_department/',views.deprtment_view.as_view()),
     path('add_department/',views.deprtment_view.as_view()),
     path('delete_department/',views.deprtment_view.as_view()),

@@ -17,8 +17,10 @@ import {
   FaBell,
   FaChalkboardTeacher,
   FaHome,
+  FaGripLines
 } from "react-icons/fa";
 import FacultyManage from "./FacultyManage";
+import DeletedDocuments from "./DeletedDocuments";
 import networkRequests from "../request_helper";
 
 const req_client = new networkRequests();
@@ -26,6 +28,7 @@ const req_client = new networkRequests();
 const AdminPanel = ({ userStatus }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showAside, setShowAside] = useState(false);
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalDocs, setTotalDocs] = useState(0);
 
@@ -50,50 +53,67 @@ const AdminPanel = ({ userStatus }) => {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
       {/* Sidebar */}
-      <aside className="bg-[#1f2937] text-white w-64 p-6 shadow-2xl flex flex-col justify-between">
-        <div>
-          <h2 className="text-3xl font-bold mb-8 text-center tracking-wide">
-            Admin
-          </h2>
-          <nav className="space-y-4">
-            {[
-              { label: "Dashboard", icon: <FaHome />, path: "/adminpanel" },
-              {
-                label: "User Management",
-                icon: <FaUsers />,
-                path: "/adminpanel/UserManagement",
-              },
-              {
-                label: "Document Management",
-                icon: <FaFileAlt />,
-                path: "/adminpanel/DocumentManage",
-              },
-              {
-                label: "Faculty Management",
-                icon: <FaChalkboardTeacher />,
-                path: "/adminpanel/FacultyManage",
-              },
-              {
-                label: "Settings",
-                icon: <FaCog />,
-                path: "/adminpanel/Settings",
-              },
-            ].map(({ label, icon, path }) => (
-              <Link
-                key={path}
-                to={path}
-                className={`flex items-center gap-4 px-2 py-2 rounded-lg transition-all duration-200 
+      <div className="flex flex-col ">
+      <button
+        className="absolute h-10 bg-gray-600 p-1 rounded-br-md text-white text-3xl hover:text-gray-300"
+        onClick={() =>
+          setShowAside(showAside === true ? false : true)
+        }
+      >
+        <FaGripLines />
+      </button>
+      {showAside && (
+        <aside className="bg-[#1f2937] text-white w-64 p-6 shadow-2xl flex flex-col justify-between">
+          <div>
+            <h2 className="text-3xl font-bold mb-8 text-center tracking-wide">
+              Admin
+            </h2>
+            <nav className="space-y-4">
+              {[
+                { label: "Dashboard", icon: <FaHome />, path: "/adminpanel" },
+                {
+                  label: "User Management",
+                  icon: <FaUsers />,
+                  path: "/adminpanel/UserManagement",
+                },
+                {
+                  label: "Document Management",
+                  icon: <FaFileAlt />,
+                  path: "/adminpanel/DocumentManage",
+                },
+                {
+                  label: "Document Delete Requests",
+                  icon: <FaFileAlt />,
+                  path: "/adminpanel/DocumentDeleteRequests",
+                },
+                {
+                  label: "Faculty Management",
+                  icon: <FaChalkboardTeacher />,
+                  path: "/adminpanel/FacultyManage",
+                },
+                {
+                  label: "Settings",
+                  icon: <FaCog />,
+                  path: "/adminpanel/Settings",
+                },
+              ].map(({ label, icon, path }) => (
+                <Link
+                  key={path}
+                  to={path}
+                  className={`flex items-center gap-4 px-2 py-2 rounded-lg transition-all duration-200 
                   hover:bg-gray-700 hover:shadow-lg active:scale-[0.98] ${
                     location.pathname === path ? "bg-gray-700 shadow-md" : ""
                   }`}
-              >
-                <span className="text-xl">{icon}</span>
-                <span className="font-medium">{label}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
-      </aside>
+                >
+                  <span className="text-xl">{icon}</span>
+                  <span className="font-medium">{label}</span>
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </aside>
+      )}
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto">
@@ -141,7 +161,14 @@ const AdminPanel = ({ userStatus }) => {
         {/* Dynamic Routes */}
         <Routes>
           <Route path="/Settings" element={<Settings />} />
-          <Route path="/DocumentManage" element={<DocumentManage userStatus={userStatus}/>} />
+          <Route
+            path="/DocumentManage"
+            element={<DocumentManage userStatus={userStatus} />}
+          />
+          <Route
+            path="/DocumentDeleteRequests"
+            element={<DeletedDocuments />}
+          />
           <Route path="/UserManagement" element={<UserManagement />} />
           <Route path="/FacultyManage" element={<FacultyManage />} />
         </Routes>

@@ -23,8 +23,9 @@ const DocUpload = () => {
   const [newAuthor, setNewAuthor] = useState("");
   const [authorsList, setAuthorList] = useState([]);
   const[hsnNumber,setHsnNumber] = useState("");
-
+  
   // form fields
+  const [allCategories,setAllCategories] = useState([]);
   const [allDepartments, setAllDepartments] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const navigate = useNavigate();
@@ -38,8 +39,21 @@ const DocUpload = () => {
     const resultJson = await result.json();
     if (result.ok) {
       setAllDepartments(resultJson.departments);
+      setSubject("other");
     }
   };
+
+  const getAllCategories = async() =>{
+    req_client.reload_tokens();
+    const headers = {
+      Authorization: `Bearer ${req_client.accessToken}`,
+    };
+    const result = await req_client.fetchReq("get_categories/", "GET", headers);
+    const resultJson = await result.json();
+    if (result.ok) {
+      setAllCategories(resultJson.categories);
+    }
+  }
 
   useEffect(() => {
     if (coverType === "img") {
@@ -91,6 +105,9 @@ const DocUpload = () => {
     const resultJson = await result.json();
     if (result.ok) {
       setSubjects(resultJson.subjects);
+    }
+    else{
+      setSubjects([]);
     }
   };
 
@@ -320,21 +337,18 @@ const DocUpload = () => {
           <select
             className="border border-gray-300 rounded-lg p-2 w-full mt-2"
             value={category}
+            onFocus={getAllCategories}
             onChange={(e) => setCategory(e.target.value)}
             required
           >
             <option value="" disabled default>
               Select
             </option>
-            <option value="research_paper">Research Paper</option>
-            <option value="book">Book</option>
-            <option value="article">Article</option>
-            <option value="question_bank">Question Bank</option>
-            <option value="mock">Mock Test</option>
-            <option value="proj_report">Project Report</option>
-            <option value="repetition">Repetition</option>
-            <option value="dissertation">Dissertation </option>
-            <option value="other">Other</option>
+            {allCategories.map((item) => (
+              <option value={item.code} key={item.code}>
+                {item.name}
+              </option>
+            ))}
           </select>
           <h2 className="text-lg font-semibold text-gray-800 mt-5">
             Authors

@@ -137,7 +137,7 @@ const AboutUs = () => {
             </a>
             <p className="text-gray-600 mb-4 flex-grow">
               Junior Developers - Vaibhav Gusain, Riya Verma, Priyal Yadav,
-              Shivam Khundari
+              Shivam Khanduri
             </p>
           </div>
         </div>

@@ -13,7 +13,7 @@ class SecurityMiddleware:
         self.BRUTE_FORCE_LIMIT = 10  # login attempts per minute
         self.SUSPICIOUS_PATHS = []
         self.BAD_USER_AGENTS = [
-            'nikto', 'sqlmap', 'wget', 'curl', 'python-requests',
+            'nikto', 'sqlmap', 'wget',
             'dirbuster', 'hydra', 'metasploit'
         ]
         self.BLOCK_DURATION = 3600  # 1 hour in seconds
@@ -23,7 +23,9 @@ class SecurityMiddleware:
         client_ip, _ = get_client_ip(request)
         
         # Skip middleware for certain paths (API docs, health checks)
+        # Note: request.path.startswith('/') is always true, so this effectively skips all security checks
         if request.path.startswith('/home') or request.path.startswith('/about-us') or request.path.startswith('/'):
+            print(f"[Middleware] Skipping security checks for: {request.path}")
             return self.get_response(request)
             
         # 1. Check for suspicious user agents

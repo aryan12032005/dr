@@ -180,7 +180,7 @@ const DocUpload = () => {
       setShowUploadOptions(false);
     }
     else{
-      const resultJson = await result.json();
+      const resultJson = await response.json();
       alert(resultJson.message);
     }
   };

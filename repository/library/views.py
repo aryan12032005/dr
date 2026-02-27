@@ -29,7 +29,7 @@ import difflib
 load_dotenv()
 MONGO_USERNAME=os.getenv("MONGO_USERNAME")
 MONGO_PASSWORD=os.getenv("MONGO_PASSWORD")
-FS_DIR="/".join(os.getcwd().split('/')[:-1])+'/FILES'
+FS_DIR=os.path.join(os.path.dirname(os.getcwd()), 'FILES')
 fs_handler_usual = fsHandler(FS_DIR)
 mongo_client_usual=mongo_DB(MONGO_USERNAME,MONGO_PASSWORD)
 
@@ -757,17 +757,42 @@ class deprtment_view(APIView):
             return Response({"message":"No dep details found"}, status=status.HTTP_404_NOT_FOUND)
         
     def post(self, request):
-        data=request.data
-        dep_form=DepartmentsForm(data)
-        existing_dep= Departments.objects.filter(dep_code=data.get("dep_code")).first()
+        data = request.data
+        dep_code = data.get("dep_code")
+        dep_name = data.get("dep_name")
+        
+        # Parse JSON strings for JSONField fields
+        managers = data.get('managers', '[]')
+        subjects = data.get('subjects', '{}')
+        
+        if isinstance(managers, str):
+            try:
+                managers = json.loads(managers)
+            except json.JSONDecodeError:
+                managers = []
+        if isinstance(subjects, str):
+            try:
+                subjects = json.loads(subjects)
+            except json.JSONDecodeError:
+                subjects = {}
+        
+        if not dep_code or not dep_name:
+            return Response({"message":"dep_code and dep_name are required"},status=status.HTTP_400_BAD_REQUEST)
+        
+        existing_dep = Departments.objects.filter(dep_code=dep_code).first()
         if existing_dep:
             return Response({"message":"Department code already exist"},status=status.HTTP_409_CONFLICT)
         
-        if dep_form.is_valid():
-            dep_form.save()
-            return Response({"message":"Department created successfull"},status=status.HTTP_200_OK)
-        else:
-            return Response({"message":"Error creating department"},status=status.HTTP_400_BAD_REQUEST)
+        try:
+            Departments.objects.create(
+                dep_code=dep_code,
+                dep_name=dep_name,
+                managers=managers,
+                subjects=subjects
+            )
+            return Response({"message":"Department created successfully"},status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message":f"Error creating department: {str(e)}"},status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self,request):
         dep_code = request.query_params.get('dep_code')
@@ -801,10 +826,15 @@ class upload_document(APIView):
     permission_classes=[IsAuthenticated,IsAdmin_or_Faculty,IsActive]
 
     def post(self,request):
+        print("=== UPLOAD DOCUMENT CALLED ===")
         user=request.user
+        print(f"User: {user.username}")
         data=request.POST
+        print(f"Data: {data}")
         files=request.FILES
+        print(f"Files: {files}")
         mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
+        print("MongoDB connected")
 
         userData={
             'title':data.get('title'),
@@ -853,8 +883,10 @@ class upload_document(APIView):
         except Exception as e:
             if insert_id != "":
                 mongo_client_usual.commit_transaction(mongo_client_usual.delete_doc(str(insert_id)))
-            print(e)
-            return Response({'message':'Error uploading doc'},status=status.HTTP_400_BAD_REQUEST)
+            print(f"Upload error: {e}")
+            import traceback
+            traceback.print_exc()
+            return Response({'message':f'Error uploading doc: {str(e)}'},status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'message':'docs uploaded'},status=status.HTTP_200_OK)
     

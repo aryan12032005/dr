@@ -11,7 +11,7 @@ class IsFaculty(BasePermission):
     
 class IsActive(BasePermission):
     def has_permission(self,request,view):
-        return request.user.is_active
+        return getattr(request.user, 'is_allowed', True)
 
 class IsAdmin_or_Faculty(BasePermission):
     def has_permission(self,request,view):

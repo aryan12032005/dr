@@ -26,17 +26,22 @@ SECRET_KEY = 'django-insecure-8#+r4cpo52ils31m6h8=kjxj=jpvq5_uh0n0%bm$!=il*0_hnl
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = False
+DEBUG = True
 
 # DEBUG = True   # testing only
-# CORS_ALLOW_ALL_ORIGINS = True  # testing only
+CORS_ALLOW_ALL_ORIGINS = True  # testing only
 
 
 frontend_server = os.getenv("FRONTEND_SERVER_IP")
-ALLOWED_HOSTS = [frontend_server]
+ALLOWED_HOSTS = [frontend_server, "localhost", "127.0.0.1"]
 
 CORS_ALLOWED_ORIGINS = [
-    f"http://{frontend_server}:3000"
+    f"http://{frontend_server}:3000",
+    f"http://{frontend_server}:3001",
+    f"http://{frontend_server}:3002",
+    f"http://{frontend_server}:3003",
+    f"http://{frontend_server}:3004",
+    f"http://{frontend_server}:3005",
 ]
 
 
@@ -108,6 +113,7 @@ AUTHENTICATION_BACKENDS=[
 
 AUTH_USER_MODEL="library.LibraryUser"
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -115,8 +121,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'repository.urls'

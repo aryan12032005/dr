@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 import os, shutil
+import certifi
 from bson import ObjectId
 import zipfile
 import base64
@@ -7,17 +8,26 @@ import uuid
 from ..tasks import delete_zip
 import shutil
 import dotenv
+from pathlib import Path
 
 
 class mongo_DB:
     def __init__(self, username=None, password=None, host="localhost", port=27017, db_name="Library", table_name="documents"):
         """ takes mongodb credentials and db_name, table_name to initialize a connection to database """
 
-        dotenv.load_dotenv()
+        # Load .env from the repository root directory
+        env_path = Path(__file__).resolve().parent.parent.parent / '.env'
+        dotenv.load_dotenv(env_path)
         # auth_database="admin"
         # db_string=f"mongodb://{username}:{password}@localhost:{port}/{auth_database}?authSource={auth_database}"
         db_string = os.getenv("DATABASE_STRING")
-        self.client=MongoClient(db_string)
+        print(f"[DEBUG] MongoDB connection string: {db_string[:60] if db_string else 'None'}...")
+        # Use certifi CA bundle to ensure TLS connections to MongoDB Atlas succeed
+        try:
+            self.client = MongoClient(db_string, tlsCAFile=certifi.where())
+        except TypeError:
+            # Fallback for older pymongo versions that may not accept tlsCAFile
+            self.client = MongoClient(db_string)
         self.db=self.client[db_name]
         self.doc=self.db[table_name]
         self.__sessions={}

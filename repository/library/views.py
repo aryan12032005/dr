@@ -358,7 +358,7 @@ class CategoryView(APIView):
 
 class SearchView(APIView):
     def get(self,request):
-        querry=request.query_params.get('querry')
+        querry=request.query_params.get('querry') or ''
         extra_params={}
         docType = request.query_params.get('docType',None) 
         if docType:
@@ -373,7 +373,7 @@ class SearchView(APIView):
 
         mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
         print(querry, extra_params)
-        result=mongo_client.search_document(str(querry), extra_params=extra_params, dateOrder= int(order))
+        result=mongo_client.search_document(querry, extra_params=extra_params, dateOrder= int(order))
         if len(result) > 0:
             documents = []
             for doc in result:

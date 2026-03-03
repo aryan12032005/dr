@@ -29,7 +29,10 @@ import difflib
 load_dotenv()
 MONGO_USERNAME=os.getenv("MONGO_USERNAME")
 MONGO_PASSWORD=os.getenv("MONGO_PASSWORD")
-FS_DIR=os.path.join(os.path.dirname(os.getcwd()), 'FILES')
+# Use path relative to this file instead of cwd() for reliable path in production
+# Set FS_DIR in .env for production, leave empty to use default relative path
+_default_fs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'FILES')
+FS_DIR = os.getenv('FS_DIR') or _default_fs_dir
 fs_handler_usual = fsHandler(FS_DIR)
 mongo_client_usual=mongo_DB(MONGO_USERNAME,MONGO_PASSWORD)
 

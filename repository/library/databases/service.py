@@ -216,7 +216,8 @@ class fsHandler:
         os.makedirs(working_dir,exist_ok=True)
         self.work_dir=working_dir
         print(self.work_dir)
-        self.alternate_dirs = os.getenv("alternate_dirs")
+        alt_dirs = os.getenv("alternate_dirs")
+        self.alternate_dirs = alt_dirs.split(',') if alt_dirs else []
     
     def create_file(self,category,id,doc_type,filenames,files):
         empty_threshold = 1024**3  # 1 GB of space threshold

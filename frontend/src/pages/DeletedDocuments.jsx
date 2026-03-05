@@ -1,6 +1,6 @@
 import { React, useEffect, useState } from "react";
+import { FaTrashAlt, FaSearch, FaCheck, FaTimes, FaUser, FaFileAlt, FaExclamationTriangle } from "react-icons/fa";
 import networkRequests from "../request_helper";
-import SearchDocument from "./SearchDocuments";
 
 const req_client = new networkRequests();
 const DeletedDocuments = () => {
@@ -117,69 +117,87 @@ const DeletedDocuments = () => {
   },[])
  
   return (
-    <>
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">
-            Deleted Documents
-          </h2>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <FaTrashAlt className="text-2xl text-red-500" />
+        <h1 className="text-2xl font-bold text-gray-800">Delete Requests</h1>
+      </div>
 
-        {/* Search Groups */}
-        <div className="mb-4 flex flex-row">
-          <input
-            type="text"
-            placeholder="Search deletes..."
-            value={requestSearchId}
-            onChange={(e) => setRequestSearchId(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mr-5"
-          />
+      {/* Search Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex-1 relative">
+            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search delete requests..."
+              value={requestSearchId}
+              onChange={(e) => setRequestSearchId(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+            />
+          </div>
           <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
             onClick={searchRequests}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors flex items-center gap-2"
           >
-            Search
+            <FaSearch /> Search
           </button>
         </div>
-        <div className="space-y-4">
-        
-          {requestData.map((req) => (
+      </div>
+
+      {/* Requests List */}
+      <div className="space-y-4">
+        {requestData.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+            <FaTrashAlt className="text-5xl text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-600">No Delete Requests</h3>
+            <p className="text-gray-400 mt-1">All delete requests will appear here</p>
+          </div>
+        ) : (
+          requestData.map((req) => (
             <div
               key={`${req.doc_id}-${req.requester_id}`}
-              className="border p-4 rounded"
+              className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow"
             >
-              <h3 className="text-lg font-semibold">
-                {req.document?.title || "Loading..."}
-              </h3>
-              <p>
-                Requested by: {req.requester?.first_name || ""} -{" "}
-                {req.requester?.username || "Loading..."}
-              </p>
-              <p>
-                Reason : {req.reason || ""}
-                </p>
-
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={() =>
-                    handleApprove(req.doc_id)
-                  }
-                  className="bg-green-500 text-white px-4 py-2 rounded"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => handleReject(req.requester_id,req.doc_id)}
-                  className="bg-red-500 text-white px-4 py-2 rounded"
-                >
-                  Reject
-                </button>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <FaFileAlt className="text-blue-500" />
+                    {req.document?.title || "Loading..."}
+                  </h3>
+                  <div className="mt-2 space-y-1 text-sm text-gray-600">
+                    <p className="flex items-center gap-2">
+                      <FaUser className="text-gray-400" />
+                      Requested by: <span className="font-medium">{req.requester?.first_name || ""}</span> ({req.requester?.username || "Loading..."})
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <FaExclamationTriangle className="text-orange-400" />
+                      Reason: <span className="font-medium">{req.reason || "No reason provided"}</span>
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleApprove(req.doc_id)}
+                    className="px-4 py-2 bg-green-100 text-green-700 hover:bg-green-200 font-medium rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <FaCheck /> Approve
+                  </button>
+                  <button
+                    onClick={() => handleReject(req.requester_id, req.doc_id)}
+                    className="px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 font-medium rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <FaTimes /> Reject
+                  </button>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
+          ))
+        )}
       </div>
-    </>
+    </div>
   );
 };
 

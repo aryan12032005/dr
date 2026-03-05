@@ -1,6 +1,6 @@
 import { React, useEffect, useState } from "react";
 import networkRequests from "../request_helper";
-import SearchDocument from "./SearchDocuments";
+import { FaFileAlt, FaSearch, FaCheck, FaTimes, FaUser, FaClipboardList } from "react-icons/fa";
 
 const req_client = new networkRequests();
 const RequestedDocument = () => {
@@ -118,65 +118,93 @@ const RequestedDocument = () => {
   },[])
  
   return (
-    <>
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">
-            Requested Documents
-          </h2>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-3 bg-amber-500 rounded-xl">
+          <FaClipboardList className="text-white text-xl" />
         </div>
-
-        {/* Search Groups */}
-        <div className="mb-4 flex flex-row">
-          <input
-            type="text"
-            placeholder="Search requests..."
-            value={requestSearchId}
-            onChange={(e) => setRequestSearchId(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mr-5"
-          />
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
-            onClick={searchRequests}
-          >
-            Search
-          </button>
-        </div>
-        <div className="space-y-4">
-          {requestData.map((req) => (
-            <div
-              key={`${req.doc_id}-${req.requester_id}`}
-              className="border p-4 rounded"
-            >
-              <h3 className="text-lg font-semibold">
-                {req.document?.title || "Loading..."}
-              </h3>
-              <p>
-                Requested by: {req.requester?.first_name || ""} -{" "}
-                {req.requester?.username || "Loading..."}
-              </p>
-
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={() =>
-                    handleApprove(req.requester_id, req.doc_id, req.fac_id)
-                  }
-                  className="bg-green-500 text-white px-4 py-2 rounded"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => handleReject(req.requester_id,req.doc_id)}
-                  className="bg-red-500 text-white px-4 py-2 rounded"
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
-          ))}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">Document Requests</h2>
+          <p className="text-gray-500 text-sm">Review and approve document access requests</p>
         </div>
       </div>
-    </>
+
+      {/* Search Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search requests..."
+              value={requestSearchId}
+              onChange={(e) => setRequestSearchId(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <button
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all flex items-center gap-2"
+            onClick={searchRequests}
+          >
+            <FaSearch /> Search
+          </button>
+        </div>
+      </div>
+
+      {/* Requests List */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        {requestData.length > 0 ? (
+          <div className="divide-y divide-gray-100">
+            {requestData.map((req) => (
+              <div
+                key={`${req.doc_id}-${req.requester_id}`}
+                className="p-5 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-blue-100 rounded-xl">
+                      <FaFileAlt className="text-blue-600 text-xl" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg text-gray-800">
+                        {req.document?.title || "Loading..."}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1 text-gray-500">
+                        <FaUser className="text-gray-400" />
+                        <span>Requested by: <span className="font-medium text-gray-700">{req.requester?.first_name || ""}</span></span>
+                        <span className="text-gray-300">|</span>
+                        <span className="text-sm">{req.requester?.email || ""}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 md:ml-auto">
+                    <button
+                      onClick={() => handleApprove(req.requester_id, req.doc_id, req.fac_id)}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors font-medium"
+                    >
+                      <FaCheck /> Approve
+                    </button>
+                    <button
+                      onClick={() => handleReject(req.requester_id, req.doc_id)}
+                      className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium"
+                    >
+                      <FaTimes /> Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <FaClipboardList className="mx-auto text-5xl text-gray-300 mb-4" />
+            <p className="text-gray-500">No pending requests</p>
+            <p className="text-gray-400 text-sm mt-1">Document access requests will appear here</p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

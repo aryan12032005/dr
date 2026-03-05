@@ -1,93 +1,64 @@
 class networkRequests {
   constructor() {
     this.baseUrl = import.meta.env.VITE_backendUrl;
-    // Use localStorage instead of sessionStorage to persist tokens across browser sessions
-    this.accessToken = localStorage.getItem("access_token") || null;
-    this.refreshToken = localStorage.getItem("refresh_token") || null;
+    this.accessToken = sessionStorage.getItem("access_token") || null;
+    this.refreshToken = sessionStorage.getItem("refresh_token") || null;
   }
 
-  reload_tokens() {
-    // Synchronous function - removed async since no await is needed
-    this.accessToken = localStorage.getItem("access_token");
-    this.refreshToken = localStorage.getItem("refresh_token");  
-    return this.accessToken !== null;
+  async reload_tokens() {
+    this.accessToken = sessionStorage.getItem("access_token");
+    this.refreshToken = sessionStorage.getItem("refresh_token");  
+    return this.accessToken === null ? false : true;
   }
 
+  // CSRF token not needed with JWT in Node.js backend
   async getCSRFToken() {
-    try {
-      var response = await fetch(`${this.baseUrl}get_csrf/`, {
-        method: "GET",
-        credentials: 'include',  // Include cookies for cross-origin
-      });
-      var data = await response.json();
-      return data.csrf_token;
-    } catch (error) {
-      console.error("Failed to get CSRF token:", error);
-      return null;
-    }
+    return 'not-required-with-jwt';
   }
 
   async refresh_token() {
-    const csrf_token = await this.getCSRFToken();
-    this.refreshToken = localStorage.getItem("refresh_token");
+    this.refreshToken = sessionStorage.getItem("refresh_token");
     if (!this.refreshToken) {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      localStorage.clear();
       return 0;
     }
-    try {
-      var result = await fetch(`${this.baseUrl}refresh_token/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrf_token,
-        },
-        body: JSON.stringify({ refresh_token: this.refreshToken }),
-        credentials: 'include',  // Include cookies for cross-origin
-      });
-      if (result.ok) {
-        const data = await result.json();
-        localStorage.setItem("access_token", data.access_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
-        this.accessToken = data["access_token"];
-        this.refreshToken = data["refresh_token"];
-        return 1;
-      } else {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        return 0;
-      }
-    } catch (error) {
-      console.error("Token refresh failed:", error);
+    var result = await fetch(`${this.baseUrl}refresh_token/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refresh_token: this.refreshToken }),
+    });
+    if (result.ok) {
+      const data = await result.json();
+      sessionStorage.setItem("access_token", data.access_token);
+      sessionStorage.setItem("refresh_token", data.refresh_token);
+      this.accessToken = data["access_token"];
+      this.refreshToken = data["refresh_token"];
+      return 1;
+    } else {
+      sessionStorage.clear();
       return 0;
     }
   }
 
   async fetchReq(endPoint, method, headers, body = null, count = 0) {
     let result = null;
-    try {
+    try{
       if (body) {
-        headers["X-CSRFToken"] = await this.getCSRFToken();
-        // Don't set Content-Type for FormData - browser sets it with boundary
-        if (body instanceof FormData) {
-          delete headers["Content-Type"];
-        }
         result = await fetch(`${this.baseUrl}${endPoint}`, {
           method: method,
           headers: headers,
           body: body,
-          credentials: 'include',  // Include cookies for CSRF
         });
       } else {
         result = await fetch(`${this.baseUrl}${endPoint}`, {
           method: method,
           headers: headers,
-          credentials: 'include',  // Include cookies for CSRF
         });
       }
       if (count > 1) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+        sessionStorage.clear();
         return result;
       }
       if (result.status === 401) {
@@ -104,17 +75,15 @@ class networkRequests {
         }
       }
       return result;
-    } catch (error) {
-      console.error("Network request failed:", error);
-      // Return a mock Response object with error info instead of -1
-      return {
-        ok: false,
-        status: 0,
-        statusText: "Network Error",
-        json: async () => ({ message: "Network error: Unable to connect to server" }),
-        text: async () => "Network error: Unable to connect to server",
-        _isNetworkError: true
-      };
+    }
+    catch{
+      // Return a Response-like object so callers can always call `.json()`
+      console.error('Network request failed for', endPoint);
+      const errorBody = { message: 'Network request failed' };
+      return new Response(JSON.stringify(errorBody), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
   }
 }

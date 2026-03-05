@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import networkRequests from "../request_helper";
 import { useNavigate } from "react-router-dom";
+import { FaUsers, FaSearch, FaPlus, FaEdit, FaTrash, FaFileAlt, FaUserPlus, FaTimes, FaSave, FaCheck } from "react-icons/fa";
 
 const req_client = new networkRequests();
 const Groups = () => {
@@ -141,7 +142,11 @@ const Groups = () => {
   }, [groupMemberSearchQuery]);
 
   const handleSaveGroup = async () => {
-    req_client.reload_tokens();
+    if (!newGroup.group_name.trim()) {
+      alert("Please enter a group name");
+      return;
+    }
+    await req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
       "Content-Type": "application/json",
@@ -156,13 +161,12 @@ const Groups = () => {
     setShowGroupModal(false);
     if (result.ok) {
       const resultJson = await result.json();
-      searchGroups();
+      await searchGroups();
       alert(resultJson.message);
-    } else if (result.status == 400) {
+    } else {
       const resultJson = await result.json();
-      alert(resultJson.message);
+      alert(resultJson.message || "Error creating group");
     }
-    searchGroups();
   };
 
   const handleUpdateGroup = async () => {
@@ -216,7 +220,7 @@ const Groups = () => {
   };
 
   const searchGroups = async () => {
-    req_client.reload_tokens();
+    await req_client.reload_tokens();
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
     };
@@ -227,9 +231,11 @@ const Groups = () => {
     const result = await req_client.fetchReq(fetch_url, "GET", headers);
     if (result.ok) {
       const resultJson = await result.json();
-      setFilteredGroups(resultJson.groups);
-      setGroups(resultJson.groups);
+      setFilteredGroups(resultJson.groups || []);
+      setGroups(resultJson.groups || []);
     } else {
+      setFilteredGroups([]);
+      setGroups([]);
     }
   };
 
@@ -281,145 +287,167 @@ const Groups = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">Member Groups</h2>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-blue-600 rounded-xl">
+            <FaUsers className="text-white text-xl" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Member Groups</h2>
+            <p className="text-gray-500 text-sm">Manage your groups and members</p>
+          </div>
+        </div>
         <button
           onClick={handleCreateGroup}
-          className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md transition-colors flex items-center"
+          className="bg-green-500 hover:bg-green-600 text-white py-2.5 px-5 rounded-xl transition-colors flex items-center gap-2 font-medium shadow-sm"
         >
-          + Create New Group
+          <FaPlus /> Create New Group
         </button>
       </div>
 
-      {/* Search Groups */}
-      <div className="mb-4 flex flex-row">
-        <input
-          type="text"
-          placeholder="Search groups..."
-          value={groupSearchQuery}
-          onChange={(e) => setGroupSearchQuery(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mr-5"
-        />
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
-          onClick={searchGroups}
-        >
-          Search
-        </button>
+      {/* Search Section */}
+      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search groups..."
+              value={groupSearchQuery}
+              onChange={(e) => setGroupSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <button
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all flex items-center gap-2"
+            onClick={searchGroups}
+          >
+            <FaSearch /> Search
+          </button>
+        </div>
       </div>
 
-      {/* Groups List */}
-      {filteredGroups.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredGroups.map((group) => (
-            <div
-              key={group.id}
-              className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="font-medium text-lg text-gray-800">
-                    {group.group_name}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {group.members.length} members
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleAddDocument(group)}
-                    className="text-green-500 hover:text-green-600"
-                    title="Add Document"
-                  >
-                    ➕
-                  </button>
-                  <button
-                    onClick={() => handleEditGroup(group)}
-                    className="text-blue-500 hover:text-blue-600"
-                    title="Edit Group"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={() => handleDeleteGroup(group.id)}
-                    className="text-red-500 hover:text-red-600"
-                    title="Delete Group"
-                  >
-                    🗑
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-2">
-                <h4 className="text-sm font-medium text-gray-700 mb-1">
-                  Members:
-                </h4>
-                <div className="flex flex-wrap gap-1">
-                  {group.members.slice(0, 5).map((member) => (
-                    <span
-                      key={member.id}
-                      className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+      {/* Groups Grid */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        {filteredGroups.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
+            {filteredGroups.map((group) => (
+              <div
+                key={group.id}
+                className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-all bg-gradient-to-br from-white to-gray-50"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <FaUsers className="text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg text-gray-800">
+                        {group.group_name}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {group.members.length} members
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleAddDocument(group)}
+                      className="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
+                      title="Add Document"
                     >
-                      {member.first_name} - {member.username}
-                    </span>
-                  ))}
-                  {group.members.length > 5 && (
-                    <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
-                      +{group.members.length - 5} more
-                    </span>
-                  )}
+                      <FaFileAlt />
+                    </button>
+                    <button
+                      onClick={() => handleEditGroup(group)}
+                      className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                      title="Edit Group"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteGroup(group.id)}
+                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                      title="Delete Group"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Documents Section */}
-              <div className="mt-3">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-medium text-gray-700">
-                    Documents:
+                {/* Members */}
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-gray-600 mb-2 flex items-center gap-1">
+                    <FaUserPlus className="text-gray-400" /> Members
                   </h4>
-                  <button
-                    onClick={() => handleAddDocument(group)}
-                    className="text-green-500 hover:text-green-600 text-sm flex items-center"
-                    title="Add Document"
-                  >
-                    {group.documents.length > 0 ? (
-                      <span className="mr-1">Edit Documents</span>
-                    ) : (
-                      <span className="mr-1">+ Add Document</span>
+                  <div className="flex flex-wrap gap-1">
+                    {group.members.slice(0, 5).map((member) => (
+                      <span
+                        key={member.id}
+                        className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium"
+                      >
+                        {member.first_name}
+                      </span>
+                    ))}
+                    {group.members.length > 5 && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                        +{group.members.length - 5} more
+                      </span>
                     )}
-                  </button>
+                  </div>
                 </div>
-                <div className="mt-1 border-t pt-2">
+
+                {/* Documents */}
+                <div className="pt-3 border-t border-gray-100">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                      <FaFileAlt className="text-gray-400" /> Documents
+                    </h4>
+                    <button
+                      onClick={() => handleAddDocument(group)}
+                      className="text-green-600 hover:text-green-700 text-xs font-medium flex items-center gap-1"
+                    >
+                      <FaPlus /> {group.documents.length > 0 ? "Edit" : "Add"}
+                    </button>
+                  </div>
                   {group.documents && group.documents.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
                       {group.documents.slice(0, 3).map((doc, index) => (
                         <span
                           key={index}
-                          className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full"
+                          className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full"
                         >
                           {doc.title || `Document ${index + 1}`}
                         </span>
                       ))}
                       {group.documents.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
                           +{group.documents.length - 3} more
                         </span>
                       )}
                     </div>
                   ) : (
-                    <p className="text-gray-400 text-xs">
-                      No documents added yet
-                    </p>
+                    <p className="text-gray-400 text-xs">No documents added yet</p>
                   )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-gray-500 text-center py-6">No groups found.</p>
-      )}
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <FaUsers className="mx-auto text-5xl text-gray-300 mb-4" />
+            <p className="text-gray-500">No groups found.</p>
+            <button
+              onClick={handleCreateGroup}
+              className="mt-4 px-4 py-2 text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Create your first group
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Group Modal */}
       {showGroupModal && (

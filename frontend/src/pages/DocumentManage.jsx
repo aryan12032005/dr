@@ -1,34 +1,33 @@
 import React from 'react';
+import { FaCloudUploadAlt, FaFolderOpen, FaRocket } from 'react-icons/fa';
 import SearchDocument from './SearchDocuments';
 import DocUpload from './DocUpload';
 
 const DocumentManage = ({ userStatus }) => {
   return (
-    <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-gray-100 via-white to-gray-200 min-h-screen">
-      <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-8 text-center drop-shadow-lg">
-        📄 Manage Your Documents
-      </h1>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <FaFolderOpen className="text-2xl text-blue-500" />
+        <h1 className="text-2xl font-bold text-gray-800">Manage Your Documents</h1>
+      </div>
 
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Upload Section */}
-        <div className="bg-white/80  border border-gray-200 rounded-xl shadow-xl hover:shadow-blue-100 transition-shadow duration-500 transform hover:scale-[1.005]">
-          <div className="p-6 md:p-8">
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-700 mb-4">
-              🚀 Upload New Document
-            </h2>
-            <DocUpload />
-          </div>
-        </div>
+      {/* Upload Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+          <FaRocket className="text-blue-500" />
+          Upload New Document
+        </h2>
+        <DocUpload />
+      </div>
 
-        {/* View Uploaded Documents Section */}
-        <div className="bg-white/80  border border-gray-200 rounded-xl shadow-xl hover:shadow-blue-100 transition-shadow duration-500 transform hover:scale-[1.005]">
-          <div className="p-6 md:p-8">
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-700 mb-4">
-              📚 View Uploaded Documents
-            </h2>
-            <SearchDocument userStatus={userStatus}/>
-          </div>
-        </div>
+      {/* View Documents Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
+          <FaFolderOpen className="text-green-500" />
+          View Uploaded Documents
+        </h2>
+        <SearchDocument userStatus={userStatus}/>
       </div>
     </div>
   );

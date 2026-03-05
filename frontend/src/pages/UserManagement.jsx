@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaSearch, FaEdit, FaTrash, FaKey, FaSave, FaTimes, FaUser, FaEnvelope, FaPhone, FaCheck, FaBan, FaUserPlus, FaUpload, FaBuilding } from "react-icons/fa";
 import networkRequests from "../request_helper";
 import Signup from "./SignUp";
 
@@ -170,178 +171,192 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg flex flex-col items-center p-6 mb-4 ">
-      <h1 className="text-3xl font-semibold mb-2 text-gray-1200 underline">
-        User Management
-      </h1>
-      <Signup />
-      <input
-        type="text"
-        placeholder="Search Users..."
-        className="border rounded-md px-3 py-2 mb-4 mt-7 w-full shadow-sm focus:ring-2 focus:ring-blue-500 transition-all duration-300"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      <button
-        onClick={() => searchUser(searchTerm)}
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
-      >
-        Search
-      </button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+      </div>
 
-      <p className="text-gray-600 mb-4">
-        Total Users: {filteredUsers.length} (Filtered from {users.length})
-      </p>
+      {/* Add User Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <Signup onUserCreated={fetchUsers} />
+      </div>
 
-      <table className="min-w-full border border-collapse shadow-md">
-        <thead>
-          <tr className="bg-gray-300 text-gray-800">
-            <th className="border px-4 py-2">ID</th>
-            <th className="border px-4 py-2">Name</th>
-            <th className="border px-4 py-2">Email</th>
-            <th className="border px-4 py-2">Username</th>
-            <th className="border px-4 py-2">Phone</th>
-            <th className="border px-4 py-2">Is Allowed</th>
-            <th className="border px-4 py-2">Actions</th>
-          </tr>
-        </thead>
+      {/* Search Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="flex-1 relative w-full">
+            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name, email, or phone..."
+              className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && searchUser(searchTerm)}
+            />
+          </div>
+          <button
+            onClick={() => searchUser(searchTerm)}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all flex items-center gap-2 shadow-sm"
+          >
+            <FaSearch />
+            Search
+          </button>
+        </div>
+        <p className="text-gray-500 text-sm mt-4">
+          Total Users: {filteredUsers.length} (Filtered from {users.length})
+        </p>
+      </div>
 
-        <tbody>
-          {filteredUsers.map((user) => (
-            <tr
-              key={user.id}
-              className="hover:bg-gray-100 transition-all duration-200"
-            >
-              <td className="border px-4 py-2 text-center">{user.id}</td>
-              <td className="border px-4 py-2">
-                {editUser?.id === user.id ? (
-                  <input
-                    type="text"
-                    No
-                    value={editUser.first_name}
-                    onChange={(e) =>
-                      setEditUser({
-                        ...editUser,
-                        first_name: e.target.value,
-                      })
-                    }
-                    className="border rounded px-2 py-1 w-full"
-                  />
-                ) : (
-                  user.first_name
-                )}
-              </td>
-              <td className="border px-4 py-2">
-                {editUser?.id === user.id ? (
-                  <input
-                    type="email"
-                    value={editUser.email}
-                    onChange={(e) =>
-                      setEditUser({ ...editUser, email: e.target.value })
-                    }
-                    className="border rounded px-2 py-1 w-full"
-                  />
-                ) : (
-                  user.email
-                )}
-              </td>
-              <td className="border px-4 py-2">
-                {editUser?.id === user.id ? (
-                  <input
-                    type="text"
-                    value={editUser.username}
-                    onChange={(e) =>
-                      setEditUser({ ...editUser, username: e.target.value })
-                    }
-                    className="border rounded px-2 py-1 w-full"
-                  />
-                ) : (
-                  user.username
-                )}
-              </td>
-              <td className="border px-4 py-2">
-                {" "}
-                {/* Phone number cell */}
-                {editUser?.id === user.id ? (
-                  <input
-                    type="text"
-                    value={editUser.phone_number}
-                    onChange={(e) =>
-                      setEditUser({
-                        ...editUser,
-                        phone_number: e.target.value,
-                      })
-                    }
-                    className="border rounded px-2 py-1 w-full"
-                  />
-                ) : (
-                  user.phone_number
-                )}
-              </td>
-              <td className="border px-4 py-2">
-                {" "}
-                {editUser?.id === user.id ? (
-                  <input
-                    type="checkbox"
-                    checked={editUser.is_allowed}
-                    onChange={(e) =>
-                      setEditUser({
-                        ...editUser,
-                        is_allowed: e.target.checked,
-                      })
-                    }
-                    className="border rounded px-2 py-1 w-full"
-                  />
-                ) : user.is_allowed ? (
-                  "Yes"
-                ) : (
-                  "No"
-                )}
-              </td>
-
-              <td className="border py-2 text-center">
-                {editUser?.id === user.id ? (
-                  <>
-                    <button
-                      onClick={() => handleUpdateUser(editUser)}
-                      className="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded mr-1 transition-all duration-300 hover:scale-105"
-                    >
-                      Update
-                    </button>
-                    <button
-                      onClick={() => setEditUser(null)}
-                      className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-1 px-2 rounded transition-all duration-300 hover:scale-105"
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleEdit(user)}
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 mx-1 rounded mr-1 transition-all duration-300 hover:scale-105"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user)}
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 mx-1 rounded transition-all duration-300 hover:scale-110"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => handleChangePass(user)}
-                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 mx-1 rounded transition-all duration-300 hover:scale-110"
-                    >
-                      Change Pass
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Users Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-100">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Username</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Phone</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-sm text-gray-500 font-mono">{user.id?.toString().slice(-6)}</td>
+                  <td className="px-6 py-4">
+                    {editUser?.id === user.id ? (
+                      <input
+                        type="text"
+                        value={editUser.first_name}
+                        onChange={(e) => setEditUser({ ...editUser, first_name: e.target.value })}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none"
+                      />
+                    ) : (
+                      <span className="font-medium text-gray-800">{user.first_name}</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {editUser?.id === user.id ? (
+                      <input
+                        type="email"
+                        value={editUser.email}
+                        onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none"
+                      />
+                    ) : (
+                      <span className="text-gray-600">{user.email}</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {editUser?.id === user.id ? (
+                      <input
+                        type="text"
+                        value={editUser.username}
+                        onChange={(e) => setEditUser({ ...editUser, username: e.target.value })}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none"
+                      />
+                    ) : (
+                      <span className="text-gray-600">{user.username}</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {editUser?.id === user.id ? (
+                      <input
+                        type="text"
+                        value={editUser.phone_number}
+                        onChange={(e) => setEditUser({ ...editUser, phone_number: e.target.value })}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-200 outline-none"
+                      />
+                    ) : (
+                      <span className="text-gray-600">{user.phone_number}</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {editUser?.id === user.id ? (
+                      <label className="flex items-center justify-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editUser.is_allowed}
+                          onChange={(e) => setEditUser({ ...editUser, is_allowed: e.target.checked })}
+                          className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm">Allowed</span>
+                      </label>
+                    ) : user.is_allowed ? (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                        <FaCheck /> Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                        <FaBan /> Disabled
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2">
+                      {editUser?.id === user.id ? (
+                        <>
+                          <button
+                            onClick={() => handleUpdateUser(editUser)}
+                            className="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+                            title="Save"
+                          >
+                            <FaSave />
+                          </button>
+                          <button
+                            onClick={() => setEditUser(null)}
+                            className="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                            title="Cancel"
+                          >
+                            <FaTimes />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleEdit(user)}
+                            className="p-2 rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
+                            title="Edit"
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(user)}
+                            className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                            title="Delete"
+                          >
+                            <FaTrash />
+                          </button>
+                          <button
+                            onClick={() => handleChangePass(user)}
+                            className="p-2 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 transition-colors"
+                            title="Change Password"
+                          >
+                            <FaKey />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                    <FaUser className="text-4xl mx-auto mb-3 text-gray-300" />
+                    <p>No users found</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

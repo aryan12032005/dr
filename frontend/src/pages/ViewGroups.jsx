@@ -124,9 +124,9 @@ const ViewGroups = () => {
     );
     if (result.ok) {
       const resultJson = await result.json();
-      setSearchedGroups(resultJson.groups);
+      setSearchedGroups(resultJson.groups || []);
     } else {
-      alert("no groups found");
+      setSearchedGroups([]);
     }
   };
 
@@ -191,6 +191,8 @@ const ViewGroups = () => {
 
     if (searchedGroups.length > 0) {
       fetchGroupDetails();
+    } else {
+      setFilteredGroups([]);
     }
   }, [searchedGroups]);
 

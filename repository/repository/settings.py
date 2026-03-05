@@ -33,9 +33,11 @@ CORS_ALLOW_ALL_ORIGINS = True  # testing only
 
 
 frontend_server = os.getenv("FRONTEND_SERVER_IP")
-ALLOWED_HOSTS = [frontend_server, "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [frontend_server, "localhost", "127.0.0.1", "*"]
 
 CORS_ALLOWED_ORIGINS = [
+    f"http://{frontend_server}",
+    f"http://{frontend_server}:80",
     f"http://{frontend_server}:3000",
     f"http://{frontend_server}:3001",
     f"http://{frontend_server}:3002",

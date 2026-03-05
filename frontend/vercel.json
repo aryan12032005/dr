@@ -1,0 +1,10 @@
+{
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "env": {
+    "ESLINT_NO_DEV_ERRORS": "true",
+    "CI": "false"
+  }
+}

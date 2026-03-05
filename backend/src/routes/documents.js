@@ -269,26 +269,46 @@ router.get('/get_faculty_doc', protect, isAdminOrFaculty, async (req, res) => {
   }
 });
 
-// Download document
-router.get('/download_doc', protect, isActive, async (req, res) => {
+// Download document - allows public documents without login
+router.get('/download_doc', async (req, res) => {
   try {
     const { doc_id } = req.query;
-    const user = req.user;
 
     const document = await Document.findById(doc_id);
     if (!document) {
       return res.status(400).json({ message: 'No document found' });
     }
 
-    const isOwner = document.owner && document.owner.toString() === user._id.toString();
-    const isInAllowedUsers = document.allowed_users && document.allowed_users.some(u => u.toString() === user._id.toString());
-    const isAllowed = document.isPublic === 'true' || 
-                      user.is_admin || 
-                      isOwner ||
-                      isInAllowedUsers;
+    // Check if document is public - allow download without auth
+    const isPublicDoc = document.isPublic === 'true' || document.isPublic === true;
+    
+    // If document is private, require authentication
+    if (!isPublicDoc) {
+      // Try to get user from token
+      let user = null;
+      if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+          const token = req.headers.authorization.split(' ')[1];
+          const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
+          user = await require('../models/User').findById(decoded.id);
+        } catch (err) {
+          return res.status(401).json({ message: 'Please login to download private documents' });
+        }
+      } else {
+        return res.status(401).json({ message: 'Please login to download private documents' });
+      }
 
-    if (!isAllowed) {
-      return res.status(400).json({ message: 'Document is private' });
+      if (!user || !user.is_allowed) {
+        return res.status(401).json({ message: 'Not authorized' });
+      }
+
+      const isOwner = document.owner && document.owner.toString() === user._id.toString();
+      const isInAllowedUsers = document.allowed_users && document.allowed_users.some(u => u.toString() === user._id.toString());
+      const isAllowed = user.is_admin || isOwner || isInAllowedUsers;
+
+      if (!isAllowed) {
+        return res.status(400).json({ message: 'Document is private' });
+      }
     }
 
     if (document.docType === 'link') {

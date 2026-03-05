@@ -168,13 +168,21 @@ class CloudinaryFileHandler {
           max_results: 1
         });
       } catch (err) {
-        // Try raw if no images found
-        resources = await cloudinary.api.resources({
-          type: 'upload',
-          prefix: prefix,
-          resource_type: 'raw',
-          max_results: 1
-        });
+        resources = { resources: [] };
+      }
+
+      // If no images found, try raw resource type
+      if (!resources.resources || resources.resources.length === 0) {
+        try {
+          resources = await cloudinary.api.resources({
+            type: 'upload',
+            prefix: prefix,
+            resource_type: 'raw',
+            max_results: 1
+          });
+        } catch (err) {
+          resources = { resources: [] };
+        }
       }
 
       if (!resources.resources || resources.resources.length === 0) {

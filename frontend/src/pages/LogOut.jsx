@@ -17,15 +17,11 @@ const LogOut = () => {
       refresh_token: req_client.refreshToken
     }
     const result=await req_client.fetchReq('logout/', "POST", headers, JSON.stringify(data));
-    if(result.ok){
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_status');
-      navigate('/');
-    }
-    else{
-      navigate('/');
-    }
+    // Always clear storage and redirect, regardless of API result
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_status');
+    navigate('/');
   };
   logoutUser();
   },[navigate]);

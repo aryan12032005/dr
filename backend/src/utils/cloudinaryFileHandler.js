@@ -3,6 +3,8 @@ const streamifier = require('streamifier');
 const archiver = require('archiver');
 const https = require('https');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
 class CloudinaryFileHandler {
   constructor() {
@@ -12,6 +14,8 @@ class CloudinaryFileHandler {
       api_key: process.env.CLOUDINARY_API_KEY,
       api_secret: process.env.CLOUDINARY_API_SECRET
     });
+    // Local files directory for legacy documents
+    this.localFilesDir = path.join(__dirname, '..', '..', 'FILES');
   }
 
   /**
@@ -149,13 +153,20 @@ class CloudinaryFileHandler {
   }
 
   /**
-   * Get cover image from Cloudinary
+   * Get cover image - tries local files first, then Cloudinary
    * @param {string} category - Document category
    * @param {string} id - Document ID
    * @returns {Promise<string|null>} - Base64 encoded image or null
    */
   async getCover(category, id) {
     try {
+      // First try local files (for legacy documents)
+      const localCover = this._getLocalCover(category, id);
+      if (localCover) {
+        return localCover;
+      }
+
+      // Then try Cloudinary
       const prefix = `digital_repo/${category}/${id}/cover`;
       
       // Try to get image resources first
@@ -196,6 +207,52 @@ class CloudinaryFileHandler {
       return base64;
     } catch (error) {
       console.error('Error getting cover from Cloudinary:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get cover from local files directory (legacy documents)
+   * @param {string} category - Document category
+   * @param {string} id - Document ID
+   * @returns {string|null} - Base64 encoded image or null
+   */
+  _getLocalCover(category, id) {
+    try {
+      const folderDir = path.join(this.localFilesDir, category, String(id), 'cover');
+      
+      if (!fs.existsSync(folderDir)) {
+        return null;
+      }
+      
+      const files = fs.readdirSync(folderDir);
+      if (files.length === 0) {
+        return null;
+      }
+      
+      const fileName = files[0];
+      const filePath = path.join(folderDir, fileName);
+      const fileBuffer = fs.readFileSync(filePath);
+      
+      return fileBuffer.toString('base64');
+    } catch (error) {
+      console.error('Error getting local cover:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Download cover directly from a URL (faster than searching Cloudinary)
+   * @param {string} url - The cover file URL
+   * @returns {Promise<string|null>} - Base64 encoded content or null
+   */
+  async downloadCoverFromUrl(url) {
+    try {
+      if (!url) return null;
+      const base64 = await this._downloadAsBase64(url);
+      return base64;
+    } catch (error) {
+      console.error('Error downloading cover from URL:', error);
       return null;
     }
   }

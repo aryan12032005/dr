@@ -90,7 +90,24 @@ router.get('/get_document', async (req, res) => {
 
     if (doc.coverType === 'link') {
       document.coverLink = doc.coverLink || '';
+    } else if (doc.cover_path) {
+      // Use stored cover path URL directly for faster, more reliable retrieval
+      try {
+        const coverData = JSON.parse(doc.cover_path);
+        if (coverData && coverData.length > 0 && coverData[0].url) {
+          // Download and convert to base64 for inline display
+          const coverFile = await fileHandler.downloadCoverFromUrl(coverData[0].url);
+          document.cover = coverFile;
+        }
+      } catch (e) {
+        // cover_path is a local path (legacy format), read from local files
+        const coverFile = await fileHandler.getCover(doc.category, doc._id.toString());
+        if (coverFile) {
+          document.cover = coverFile;
+        }
+      }
     } else {
+      // Legacy fallback: search Cloudinary for cover
       const coverFile = await fileHandler.getCover(doc.category, doc._id.toString());
       document.cover = coverFile;
     }

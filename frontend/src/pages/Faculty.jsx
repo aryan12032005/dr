@@ -828,7 +828,7 @@ const FacultyDocumentManager = () => {
                   </a>
                 </div>
               ) : viewingDocument?.cover ? (
-                <img src={`data:${viewingDocument?.coverType};base64,${viewingDocument?.cover}`} className="w-full max-h-[60vh] object-contain" alt={viewingDocument?.title} />
+                <img src={`data:image/jpeg;base64,${viewingDocument?.cover}`} className="w-full max-h-[60vh] object-contain" alt={viewingDocument?.title} />
               ) : (
                 <div className="p-12 text-center bg-gray-50">
                   <FaFileAlt className="text-5xl text-gray-300 mx-auto mb-3" />

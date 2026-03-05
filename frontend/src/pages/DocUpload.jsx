@@ -124,64 +124,103 @@ const DocUpload = () => {
 
 
   const handleUpload = async () => {
+    // Validation
+    if (!title) { alert("Please enter a title"); return; }
+    if (!coverType) { alert("Please select cover type"); return; }
+    if (!documentType) { alert("Please select document type"); return; }
+    if (!category) { alert("Please select a category"); return; }
+    if (!department) { alert("Please select a department"); return; }
+    if (!subject) { alert("Please select a subject"); return; }
+    if (!hsnNumber) { alert("Please enter HSN number"); return; }
+    if (authorsList.length === 0) { alert("Please add at least one author"); return; }
+    
+    if (coverType !== "link" && (!Cover || Cover.length === 0)) {
+      alert("Please select a cover file"); return;
+    }
+    if (coverType === "link" && !coverLink) {
+      alert("Please enter cover link"); return;
+    }
+    if (documentType !== "link" && (!documentFile || documentFile.length === 0)) {
+      alert("Please select document files"); return;
+    }
+    if (documentType === "link" && !documentLink) {
+      alert("Please enter document link"); return;
+    }
+
     const data = new FormData();
     data.append("title", title);
     data.append("coverType", coverType);
     data.append("documentType", documentType);
     data.append("isPublic", isPublic);
-    if (Cover && Cover.length > 0 && coverType != "link") {
+    
+    if (Cover && Cover.length > 0 && coverType !== "link") {
       data.append("cover", Cover[0]);
-    } else {
+    } else if (coverType === "link") {
       data.append("coverLink", coverLink);
     }
 
     // Append documents (multiple files)
-    if (documentFile && documentFile.length > 0 && documentType != "link") {
+    if (documentFile && documentFile.length > 0 && documentType !== "link") {
       Array.from(documentFile).forEach((doc) => {
-        data.append("documents", doc); // 'documents' will be an array in the backend
+        data.append("documents", doc);
       });
-    } else {
+    } else if (documentType === "link") {
       data.append("documentLink", documentLink);
     }
+    
     data.append("category", category);
     data.append("department", department);
     data.append("subject", subject);
-    data.append('authors',authorsList);
-    data.append('hsnNumber',hsnNumber);
-
-    for (let [key, value] of data.entries()) {
-      if (!value) {
-        alert(`Please fill in the ${key} field.`);
-        return false;
-      }
-    }
+    data.append('authors', authorsList.join(','));
+    data.append('hsnNumber', hsnNumber);
 
     req_client.reload_tokens();
+    
+    if (!req_client.accessToken) {
+      alert("Please login to upload documents");
+      return;
+    }
+    
     const headers = {
       Authorization: `Bearer ${req_client.accessToken}`,
     };
-    const response = await req_client.fetchReq(
-      "upload_document/",
-      "POST",
-      headers,
-      data
-    );
-    if (response.ok) {
-      alert("document uploaded successfully");
-      setTitle("");
-      setCover("");
-      setCoverLink("");
-      setDocument("");
-      setDocumentLink("");
-      setDepartment("");
-      setSubject("");
-      setCoverType("");
-      setDocumentType("");
-      setShowUploadOptions(false);
-    }
-    else{
-      const resultJson = await response.json();
-      alert(resultJson.message);
+    
+    console.log("Uploading to:", req_client.baseUrl + "upload_document/");
+    console.log("Token:", req_client.accessToken ? "Present" : "Missing");
+    
+    try {
+      const response = await req_client.fetchReq(
+        "upload_document/",
+        "POST",
+        headers,
+        data
+      );
+      
+      console.log("Response status:", response.status);
+      
+      if (response.ok) {
+        alert("Document uploaded successfully!");
+        setTitle("");
+        setCover("");
+        setCoverLink("");
+        setDocument("");
+        setDocumentLink("");
+        setDepartment("");
+        setSubject("");
+        setCoverType("");
+        setDocumentType("");
+        setCategory("");
+        setAuthorList([]);
+        setHsnNumber("");
+        setShowUploadOptions(false);
+      } else {
+        const resultJson = await response.json();
+        console.error("Upload failed:", resultJson);
+        alert(resultJson.message || "Upload failed");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Network error during upload. Please try again.");
     }
   };
 

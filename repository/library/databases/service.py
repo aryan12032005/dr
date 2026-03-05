@@ -18,16 +18,22 @@ class mongo_DB:
         # Load .env from the repository root directory
         env_path = Path(__file__).resolve().parent.parent.parent / '.env'
         dotenv.load_dotenv(env_path)
-        # auth_database="admin"
-        # db_string=f"mongodb://{username}:{password}@localhost:{port}/{auth_database}?authSource={auth_database}"
         db_string = os.getenv("DATABASE_STRING")
         print(f"[DEBUG] MongoDB connection string: {db_string[:60] if db_string else 'None'}...")
-        # Use certifi CA bundle to ensure TLS connections to MongoDB Atlas succeed
+        
+        # Only use TLS/SSL for MongoDB Atlas (mongodb+srv://)
+        # Local MongoDB connections don't need SSL
         try:
-            self.client = MongoClient(db_string, tlsCAFile=certifi.where())
-        except TypeError:
-            # Fallback for older pymongo versions that may not accept tlsCAFile
+            if db_string and 'mongodb+srv://' in db_string:
+                # MongoDB Atlas - use SSL with certifi
+                self.client = MongoClient(db_string, tlsCAFile=certifi.where())
+            else:
+                # Local MongoDB - no SSL needed
+                self.client = MongoClient(db_string)
+        except Exception as e:
+            print(f"[DEBUG] MongoDB connection error: {e}")
             self.client = MongoClient(db_string)
+            
         self.db=self.client[db_name]
         self.doc=self.db[table_name]
         self.__sessions={}

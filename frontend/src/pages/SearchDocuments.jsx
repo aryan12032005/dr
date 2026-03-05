@@ -653,12 +653,12 @@ const SearchDocument = ({ userStatus }) => {
 
               {/* Document Preview */}
               <div className="rounded-2xl overflow-hidden border-2 border-gray-200 shadow-inner">
-                {viewingDocument?.cover && viewingDocument?.coverType?.includes("pdf") ? (
+                {viewingDocument?.cover && (viewingDocument?.coverType === "pdf" || viewingDocument?.coverType?.includes("pdf")) ? (
                   <iframe
                     src={`data:application/pdf;base64,${viewingDocument?.cover}`}
                     className="w-full min-h-[60vh]"
                   />
-                ) : viewingDocument?.coverType?.includes("link") ? (
+                ) : viewingDocument?.coverType === "link" || viewingDocument?.coverType?.includes("link") ? (
                   <div className="p-8 text-center bg-gradient-to-r from-gray-50 to-gray-100">
                     <FaExternalLinkAlt className="text-4xl text-blue-500 mx-auto mb-4" />
                     <p className="text-gray-600 mb-3">External Cover Link:</p>
@@ -673,7 +673,7 @@ const SearchDocument = ({ userStatus }) => {
                   </div>
                 ) : viewingDocument?.cover ? (
                   <img
-                    src={`data:${viewingDocument?.coverType};base64,${viewingDocument?.cover}`}
+                    src={`data:image/jpeg;base64,${viewingDocument?.cover}`}
                     className="w-full max-h-[60vh] object-contain bg-gray-100"
                     alt={viewingDocument?.title}
                   />

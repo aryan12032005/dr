@@ -1,55 +1,69 @@
 class networkRequests {
   constructor() {
     this.baseUrl = import.meta.env.VITE_backendUrl;
-    this.accessToken = sessionStorage.getItem("access_token") || null;
-    this.refreshToken = sessionStorage.getItem("refresh_token") || null;
+    // Use localStorage instead of sessionStorage to persist tokens across browser sessions
+    this.accessToken = localStorage.getItem("access_token") || null;
+    this.refreshToken = localStorage.getItem("refresh_token") || null;
   }
 
-  async reload_tokens() {
-    this.accessToken = sessionStorage.getItem("access_token");
-    this.refreshToken = sessionStorage.getItem("refresh_token");  
-    return this.accessToken === null ? false : true;
+  reload_tokens() {
+    // Synchronous function - removed async since no await is needed
+    this.accessToken = localStorage.getItem("access_token");
+    this.refreshToken = localStorage.getItem("refresh_token");  
+    return this.accessToken !== null;
   }
 
   async getCSRFToken() {
-    var response = await fetch(`${this.baseUrl}get_csrf/`, {
-      method: "GET",
-    });
-    var data = await response.json();
-    return data.csrf_token;
+    try {
+      var response = await fetch(`${this.baseUrl}get_csrf/`, {
+        method: "GET",
+      });
+      var data = await response.json();
+      return data.csrf_token;
+    } catch (error) {
+      console.error("Failed to get CSRF token:", error);
+      return null;
+    }
   }
 
   async refresh_token() {
     const csrf_token = await this.getCSRFToken();
-    this.refreshToken = sessionStorage.getItem("refresh_token");
+    this.refreshToken = localStorage.getItem("refresh_token");
     if (!this.refreshToken) {
-      localStorage.clear();
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
       return 0;
     }
-    var result = await fetch(`${this.baseUrl}refresh_token/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrf_token,
-      },
-      body: JSON.stringify({ refresh_token: this.refreshToken }),
-    });
-    if (result.ok) {
-      const data = await result.json();
-      sessionStorage.setItem("access_token", data.access_token);
-      sessionStorage.setItem("refresh_token", data.refresh_token);
-      this.accessToken = data["access_token"];
-      this.refreshToken = data["refresh_token"];
-      return 1;
-    } else {
-      sessionStorage.clear();
+    try {
+      var result = await fetch(`${this.baseUrl}refresh_token/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrf_token,
+        },
+        body: JSON.stringify({ refresh_token: this.refreshToken }),
+      });
+      if (result.ok) {
+        const data = await result.json();
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("refresh_token", data.refresh_token);
+        this.accessToken = data["access_token"];
+        this.refreshToken = data["refresh_token"];
+        return 1;
+      } else {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        return 0;
+      }
+    } catch (error) {
+      console.error("Token refresh failed:", error);
       return 0;
     }
   }
 
   async fetchReq(endPoint, method, headers, body = null, count = 0) {
     let result = null;
-    try{
+    try {
       if (body) {
         headers["X-CSRFToken"] = await this.getCSRFToken();
         result = await fetch(`${this.baseUrl}${endPoint}`, {
@@ -64,7 +78,8 @@ class networkRequests {
         });
       }
       if (count > 1) {
-        sessionStorage.clear();
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
         return result;
       }
       if (result.status === 401) {
@@ -81,9 +96,17 @@ class networkRequests {
         }
       }
       return result;
-    }
-    catch{
-      return -1;
+    } catch (error) {
+      console.error("Network request failed:", error);
+      // Return a mock Response object with error info instead of -1
+      return {
+        ok: false,
+        status: 0,
+        statusText: "Network Error",
+        json: async () => ({ message: "Network error: Unable to connect to server" }),
+        text: async () => "Network error: Unable to connect to server",
+        _isNetworkError: true
+      };
     }
   }
 }

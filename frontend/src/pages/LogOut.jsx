@@ -18,7 +18,9 @@ const LogOut = () => {
     }
     const result=await req_client.fetchReq('logout/', "POST", headers, JSON.stringify(data));
     if(result.ok){
-      sessionStorage.clear();
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user_status');
       navigate('/');
     }
     else{

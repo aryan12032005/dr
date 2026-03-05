@@ -121,7 +121,7 @@ const SearchDocument = ({ userStatus }) => {
       "Content-Type": "application/json",
     };
     const response = await req_client.fetchReq(
-      `search_document/?querry=${searchTerm}&docType=${filters.docType}&department=${filters.department}&order=${filters.sortOrder}&category=${filters.category}`,
+      `search_document/?querry=${encodeURIComponent(searchTerm)}&docType=${encodeURIComponent(filters.docType)}&department=${encodeURIComponent(filters.department)}&order=${filters.sortOrder}&category=${encodeURIComponent(filters.category)}`,
       "GET",
       headers
     );
@@ -134,6 +134,15 @@ const SearchDocument = ({ userStatus }) => {
       const responseJson = await response.json();
       setFilteredDocuments([]);
       alert(responseJson.message);
+    } else {
+      // Handle other errors including network errors
+      try {
+        const responseJson = await response.json();
+        alert(responseJson.message || "An error occurred while searching");
+      } catch {
+        alert("An error occurred while searching");
+      }
+      setFilteredDocuments([]);
     }
   };
 

@@ -56,7 +56,7 @@ const RequestedDocument = () => {
       Authorization: `Bearer ${req_client.accessToken}`,
       "Content-Type": "application/json",
     };
-    const user_status = JSON.parse(sessionStorage.getItem("user_status"));
+    const user_status = JSON.parse(localStorage.getItem("user_status"));
     const result = await req_client.fetchReq(
       `get_requests/?fac_id=${user_status.user_id}`,
       "GET",

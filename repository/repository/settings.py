@@ -52,6 +52,19 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 209715200
 
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF trusted origins for Django 4.0+ (required for cross-origin POST requests)
+CSRF_TRUSTED_ORIGINS = [
+    f"http://{frontend_server}",
+    f"http://{frontend_server}:80",
+    f"http://{frontend_server}:3000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+# CSRF cookie settings for cross-origin requests
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF token
+
 # Methods to be allowed by CORS requests
 CORS_ALLOW_METHODS = [
     'GET',
@@ -60,6 +73,18 @@ CORS_ALLOW_METHODS = [
     'PATCH',
     'DELETE',
     'OPTIONS',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 CORS_EXPOSE_HEADERS = ["Content-Disposition"]

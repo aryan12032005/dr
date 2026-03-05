@@ -17,6 +17,7 @@ class networkRequests {
     try {
       var response = await fetch(`${this.baseUrl}get_csrf/`, {
         method: "GET",
+        credentials: 'include',  // Include cookies for cross-origin
       });
       var data = await response.json();
       return data.csrf_token;
@@ -42,6 +43,7 @@ class networkRequests {
           "X-CSRFToken": csrf_token,
         },
         body: JSON.stringify({ refresh_token: this.refreshToken }),
+        credentials: 'include',  // Include cookies for cross-origin
       });
       if (result.ok) {
         const data = await result.json();
@@ -66,15 +68,21 @@ class networkRequests {
     try {
       if (body) {
         headers["X-CSRFToken"] = await this.getCSRFToken();
+        // Don't set Content-Type for FormData - browser sets it with boundary
+        if (body instanceof FormData) {
+          delete headers["Content-Type"];
+        }
         result = await fetch(`${this.baseUrl}${endPoint}`, {
           method: method,
           headers: headers,
           body: body,
+          credentials: 'include',  // Include cookies for CSRF
         });
       } else {
         result = await fetch(`${this.baseUrl}${endPoint}`, {
           method: method,
           headers: headers,
+          credentials: 'include',  // Include cookies for CSRF
         });
       }
       if (count > 1) {

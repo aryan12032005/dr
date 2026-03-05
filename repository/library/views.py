@@ -40,6 +40,32 @@ mongo_client_usual=mongo_DB(MONGO_USERNAME,MONGO_PASSWORD)
 def index(request):
     return Response("Umm, well you know me:) feed me...")
 
+def server_status(request):
+    """Diagnostic endpoint to check server configuration"""
+    import shutil
+    status = {
+        'fs_dir': FS_DIR,
+        'fs_dir_exists': os.path.exists(FS_DIR),
+        'fs_dir_writable': os.access(FS_DIR, os.W_OK) if os.path.exists(FS_DIR) else False,
+        'mongo_connected': False,
+        'disk_space_gb': 0,
+    }
+    try:
+        mongo_client = mongo_DB(MONGO_USERNAME, MONGO_PASSWORD)
+        mongo_client.get_count()
+        status['mongo_connected'] = True
+    except Exception as e:
+        status['mongo_error'] = str(e)
+    
+    try:
+        if os.path.exists(FS_DIR):
+            usage = shutil.disk_usage(FS_DIR)
+            status['disk_space_gb'] = round(usage.free / (1024**3), 2)
+    except Exception as e:
+        status['disk_error'] = str(e)
+    
+    return JsonResponse(status)
+
 class logout_user(APIView):
     """ Log out a user using refresh token """
     authentication_classes = [JWTAuthentication]
@@ -830,12 +856,24 @@ class upload_document(APIView):
 
     def post(self,request):
         print("=== UPLOAD DOCUMENT CALLED ===")
+        print(f"FS_DIR: {FS_DIR}")
         user=request.user
         print(f"User: {user.username}")
         data=request.POST
-        print(f"Data: {data}")
+        print(f"Data: {dict(data)}")
         files=request.FILES
-        print(f"Files: {files}")
+        print(f"Files: {dict(files)}")
+        
+        # Check if FS_DIR exists and is writable
+        if not os.path.exists(FS_DIR):
+            print(f"ERROR: FS_DIR does not exist: {FS_DIR}")
+            try:
+                os.makedirs(FS_DIR, exist_ok=True)
+                print(f"Created FS_DIR: {FS_DIR}")
+            except Exception as e:
+                print(f"Failed to create FS_DIR: {e}")
+                return Response({'message': f'Server storage directory not accessible: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         mongo_client=mongo_DB(username=MONGO_USERNAME,password=MONGO_PASSWORD)
         print("MongoDB connected")
 

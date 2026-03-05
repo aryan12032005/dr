@@ -221,8 +221,16 @@ class fsHandler:
     
     def create_file(self,category,id,doc_type,filenames,files):
         empty_threshold = 1024**3  # 1 GB of space threshold
-        print(self.work_dir)
-        usage = shutil.disk_usage(self.work_dir)
+        print(f"[fsHandler] work_dir: {self.work_dir}")
+        print(f"[fsHandler] category: {category}, id: {id}, doc_type: {doc_type}")
+        print(f"[fsHandler] filenames: {filenames}")
+        
+        try:
+            usage = shutil.disk_usage(self.work_dir)
+        except Exception as e:
+            print(f"[fsHandler] Error getting disk usage: {e}")
+            return False
+            
         original_dir = self.work_dir
         if usage.free < empty_threshold:
             original_dir = self.work_dir
@@ -238,16 +246,23 @@ class fsHandler:
             return False
         
         temp_dir=self.work_dir+'/'+category+'/'+str(id)+'/'+doc_type
+        print(f"[fsHandler] Creating directory: {temp_dir}")
         os.makedirs(temp_dir,exist_ok=True)
         try:
             for i,f in enumerate(filenames):
-                with open(temp_dir+ '/'+ str(i)+ '_'+  str(f), 'wb+') as new_file:
+                file_path = temp_dir+ '/'+ str(i)+ '_'+  str(f)
+                print(f"[fsHandler] Writing file: {file_path}")
+                with open(file_path, 'wb+') as new_file:
                     for chunks in files[i]:
                         new_file.write(chunks)
-        except:
+        except Exception as e:
+            print(f"[fsHandler] Error writing file: {e}")
+            import traceback
+            traceback.print_exc()
             return False
         if not original_dir == None:
             self.work_dir = original_dir
+        print(f"[fsHandler] Success! Created files at: {temp_dir}")
         return temp_dir
     
     @file_checker

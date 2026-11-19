@@ -217,9 +217,19 @@ class CloudinaryFileHandler {
    * @param {string} id - Document ID
    * @returns {string|null} - Base64 encoded image or null
    */
+  /**
+   * Get cover from local files directory (legacy documents)
+   * @param {string} category - Document category
+   * @param {string} id - Document ID
+   * @returns {Object|null} - { base64, isPdf, fileName } or null
+   */
   _getLocalCover(category, id) {
     try {
-      const folderDir = path.join(this.localFilesDir, category, String(id), 'cover');
+      let folderDir = path.join(this.localFilesDir, category, String(id), 'cover');
+      
+      if (!fs.existsSync(folderDir) || fs.readdirSync(folderDir).length === 0) {
+        folderDir = path.join(this.localFilesDir, category, String(id), 'document');
+      }
       
       if (!fs.existsSync(folderDir)) {
         return null;
@@ -233,12 +243,65 @@ class CloudinaryFileHandler {
       const fileName = files[0];
       const filePath = path.join(folderDir, fileName);
       const fileBuffer = fs.readFileSync(filePath);
+      const isPdf = fileName.toLowerCase().endsWith('.pdf') || fileBuffer.slice(0, 4).toString() === '%PDF';
       
-      return fileBuffer.toString('base64');
+      return {
+        base64: fileBuffer.toString('base64'),
+        isPdf: isPdf,
+        fileName: fileName
+      };
     } catch (error) {
       console.error('Error getting local cover:', error);
       return null;
     }
+  }
+
+  /**
+   * Get documents as a zip from local files directory
+   * @param {string} category - Document category
+   * @param {string} id - Document ID
+   * @returns {Promise<Object>} - { file: Buffer, success: boolean }
+   */
+  _getLocalZip(category, id) {
+    return new Promise((resolve) => {
+      try {
+        let folderDir = path.join(this.localFilesDir, category, String(id), 'document');
+        if (!fs.existsSync(folderDir) || fs.readdirSync(folderDir).length === 0) {
+          folderDir = path.join(this.localFilesDir, category, String(id), 'cover');
+        }
+        
+        if (!fs.existsSync(folderDir)) {
+          return resolve({ file: null, success: false });
+        }
+        
+        const files = fs.readdirSync(folderDir);
+        if (files.length === 0) {
+          return resolve({ file: null, success: false });
+        }
+        
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        const chunks = [];
+        
+        archive.on('data', (chunk) => chunks.push(chunk));
+        archive.on('end', () => {
+          resolve({ file: Buffer.concat(chunks), success: true });
+        });
+        archive.on('error', (err) => {
+          console.error('Local archive error:', err);
+          resolve({ file: null, success: false });
+        });
+        
+        files.forEach((file) => {
+          const filePath = path.join(folderDir, file);
+          archive.file(filePath, { name: file.replace(/^\d+_/, '') });
+        });
+        
+        archive.finalize();
+      } catch (err) {
+        console.error('Error getting local zip:', err);
+        resolve({ file: null, success: false });
+      }
+    });
   }
 
   /**
@@ -306,6 +369,12 @@ class CloudinaryFileHandler {
    * @returns {Promise<Object>} - { file: Buffer, success: boolean }
    */
   async getZip(category, id) {
+    // First try local files
+    const localResult = await this._getLocalZip(category, id);
+    if (localResult && localResult.success) {
+      return localResult;
+    }
+
     return new Promise(async (resolve) => {
       try {
         const prefix = `digital_repo/${category}/${id}/document`;

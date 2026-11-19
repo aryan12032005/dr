@@ -652,13 +652,20 @@ const SearchDocument = ({ userStatus }) => {
               </div>
 
               {/* Document Preview */}
-              <div className="rounded-2xl overflow-hidden border-2 border-gray-200 shadow-inner">
-                {viewingDocument?.cover && (viewingDocument?.coverType === "pdf" || viewingDocument?.coverType?.includes("pdf")) ? (
-                  <iframe
-                    src={`data:application/pdf;base64,${viewingDocument?.cover}`}
-                    className="w-full min-h-[60vh]"
-                  />
-                ) : viewingDocument?.coverType === "link" || viewingDocument?.coverType?.includes("link") ? (
+              <div className="flex justify-between items-center mb-2 px-1">
+                <span className="text-sm font-semibold text-gray-500">Document Preview</span>
+                <a
+                  href={`${req_client.baseUrl}view_document?doc_id=${viewingDocument?.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  <FaExternalLinkAlt className="text-xs" />
+                  Open in New Tab
+                </a>
+              </div>
+              <div className="rounded-2xl overflow-hidden border-2 border-gray-200 shadow-inner bg-gray-50">
+                {viewingDocument?.coverType === "link" || viewingDocument?.coverType?.includes("link") ? (
                   <div className="p-8 text-center bg-gradient-to-r from-gray-50 to-gray-100">
                     <FaExternalLinkAlt className="text-4xl text-blue-500 mx-auto mb-4" />
                     <p className="text-gray-600 mb-3">External Cover Link:</p>
@@ -671,17 +678,12 @@ const SearchDocument = ({ userStatus }) => {
                       {viewingDocument?.coverLink}
                     </a>
                   </div>
-                ) : viewingDocument?.cover ? (
-                  <img
-                    src={`data:image/jpeg;base64,${viewingDocument?.cover}`}
-                    className="w-full max-h-[60vh] object-contain bg-gray-100"
-                    alt={viewingDocument?.title}
-                  />
                 ) : (
-                  <div className="p-16 text-center bg-gradient-to-r from-gray-50 to-gray-100">
-                    <FaFileAlt className="text-6xl text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 text-lg">No preview available</p>
-                  </div>
+                  <iframe
+                    src={`${req_client.baseUrl}view_document?doc_id=${viewingDocument?.id}#toolbar=1`}
+                    className="w-full min-h-[65vh] border-0"
+                    title={viewingDocument?.title}
+                  />
                 )}
               </div>
 

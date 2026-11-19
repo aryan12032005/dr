@@ -103,19 +103,118 @@ router.get('/get_document', async (req, res) => {
         // cover_path is a local path (legacy format), read from local files
         const coverFile = await fileHandler.getCover(doc.category, doc._id.toString());
         if (coverFile) {
-          document.cover = coverFile;
+          if (typeof coverFile === 'object' && coverFile.base64) {
+            document.cover = coverFile.base64;
+            if (coverFile.isPdf) document.coverType = 'pdf';
+          } else {
+            document.cover = coverFile;
+          }
         }
       }
     } else {
-      // Legacy fallback: search Cloudinary for cover
+      // Legacy fallback: check local files then Cloudinary
       const coverFile = await fileHandler.getCover(doc.category, doc._id.toString());
-      document.cover = coverFile;
+      if (coverFile) {
+        if (typeof coverFile === 'object' && coverFile.base64) {
+          document.cover = coverFile.base64;
+          if (coverFile.isPdf) document.coverType = 'pdf';
+        } else {
+          document.cover = coverFile;
+        }
+      }
     }
 
     res.json({ document });
   } catch (error) {
     console.error(error);
     res.status(400).json({ message: 'Error fetching document' });
+  }
+});
+
+// Stream document or cover for inline viewer
+router.get('/view_document', async (req, res) => {
+  try {
+    const { doc_id } = req.query;
+    if (!doc_id) {
+      return res.status(400).json({ message: 'doc_id is required' });
+    }
+
+    const doc = await Document.findById(doc_id);
+    if (!doc) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    // Check if document is public or user authorized
+    const isPublicDoc = doc.isPublic === 'true' || doc.isPublic === true;
+    if (!isPublicDoc) {
+      let authorized = false;
+      const token = req.query.token || (req.headers.authorization && req.headers.authorization.split(' ')[1]);
+      if (token) {
+        try {
+          const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET);
+          const user = await require('../models/User').findById(decoded.id);
+          if (user && (user.is_admin || (doc.owner && doc.owner.toString() === user._id.toString()))) {
+            authorized = true;
+          }
+        } catch (e) {}
+      }
+      if (!authorized) {
+        return res.status(403).json({ message: 'Document is private' });
+      }
+    }
+
+    // 1. If Cloudinary document_path or cover_path exists, redirect to Cloudinary CDN URL
+    if (doc.document_path) {
+      try {
+        const docData = JSON.parse(doc.document_path);
+        if (Array.isArray(docData) && docData.length > 0 && docData[0]?.url) {
+          return res.redirect(docData[0].url);
+        }
+      } catch (e) {}
+    }
+    if (doc.cover_path) {
+      try {
+        const coverData = JSON.parse(doc.cover_path);
+        if (Array.isArray(coverData) && coverData.length > 0 && coverData[0]?.url) {
+          return res.redirect(coverData[0].url);
+        }
+      } catch (e) {}
+    }
+
+    // 2. Fallback: Look for local document or cover file
+    const fs = require('fs');
+    const path = require('path');
+    let filePath = null;
+    const cat = doc.category;
+    const baseDir = path.join(__dirname, '..', '..', 'FILES', cat, String(doc._id));
+
+    for (const sub of ['document', 'cover']) {
+      const subDir = path.join(baseDir, sub);
+      if (fs.existsSync(subDir)) {
+        const files = fs.readdirSync(subDir);
+        if (files.length > 0) {
+          filePath = path.join(subDir, files[0]);
+          break;
+        }
+      }
+    }
+
+    if (filePath && fs.existsSync(filePath)) {
+      const ext = path.extname(filePath).toLowerCase();
+      let contentType = 'application/pdf';
+      if (['.jpg', '.jpeg'].includes(ext)) contentType = 'image/jpeg';
+      else if (ext === '.png') contentType = 'image/png';
+      else if (ext === '.webp') contentType = 'image/webp';
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.title)}${ext}"`);
+      return fs.createReadStream(filePath).pipe(res);
+    }
+
+    return res.status(404).json({ message: 'Physical file not found on server' });
+  } catch (error) {
+    console.error('view_document error:', error);
+    res.status(500).json({ message: 'Error viewing document' });
   }
 });
 

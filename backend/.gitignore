@@ -1,0 +1,6 @@
+node_modules
+FILES
+FILES_BACKUP_ORIGINALS
+.env
+*.tmp
+__pycache__

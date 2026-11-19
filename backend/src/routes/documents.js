@@ -163,25 +163,7 @@ router.get('/view_document', async (req, res) => {
       }
     }
 
-    // 1. If Cloudinary document_path or cover_path exists, redirect to Cloudinary CDN URL
-    if (doc.document_path) {
-      try {
-        const docData = JSON.parse(doc.document_path);
-        if (Array.isArray(docData) && docData.length > 0 && docData[0]?.url) {
-          return res.redirect(docData[0].url);
-        }
-      } catch (e) {}
-    }
-    if (doc.cover_path) {
-      try {
-        const coverData = JSON.parse(doc.cover_path);
-        if (Array.isArray(coverData) && coverData.length > 0 && coverData[0]?.url) {
-          return res.redirect(coverData[0].url);
-        }
-      } catch (e) {}
-    }
-
-    // 2. Fallback: Look for local document or cover file
+    // 1. If running locally with physical files present, stream directly (fastest & offline-friendly)
     const fs = require('fs');
     const path = require('path');
     let filePath = null;
@@ -209,6 +191,24 @@ router.get('/view_document', async (req, res) => {
       res.setHeader('Content-Type', contentType);
       res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.title)}${ext}"`);
       return fs.createReadStream(filePath).pipe(res);
+    }
+
+    // 2. Cloud deployment fallback: redirect to Cloudinary CDN URL (when deployed on Render/Vercel)
+    if (doc.document_path) {
+      try {
+        const docData = JSON.parse(doc.document_path);
+        if (Array.isArray(docData) && docData.length > 0 && docData[0]?.url) {
+          return res.redirect(docData[0].url);
+        }
+      } catch (e) {}
+    }
+    if (doc.cover_path) {
+      try {
+        const coverData = JSON.parse(doc.cover_path);
+        if (Array.isArray(coverData) && coverData.length > 0 && coverData[0]?.url) {
+          return res.redirect(coverData[0].url);
+        }
+      } catch (e) {}
     }
 
     return res.status(404).json({ message: 'Physical file not found on server' });
